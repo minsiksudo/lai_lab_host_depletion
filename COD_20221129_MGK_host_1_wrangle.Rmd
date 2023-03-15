@@ -248,7 +248,12 @@ sample_data <- merge(readstat, sample_result, by = "baylor_other_id") %>%
 ***2. Adding more data to the phyloseq - sampledata***
 
 ```{r, warning=F, `Adding more data to phyloseq object`}
-sample_data$sequencing_host_prop <- sample_data$Host_mapped/sample_data$Raw_reads
+#Adding host DNA proportion of sequencing results
+sample_data <- sample_data %>% data.frame %>% 
+        mutate(sequencing_host_prop = Host_mapped/Raw_reads, .after = Metaphlan_mapped) %>%
+        sample_data
+
+#Adding Treatment status
 sample_data$treated <- rowSums(sample_data[, c("lypma", "benzonase", "molysis", "host_zero", "qiaamp")])
 
 # Adding library prep results --------------------------------------------
@@ -264,11 +269,18 @@ phyloseq <- merge_phyloseq(phyloseq, sample_data)
 
 ```{r, warning=F, `Factorize predictors`}
 # Factorize predicters ----------------------------------------------------
+# + creating lables for figures
 sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %>% 
         mutate(treatment = tolower(treatment), 
-               treatment = factor(treatment, levels = c("control", "lypma", "benzonase", "host_zero", "molysis", "qiaamp")),
-               sample_type = factor(sample_type, levels = c("BAL", "nasal_swab", "Sputum", "neg_extraction", "pos_extraction", "neg_depletion", "pos_depletion"))) %>%
+               treatment = factor(treatment,
+                                  levels = c("control", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
+                                  labels = c("Control", "lyPMA", "Benzoanse", "Host zero", "Molysis", "QIAamp")),
+               sample_type = factor(sample_type,
+                                    levels = c("BAL", "nasal_swab", "Sputum", "neg_extraction", "pos_extraction", "neg_depletion", "pos_depletion"), 
+                                    labels = c("BAL", "Nasal swab", "Sputum", "Neg. ext.", "Pos. ext.", "Neg. dep.", "Pos. dep."))) %>%
         sample_data()
+
+
 ```
 
 ***4. Saving RDS***

@@ -1,8 +1,18 @@
 ---
-title: "COD_20221129_MGK_host_2_QC"
-output: html_document
-date: "2023-01-26"
+title: "COD_20230301_HOST_1_QC_analysis"
+author: "Minsik Kim"
+date: "2023-03-14"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+        df_print: paged
+editor_options: 
+  chunk_output_type: inline
 ---
+
 
 ## Loading packages
 
@@ -17,27 +27,29 @@ date: "2023-01-26"
 #===============================================================================
 #Input for document parameters, libraries, file paths, and options.
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
-path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/2_Protocols/host_depletion/"
+path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
 str_libraries <- c(
-    "readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "phyloseq", "vegan", "tidyverse", "microbiome", "ggpubr", "viridis", "decontam",
-    "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2"
+    "readxl", "phyloseq", "tidyverse", "pacman", "yaml"
 )
 
+path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2")
+        
 YAML_header <-
 '---
-title: "Host-DNA depletion 2: QC ana analysis"
+title: "Host-DNA depletion 1: data wrangling"
 author: "Minsik Kim"
-date: "2022.12.30"
+date: "2032.03.10"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
         code_folding: hide
-        fig_width: 11
-        fig_height: 11
+        fig_width: 6
+        fig_height: 6
 ---'
-
-seed <- "20221129"
+seed <- "20230314"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -81,99 +93,136 @@ FUN.LineZero.Report()
 
 ```
 
-## Loading data 
+
+#Script description#
+
+1. Loading data
+        1.1. phyloseq obejct
+        1.2. qPCR data (controls)
+2. QC
+        2.1. 
+
+3. Exploratory analysis
 
 
-## R Markdown
+#Loading data#
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r cars}
 # Loading files -----------------------------------------------------------
-        #loading tidy phyloseq object
-        phyloseq <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
-        #sample data loading
-        sample_data <- sample_data(phyloseq)
+#loading tidy phyloseq object
+phyloseq <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
+
+qPCR_results <- read_csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
         
+#sample data loading
+sample_data <- sample_data(phyloseq)
         
+```
+
+
+2. QC
+        Q1. How many samples failed sequencing
+        Q2. How were the extraction controls
+        Q3. Decontam - were there any contaminants?
+
+# Q1. How many samples failed in sequencing?#
+
+
+```{r}
 # Initail QC --------------------------------------------------------------
         #Quesetions - QC
         
-                                
-                                hist(sample_data$Final_reads)
-                                #overview - FInal reads
-                                
-                                hist(sample_data$total_reads)
-                                #sample_data$treatment <- factor(sample_data$treatment, levels = c("control", "lyPMA", "benzonase", "host_zero", "molysis", "qiaamp"))
-                                #sample_data$sample_type <- factor(sample_data$sample_type, levels = c("nasal_swab", "sputum", "bal", "pos_control", "neg_control"))
-                                
-        #Q0. How many samples failed in sequencing
-                                
-                                sample_data$total_reads
-                                hist((log10(sample_data$total_reads + 1)),100) # one somaple showed 0 reads
-                                sample_data %>% data.frame %>% filter(total_reads == 0) # two BAL sampels showed 0 total reads
-                                
-                                #how were the samples failed in library prep?
-                                
-                                #BAL
-                                lib_fail_list <- c("NS_6_b_lyPMA", "NS_8_b_lyPMA", "NS_17_b_lyPMA", "NS_21_b_host_zero", "NS_22_b_host_zero", "NS_19_d_molysis", "NS_21_d_molysis", "NS_22_d_molysis", "NS_23_d_molysis", "NS_26_b_lyPMA", "BAL_073_b_host_zero", "BAL_073_c_molysis", "BAL_078_d_lyPMA")
-                                sample_data(phyloseq)$lib_failed <- row.names(sample_data(phyloseq)) %in% lib_fail_list
+#Q0. How many samples failed in sequencing
+hist((log10(sample_data$Final_reads + 1)),100) # no somaple showed 0 reads
+hist((log10((phyloseq %>% otu_table %>% colSums()) + 1)),100, main = "Histogram of total reads (sum of OTU table)") # 2 samples showed 0 total reads (sum of otu_table)
 
-                                #I have no idea how Baylor decisded those sample as "library prep failed samples
-        
-        # Q0. How was the positive control and negative control? were there any contaminants? 
-                                sample_data
+#how were the samples failed in library prep?
+sample_data %>% data.frame %>% mutate(total_read = phyloseq %>% otu_table %>% colSums()) %>% rownames_to_column(var = "baylor_other_id") %>%
+        ggplot(aes(x = reorder(baylor_other_id, -total_read),
+                               y = log10(total_read + 1),
+                               col = lib_failed)) +
+                geom_point() +
+                theme_classic(base_family = "serif") +
+                theme(axis.title.y = element_markdown(), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 4)) +
+                ylab("log<sub>10</sub>(Sum of OTU table reads)") +
+                xlab("Sample ID") +
+        guides(col=guide_legend(title="Library failed")) +
+        ggtitle("Sum of OTU reads by library failure status")
+
+
+sample_data %>% data.frame %>% filter(phyloseq %>% otu_table %>% colSums() == 0) # two BAL sampels showed 0 total reads
+sample_data(phyloseq) %>% data.frame() %>% subset(., .$lib_failed)
+
+```
+*Results:*
+
+*1.1. 13 samples failed in library prep*
+
+*1.2. Two BAL sampels showed 0 total reads*
+
+*1.3. Sequencing fail ≠ library prep fail*
+
+Comments from Baylor:
+
+Q: What was the lab's criteria for deciding which samples failed library prep.? There were 13 samples that you pointed as failed but their sequencing result actually looks pretty good (ie similar to samples that didn't fail library prep)
+
+A: To determine whether a library attempt “passed or failed” the lab looks at the picogreen concentrations and a library fragment size distribution trace. The trace files are an output from either the Fragment Analyzer or TapeStation  (a copy of the trace files for PQ00331 is attached). If a sample has a background level pico concentration and no discernable fragment concentration on the trace  (i.e. a flat trace line) it is considered failed library. If the sample is below the level of detection of our standard library QC methods, it is considered failure. It’s still possible that there is some small amounts of library in those samples that were successfully sequenced, but often those samples do not generate a meaningful amount of sequence data.
+
+
+# Q2. How was the extraction controls, both pos and neg?#
+
+
+```{r}
+
+#Loading theoretical mock community
+zymo_mock <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_sicas2/data_raw/DAR_20210929_zymo_mock_data.xlsx") %>%
+        data.frame(row.names = T) %>% rename(mock_theoretical = Mock) %>%
+        phyloseq(otu_table(., taxa_are_rows = T), tax_table(phyloseq))
+
+phyloseq_control_rel <- rbind(c("mock_theoretical", "mock")) %>% data.frame() %>% column_to_rownames(var = "X1") %>% rename(sample_type = X2) %>%
+        merge_phyloseq(sample_data(.), zymo_mock) %>%        #making sample_data of mock community
+        merge_phyloseq(., subset_samples(phyloseq, sample_type == "pos_extraction" | sample_type == "neg_extraction" )) %>% #adding data of controls
+        transform_sample_counts(., function(x){x / sum(x)})
+
+#Species richness of each control groups
+S.obs <- rowSums(t(otu_table(phyloseq_control_rel)) != 0)
+
+sample_data(phyloseq_control_rel)$detail <- c("Mock, 10 spp.", "Pos., 41 spp.", "Neg., 3 spp.")
+sample_data(phyloseq_control_rel)$detail <- factor(sample_data(phyloseq_control_rel)$detail, levels = c("Mock, 10 spp.", "Pos., 41 spp.", "Neg., 3 spp."))
+
+plot_bar(phyloseq_control_rel, fill="Species") + 
+        ylab("Relative abundancne") +
+        theme_classic(base_size = 11, base_family = "serif") +
+        ggtitle("Species richness of control data") +
+        theme(legend.position = "none") +
+        facet_wrap (~ detail, scales= "free_x", nrow=1)
+
+
+#Since species level identifiers can differ by annotation methos, Genus level was analyzed
+phyloseq_control_rel_genus <- phyloseq::tax_glom(phyloseq_control_rel, "Genus", NArm = TRUE)
+S.obs <- rowSums(t(otu_table(phyloseq_control_rel_genus)) != 0)
+
+sample_data(phyloseq_control_rel_genus)$detail <- c("Mock, 10 Genus", "Pos., 28 Genus", "Neg., 3 Genus")
+sample_data(phyloseq_control_rel_genus)$detail <- factor(sample_data(phyloseq_control_rel_genus)$detail, levels = c("Mock, 10 Genus", "Pos., 28 Genus", "Neg., 3 Genus"))
+
+plot_bar(phyloseq_control_rel_genus, fill="Genus") + 
+        ylab("Relative abundancne") +
+        theme_classic(base_size = 11, base_family = "serif") +
+        ggtitle("Genus richness of control data") +
+        theme(legend.position = "none") +
+        facet_wrap (~ detail, scales= "free_x", nrow=1)
+
+#there could be opportunistic pathogens...
                                 
-                                phyloseq_control <- subset_samples(phyloseq, grepl("2022", Row.names))
-                                phyloseq_sample <- subset_samples(phyloseq, !grepl("2022", Row.names))
-                                        sample_data(phyloseq_control)$is.neg <- 1
-                                        sample_data(phyloseq_sample)$is.neg <- 0
-                                        
-                                
-                                phyloseq_control <- prune_taxa(taxa_sums(phyloseq_control) != 0, phyloseq_control) 
-                                        #Mock community data
-                                        
-                                        zymo_mock<-read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_sicas2/data_raw/DAR_20210929_zymo_mock_data.xlsx")
-                                        zymo_mock<-data.frame(zymo_mock, row.names = T)
-                                        names(zymo_mock) <- "zymo_mock"
-                                        physeq_mock <- phyloseq(otu_table(zymo_mock, taxa_are_rows = T), tax_table(phyloseq_control))
-                                        mock_sample_data <- rbind(c("zymo_mock", "mock")) %>% data.frame(.) 
-                                        names(mock_sample_data) <- c("Row.names", "sample_type")
-                                        row.names(mock_sample_data) <- mock_sample_data$Row.names
-                                        physeq_mock <- merge_phyloseq(sample_data(mock_sample_data), physeq_mock)
-                                        #Mock community & controls phyloseq
-                                        controls_phyloseq <- merge_phyloseq(physeq_mock, phyloseq_control)
-                                        #Mock community - relative abundance phyloseq
-                                        phyloseq_control_rel <- transform_sample_counts(controls_phyloseq, function(x){x / sum(x)})
-                                #Species richness of each control groups
-                                S.obs <- rowSums(t(otu_table(phyloseq_control)) != 0)
-                                ps.gen <- phyloseq::tax_glom(phyloseq_control_rel, "Genus", NArm = TRUE)
-                                
-                                sample_data(phyloseq_control_rel)$detail <- c("Mock, 10 spp.", "Pos., 41 spp.", "Neg., 3 spp.")
-                                sample_data(phyloseq_control_rel)$detail <- factor(sample_data(phyloseq_control_rel)$detail, levels = c("Mock, 10 spp.", "Pos., 41 spp.", "Neg., 3 spp."))
-                                
-                                plot_bar(phyloseq_control_rel, fill="Species") + 
-                                        facet_wrap (~ detail, scales= "free_x", nrow=1) +
-                                        ylab("Relative abudnacne") +
-                                        title("Species richenss") +
-                                        theme_classic(base_size = 11, base_family = "serif")
-                                sample_data(ps.gen)$detail <- c("Mock, 10 Genus", "Pos., 28 Genus", "Neg., 3 Genus")
-                                sample_data(ps.gen)$detail <- factor(sample_data(ps.gen)$detail, levels = c("Mock, 10 Genus", "Pos., 28 Genus", "Neg., 3 Genus"))
-                                plot_bar(ps.gen, fill="Genus") + 
-                                        facet_wrap (~ detail, scales= "free_x", nrow=1) +
-                                        ylab("Relative abudnacne") +
-                                        title("Species richenss") +
-                                        theme_classic(base_size = 11, base_family = "serif")
-                                #there could be opportunistic pathogens...
-                                
-                                #Mo-mock control data
-        ps.gen_nomock <- subset_taxa(ps.gen, otu_table(ps.gen)[,1] == 0)
-        phyloseq_control_nomock <- subset_taxa(phyloseq_control, (tax_table(phyloseq_control) %>% data.frame() %>% .$Genus) %in% (tax_table(ps.gen_nomock) %>% data.frame() %>% .$Genus))
-        sample_data(phyloseq_control_nomock)
-        phyloseq_control_nomock <- subset_samples(phyloseq_control_nomock, sample_data(phyloseq_control_nomock)$sample_type != "mock")
-subset_samples(phyloseq_control_nomock, sample_data(phyloseq_control_nomock)$sample_type != "mock")
+
+```
+Results
+        2.1. Negative control showed minimal number of possible contaminants
+        2.2. Positive control contained various contaminants
+
+```{r}
+
 
 # Decontam package --------------------------------------------------------
 

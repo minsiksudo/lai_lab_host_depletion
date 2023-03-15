@@ -99,11 +99,15 @@ FUN.LineZero.Report()
 1. Loading data
         1.1. phyloseq obejct
         1.2. qPCR data (controls)
+
 2. QC
-        2.1. 
+        Q1. How many samples failed sequencing
+        Q2. How were changes in read stats and host DNA proportion?
+        Q3. How were the extraction controls
+        Q4. Decontam - were there any contaminants?
 
 3. Exploratory analysis
-
+        3.1. 
 
 #Loading data#
 
@@ -123,8 +127,9 @@ sample_data <- sample_data(phyloseq)
 
 2. QC
         Q1. How many samples failed sequencing
-        Q2. How were the extraction controls
-        Q3. Decontam - were there any contaminants?
+        Q2. How were changes in read stats and host DNA proportion?
+        Q3. How were the extraction controls
+        Q4. Decontam - were there any contaminants?
 
 # Q1. How many samples failed in sequencing?#
 
@@ -157,11 +162,11 @@ sample_data(phyloseq) %>% data.frame() %>% subset(., .$lib_failed)
 ```
 *Results:*
 
-*1.1. 13 samples failed in library prep*
+*2.1. 13 samples failed in library prep*
 
-*1.2. Two BAL sampels showed 0 total reads*
+*2.1.2. Two BAL sampels showed 0 total reads*
 
-*1.3. Sequencing fail ≠ library prep fail*
+*2.1.3. Sequencing fail ≠ library prep fail*
 
 Comments from Baylor:
 
@@ -169,13 +174,64 @@ Q: What was the lab's criteria for deciding which samples failed library prep.? 
 
 A: To determine whether a library attempt “passed or failed” the lab looks at the picogreen concentrations and a library fragment size distribution trace. The trace files are an output from either the Fragment Analyzer or TapeStation  (a copy of the trace files for PQ00331 is attached). If a sample has a background level pico concentration and no discernable fragment concentration on the trace  (i.e. a flat trace line) it is considered failed library. If the sample is below the level of detection of our standard library QC methods, it is considered failure. It’s still possible that there is some small amounts of library in those samples that were successfully sequenced, but often those samples do not generate a meaningful amount of sequence data.
 
+```{r}
 
-# Q2. How was the extraction controls, both pos and neg?#
+## figures -----raw data
+
+#sample_data %>%
+#        data.frame() %>%
+#        gather(feature, value, Raw_reads:sequencing_host_prop) %>%
+#        group_by(feature) %>% 
+#        mutate(z_score = scale(value),
+#               feature = factor(feature, levels = c("Raw_reads", "LowQual_removed", "Reads_after_trim", "Host_mapped", "Final_reads", "Metaphlan_mapped", #"sequencing_host_prop"), labels = c("Raw reads", "Low qual removed", "Reads after trim", "Host mapped", "Final reads", "Metaphlan mapped", "Host %")),
+#        ggplot(aes(x = treatment, y = z_score, fill = treatment)) +
+#                geom_boxplot(lwd = 0.2) +
+#                guides(fill=guide_legend(title="Treatment", nrow = 1)) +
+#                facet_grid(sample_type~feature) +
+#               xlab("Treatment") +
+#                ylab("Z score") +
+#                theme_classic(base_family = "serif", base_size = 14) +
+#                guides( x =  guide_axis(angle = 90)) + 
+#                theme(legend.position = "top") +
+#                scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment") #color using
+
+
+# Summary figures - facet and z-score -------------------------------------
+
+sample_data %>%
+        data.frame() %>%
+        gather(feature, value, Raw_reads:sequencing_host_prop) %>%
+        group_by(feature) %>% 
+        subset(., .$feature %in% c("Raw_reads", "Host_mapped", "Final_reads", "sequencing_host_prop")) %>%
+        mutate(z_score = scale(value),
+               feature = factor(feature, levels = c("Raw_reads", "Host_mapped", "Final_reads", "sequencing_host_prop"), labels = c("Raw reads", "Host mapped", "Final reads", "Host %"))) %>%
+        ggplot(aes(x = treatment, y = z_score, fill = treatment)) +
+                geom_boxplot(lwd = 0.2) +
+                guides(fill=guide_legend(title="Treatment", nrow = 1)) +
+                facet_grid(sample_type~feature) +
+                xlab("Treatment") +
+                ylab("Z score") +
+                theme_classic(base_family = "serif", base_size = 14) +
+                guides( x =  guide_axis(angle = 90)) + 
+                theme(legend.position = "top") +
+                scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment") #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+
+```                                
+
+*Results:*
+
+*2.2.1. There were no differences between raw reads, however, final reads increased after some treatment, and host DNA proportion decreased *
+
+*2.2.2. The changes in final reads were varied by treatment and sample type *
+
+
+# Q3. How was the extraction controls, both pos and neg?#
 
 
 ```{r}
 
 #Loading theoretical mock community
+
 zymo_mock <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_sicas2/data_raw/DAR_20210929_zymo_mock_data.xlsx") %>%
         data.frame(row.names = T) %>% rename(mock_theoretical = Mock) %>%
         phyloseq(otu_table(., taxa_are_rows = T), tax_table(phyloseq))
@@ -198,31 +254,19 @@ plot_bar(phyloseq_control_rel, fill="Species") +
         theme(legend.position = "none") +
         facet_wrap (~ detail, scales= "free_x", nrow=1)
 
-
-#Since species level identifiers can differ by annotation methos, Genus level was analyzed
-phyloseq_control_rel_genus <- phyloseq::tax_glom(phyloseq_control_rel, "Genus", NArm = TRUE)
-S.obs <- rowSums(t(otu_table(phyloseq_control_rel_genus)) != 0)
-
-sample_data(phyloseq_control_rel_genus)$detail <- c("Mock, 10 Genus", "Pos., 28 Genus", "Neg., 3 Genus")
-sample_data(phyloseq_control_rel_genus)$detail <- factor(sample_data(phyloseq_control_rel_genus)$detail, levels = c("Mock, 10 Genus", "Pos., 28 Genus", "Neg., 3 Genus"))
-
-plot_bar(phyloseq_control_rel_genus, fill="Genus") + 
-        ylab("Relative abundancne") +
-        theme_classic(base_size = 11, base_family = "serif") +
-        ggtitle("Genus richness of control data") +
-        theme(legend.position = "none") +
-        facet_wrap (~ detail, scales= "free_x", nrow=1)
-
 #there could be opportunistic pathogens...
                                 
 
 ```
-Results
-        2.1. Negative control showed minimal number of possible contaminants
-        2.2. Positive control contained various contaminants
 
+*Results*
+
+*2.3.1. Negative control showed minimal number of possible contaminants*
+
+*2.3.2. Positive control contained various contaminants*
+
+        
 ```{r}
-
 
 # Decontam package --------------------------------------------------------
 

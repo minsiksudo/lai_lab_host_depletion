@@ -236,23 +236,38 @@ zymo_mock <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/
         data.frame(row.names = T) %>% rename(mock_theoretical = Mock) %>%
         phyloseq(otu_table(., taxa_are_rows = T), tax_table(phyloseq))
 
-phyloseq_control_rel <- rbind(c("mock_theoretical", "mock")) %>% data.frame() %>% column_to_rownames(var = "X1") %>% rename(sample_type = X2) %>%
-        merge_phyloseq(sample_data(.), zymo_mock) %>%        #making sample_data of mock community
-        merge_phyloseq(., subset_samples(phyloseq, sample_type == "pos_extraction" | sample_type == "neg_extraction" )) %>% #adding data of controls
+phyloseq_control_rel <- rbind(c("mock_theoretical", "mock")) %>% data.frame() %>%
+        column_to_rownames(var = "X1") %>% rename(sample_type = X2) %>% #making sample_data of mock community
+        merge_phyloseq(sample_data(.), zymo_mock) %>%        
+        merge_phyloseq(., subset_samples(phyloseq, sample_type == "Pos. ext." | sample_type == "Neg. ext." )) %>% #adding data of controls
         transform_sample_counts(., function(x){x / sum(x)})
 
 #Species richness of each control groups
-S.obs <- rowSums(t(otu_table(phyloseq_control_rel)) != 0)
+cat("Species richness")
+rowSums(t(otu_table(phyloseq_control_rel)) != 0)
 
-sample_data(phyloseq_control_rel)$detail <- c("Mock, 10 spp.", "Pos., 41 spp.", "Neg., 3 spp.")
-sample_data(phyloseq_control_rel)$detail <- factor(sample_data(phyloseq_control_rel)$detail, levels = c("Mock, 10 spp.", "Pos., 41 spp.", "Neg., 3 spp."))
+sample_data(phyloseq_control_rel)$sample_type <- factor(sample_data(phyloseq_control_rel)$sample_type,
+                                                        levels = c("mock", "2", "1"),
+                                                        labels = c("Mock, 10 spp.", "Pos., 41 spp.", "Neg., 3 spp."))
 
-plot_bar(phyloseq_control_rel, fill="Species") + 
+#Manipulating phyloseq - only top 10 
+
+tax_table(phyloseq_control_rel) %>%
+  cbind(species10 = "[Others]") %>%
+  {top10species <- head(taxa_sums(phyloseq_control_rel), 10) %>% names()
+   .[top10species, "species10"] <- as.character(.[top10species, "Species"])
+   .[, 8] <- .[, 8] %>% gsub("s__", "", .) %>% gsub("_", " ", .) %>% paste("<i>", ., "</i>", sep = "")
+   phyloseq_temp <- phyloseq_control_rel
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   phyloseq_temp
+  } %>%
+        plot_bar(., fill="species10") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Species richness of control data") +
-        theme(legend.position = "none") +
-        facet_wrap (~ detail, scales= "free_x", nrow=1)
+        theme(legend.text = element_markdown()) +
+        guides(fill=guide_legend(title="Top 10 species")) +
+        facet_wrap (~ sample_type, scales= "free_x", nrow=1)
 
 #there could be opportunistic pathogens...
                                 
@@ -265,32 +280,43 @@ plot_bar(phyloseq_control_rel, fill="Species") +
 
 *2.3.2. Positive control contained various contaminants*
 
-        
+#Decontam - were there any contaminants?#
+
+input of DNA concentration: 16S qPCR data
+
+ https://github.com/benjjneb/decontam/issues/33
+
+Ben Callahan: But in the more limited testing on qPCR data the method still seems to work, and other publications report strong patterns of inverse frequency of contaminants using qPCR data - which is the pattern the frequency method relies on.
+
+
+Strategy:
+
+2.4.1. run decontam for all samples
+2.4.2. stratify decontam analysis per each treatment method
+
 ```{r}
 
 # Decontam package --------------------------------------------------------
 
-                
-                        #running decontam
-                                        
-                                phyloseq_nomock <- merge_phyloseq(phyloseq_sample, phyloseq_control_nomock)
+
+
+#running decontam - prevalence method
+
+
+phyloseq_nomock <- merge_phyloseq(phyloseq_sample, phyloseq_control_nomock)
                                 
-                                        #species level decontama
-                                        #Control phylose object
-                                        #decontam - frequency method
-                                        
-                                        sample_data(phyloseq_nomock)$total_dna_ngul <- sample_data(phyloseq_nomock)$DNA_bac_nondil + sample_data(phyloseq_nomock)$DNA_host_nondil
-                                        phy_decontam <- subset_samples(phyloseq_nomock, total_reads != 0)
-                                        sample_data(phy_decontam)$DNA_bac_nondil <- ifelse(sample_data(phy_decontam)$DNA_bac_nondil %>% is.na(),
-                                                                                           0.01, 
-                                                                                           sample_data(phy_decontam)$DNA_bac_nondil)
-                                        sample_data(phy_decontam)$total_dna_ngul <- ifelse(sample_data(phy_decontam)$total_dna_ngul %>% is.na(),
-                                                                                           0.01, 
-                                                                                           sample_data(phy_decontam)$total_dna_ngul)
-                                        phy_decontam_freq <- subset_samples(phy_decontam, !is.na(DNA_bac_nondil))
-                                        contamdf.freq <- isContaminant(phy_decontam, method="frequency", conc="DNA_bac_nondil")
-                                        contamdf.freq$contaminant %>% sum()
-                                        which(contamdf.freq$contaminant)#list of contam
+#species level decontama
+#Control phyloseq object
+#decontam - frequency method
+
+phy_decontam <- subset_samples(phyloseq_nomock, total_reads != 0)
+sample_data(phy_decontam)$DNA_bac_nondil <- ifelse(sample_data(phy_decontam)$DNA_bac_nondil %>% is.na(), 0.01, sample_data(phy_decontam)$DNA_bac_nondil)
+sample_data(phy_decontam)$total_dna_ngul <- ifelse(sample_data(phy_decontam)$total_dna_ngul %>% is.na(), 0.01, sample_data(phy_decontam)$total_dna_ngul)
+phy_decontam_freq <- subset_samples(phy_decontam, !is.na(DNA_bac_nondil))
+
+contamdf.freq <- isContaminant(phy_decontam, method="frequency", conc="DNA_bac_nondil")
+contamdf.freq$contaminant %>% sum()
+which(contamdf.freq$contaminant)#list of contam
                                         
                                         plot_frequency(phy_decontam, taxa_names(phy_decontam_freq)[c(which(contamdf.freq$contaminant))], conc="DNA_bac_nondil") + 
                                                 xlab("DNA concentration (qPCR; ) [ng / uL]")        

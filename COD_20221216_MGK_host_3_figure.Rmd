@@ -1,8 +1,18 @@
 ---
-title: "COD_20221216_MGK_host_3_figure"
-output: html_document
-date: "2023-01-26"
+title: "COD_20230301_HOST_3_Figure"
+author: "Minsik Kim"
+date: "2023-03-17"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+        df_print: paged
+editor_options: 
+  chunk_output_type: inline
 ---
+
 
 ## Loading packages
 
@@ -17,27 +27,29 @@ date: "2023-01-26"
 #===============================================================================
 #Input for document parameters, libraries, file paths, and options.
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
-path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/"
+path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
 str_libraries <- c(
-    "readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "phyloseq", "vegan", "tidyverse", "microbiome", "ggpubr", "viridis", "decontam",
-    "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext"
+    "readxl", "phyloseq", "tidyverse", "pacman", "yaml"
 )
 
+path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2")
+        
 YAML_header <-
 '---
-title: "Host-DNA depletion 2: QC ana analysis"
+title: "Host-DNA depletion 1: data wrangling"
 author: "Minsik Kim"
-date: "2022.12.30"
+date: "2032.03.10"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
         code_folding: hide
-        fig_width: 11
-        fig_height: 11
+        fig_width: 6
+        fig_height: 6
 ---'
-
-seed <- "20221129"
+seed <- "20230317"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -81,7 +93,80 @@ FUN.LineZero.Report()
 
 ```
 
-##Laoding data
+
+#Script description#
+
+Table 1.Sequencing results (treatment, raw reads, host reads, % host, final reads)
+
+Table 2.
+        library prep % vs sample_type + treatment + sample_type * treatment + subject_id (binary)
+        log10(Final reads) vs sample_type + treatment + sample_type * treatment + subject_id (linear or binary)
+        Host DNA % vs sample_type + treatment + sample_type * treatment + subject_id (linear or binary)
+        
+Table 3. LM of taxa alpha diversity (richness)
+
+Table 4. Permanova (Taxa dist ~ log10(final reads) + sample_type + treatment + sample_type * treatment + subject_id)
+
+Table 5. Decontam - stratified by treatment
+
+Table S1. LM of taxa alpha diversity (Shannon)
+
+Table S2. LM of taxa alpha diversity (InvSimpson)
+
+Table S3. LM of taxa alpha diversity (BPI) 
+
+Table S4. LM of function alpha diversity (richness)
+
+Table S5. LM of function alpha diversity (Shannon)
+
+Table S6. LM of function alpha diversity (InvSimpson)
+
+Table S7. LM of function alpha diversity (BPI) 
+
+Table S8. permanova of function alpha diversity
+
+
+Fig. 1.
+        Study design (pptx)
+
+Fig. 2. qPCR, by smaple type and treatment
+        A. Total DNA
+        B. Host DNA
+        C. Bacterial DNA
+        D. Host %
+        
+Fig. 3. Sequencing, by smaple type and treatment
+        A. Total DNA
+        B. Host DNA
+        C. Bacterial DNA
+        D. Host %
+
+Fig. 4. Taxa alpha and beta diveristy
+        A. Species richness
+        B. Shannon
+        C. Inverse Simpson
+        D. BPI
+        E. PCoA, Bray
+        F. Bray - Curtis boxplot
+        
+Fig. 5. DA analysis by sample type and treatment 
+        A. Volcano plot - all samples
+        B. Stratified - NS
+        C. Stratified - Sputum
+        D. Stratified - BAL
+        *Need to change order*
+
+Fig. 6. Functional analysis by sample type and treatment 
+        A. Function richness
+        B. Shannon
+        C. Inverse Simpson
+        D. BPI
+        E. PCoA, Bray
+        F. Bray - Curtis boxplot
+
+
+
+#Loading data#
 
 As positive controls are not attached to the phyloseq object yet, the file need not be loaded separately. This need to be revised afterward.
 

@@ -106,7 +106,7 @@ FUN.LineZero.Report()
         Q3. How were the extraction controls
         Q4. Prevalence / abundance filtering - red flag
 
-3. Exploratory analysis
+3. Exploratory analysis *
 
 ***data input required:***
 
@@ -144,61 +144,59 @@ FUN.LineZero.Report()
 
 ***Analysis***
 
+0. calculation of alpha-diversity indices
 
-	1. qPCR, by smaple type and treatment
-                A. Total DNA
-                B. Host DNA
-                C. Bacterial DNA
-                D. Host %
+1. qPCR, by smaple type and treatment
+        A. Total DNA
+        B. Host DNA
+        C. Bacterial DNA
+        D. Host %
 
-	2. Sequencing results (treatment, raw reads, host reads, % host, final reads)
+2. Sequencing results (treatment, raw reads, host reads, % host, final reads)
 	--> both stratified and nonstratified
 	 library prep % vs sample_type + treatment + sample_type * treatment + subject_id (binary)
 	log10(Final reads) vs sample_type + treatment + sample_type * treatment + subject_id (linear or binary, see regular and cumulative distribution)
 	Host DNA % vs sample_type + treatment + sample_type * treatment + subject_id (linear or binary, see regular and cumulative distribution)
 	--> both stratified and nonstratified
 	
-	3. LM of taxa alpha diversity (richness)
+3. LM of taxa alpha diversity (richness)
 	--> both stratified and nonstratified
 	
-	4. Permanova (Taxa dist ~ log10(final reads) + sample_type + treatment + sample_type * treatment + subject_id)
+4. Permanova (Taxa dist ~ log10(final reads) + sample_type + treatment + sample_type * treatment + subject_id)
 	--> both stratified and nonstratified
 	
-	5. DA analysis for taxa, by sample type and treatment 
+5. DA analysis for taxa, by sample type and treatment 
 	--> both stratified and nonstratified
 	--> look at level groups as well - phylum, etc.
 	
-	6. Decontam - stratified by treatment
+6. Decontam - stratified by treatment
 	--> both stratified and nonstratified
 	
-	7. LM of taxa alpha diversity (Shannon)
+7. LM of taxa alpha diversity (Shannon)
 	--> both stratified and nonstratified
 	
-	8. LM of taxa alpha diversity (InvSimpson)
+8. LM of taxa alpha diversity (InvSimpson)
 	--> both stratified and nonstratified
 	
-	9. LM of taxa alpha diversity (BPI) 
+9. LM of taxa alpha diversity (BPI) 
 	--> both stratified and nonstratified
 	
-	10. LM of function alpha diversity (richness)
+10. LM of function alpha diversity (richness)
 	--> both stratified and nonstratified
 	
-	11. LM of function alpha diversity (Shannon)
+11. LM of function alpha diversity (Shannon)
+	--> both stratified and nonstratified
+
+12. LM of function alpha diversity (InvSimpson)
 	--> both stratified and nonstratified
 	
-	12. LM of function alpha diversity (InvSimpson)
+13. LM of function alpha diversity (BPI) 
 	--> both stratified and nonstratified
 	
-	13. LM of function alpha diversity (BPI) 
+14.  permanova of function alpha diversity
 	--> both stratified and nonstratified
-	
-	14.  permanova of function alpha diversity
-	--> both stratified and nonstratified
-        
-        5. DA analysis for function, by sample type and treatment 
-	--> both stratified and nonstratified
-	--> multiple levels?
-	
+
+
 
 #Loading data#
 
@@ -208,13 +206,12 @@ FUN.LineZero.Report()
 #loading tidy phyloseq object
 phyloseq <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
 
-qPCR_results <- read_csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
-        
+sample_data <- read_csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
+
 #sample data loading
 sample_data <- sample_data(phyloseq)
 
 #Relative abundacne transfromation
-phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
         
 ```
 

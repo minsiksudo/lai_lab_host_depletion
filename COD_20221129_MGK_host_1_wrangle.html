@@ -3179,11 +3179,9 @@ sample_result &lt;- sample_result %&gt;% mutate(
 <li>Saving RDS</li>
 </ol>
 <p><strong><em>1. Loading phyloseq object</em></strong></p>
-<pre class="r"><code>#Loading phyloseq object
-setwd(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_HOST_Depletion&quot;)
-phyloseq &lt;- microbiome::read_biom2phyloseq(&quot;metaphlan3/metaphlan3.allkingdoms.EstCount.biom&quot;)
+<pre class="r"><code>phyloseq &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom&quot;)
 
-readstat &lt;- read.csv(&quot;ReadStats.txt&quot;, sep = &quot;\t&quot;) %&gt;%
+readstat &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt&quot;, sep = &quot;\t&quot;) %&gt;%
         rename(baylor_other_id = SampleID)
 
 #Generating baylor ID
@@ -3203,7 +3201,12 @@ sample_data &lt;- merge(readstat, sample_result, by = &quot;baylor_other_id&quot
         sample_data()</code></pre>
 <p><strong><em>2. Adding more data to the phyloseq -
 sampledata</em></strong></p>
-<pre class="r"><code>sample_data$sequencing_host_prop &lt;- sample_data$Host_mapped/sample_data$Raw_reads
+<pre class="r"><code>#Adding host DNA proportion of sequencing results
+sample_data &lt;- sample_data %&gt;% data.frame %&gt;% 
+        mutate(sequencing_host_prop = Host_mapped/Raw_reads, .after = Metaphlan_mapped) %&gt;%
+        sample_data
+
+#Adding Treatment status
 sample_data$treated &lt;- rowSums(sample_data[, c(&quot;lypma&quot;, &quot;benzonase&quot;, &quot;molysis&quot;, &quot;host_zero&quot;, &quot;qiaamp&quot;)])
 
 # Adding library prep results --------------------------------------------
@@ -3214,16 +3217,36 @@ sample_data$lib_failed &lt;- row.names(sample_data) %in% lib_fail_list
 phyloseq &lt;- merge_phyloseq(phyloseq, sample_data)</code></pre>
 <p><strong><em>3. Factorize predictors</em></strong></p>
 <pre class="r"><code># Factorize predicters ----------------------------------------------------
+# + creating lables for figures
 sample_data(phyloseq) &lt;- sample_data(phyloseq) %&gt;% data.frame(check.names = F) %&gt;% 
         mutate(treatment = tolower(treatment), 
-               treatment = factor(treatment, levels = c(&quot;control&quot;, &quot;lypma&quot;, &quot;benzonase&quot;, &quot;host_zero&quot;, &quot;molysis&quot;, &quot;qiaamp&quot;)),
-               sample_type = factor(sample_type, levels = c(&quot;BAL&quot;, &quot;nasal_swab&quot;, &quot;Sputum&quot;, &quot;neg_extraction&quot;, &quot;pos_extraction&quot;, &quot;neg_depletion&quot;, &quot;pos_depletion&quot;))) %&gt;%
-        sample_data()</code></pre>
+               treatment = factor(treatment,
+                                  levels = c(&quot;control&quot;, &quot;lypma&quot;, &quot;benzonase&quot;, &quot;host_zero&quot;, &quot;molysis&quot;, &quot;qiaamp&quot;),
+                                  labels = c(&quot;Control&quot;, &quot;lyPMA&quot;, &quot;Benzoanse&quot;, &quot;Host zero&quot;, &quot;Molysis&quot;, &quot;QIAamp&quot;)),
+               sample_type = factor(sample_type,
+                                    levels = c(&quot;BAL&quot;, &quot;nasal_swab&quot;, &quot;Sputum&quot;, &quot;neg_extraction&quot;, &quot;pos_extraction&quot;, &quot;neg_depletion&quot;, &quot;pos_depletion&quot;), 
+                                    labels = c(&quot;BAL&quot;, &quot;Nasal swab&quot;, &quot;Sputum&quot;, &quot;Neg. ext.&quot;, &quot;Pos. ext.&quot;, &quot;Neg. dep.&quot;, &quot;Pos. dep.&quot;))) %&gt;%
+        sample_data()
+
+
+write.csv(sample_result, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv&quot;)</code></pre>
+<p>Adding functional data</p>
+<pre class="r"><code>#Loading phyloseq object
+setwd(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/humann3&quot;)
+path_rpk &lt;- read.csv(&quot;PathAbundance.relab.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F, row.names = &quot;# Pathway&quot;) %&gt;% select(-c(&quot;taxonomy&quot;))
+path_tax &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/humann3/PathAbundance.relab.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F) %&gt;%
+        select(c(&quot;taxonomy&quot;, &quot;# Pathway&quot;)) %&gt;% rename(pathway = &quot;# Pathway&quot;, group = &quot;taxonomy&quot;)
+row.names(path_tax) &lt;- path_tax$pathway
+
+phy &lt;- list()
+phy$phyloseq_count &lt;- phyloseq
+phy$phyloseq_rel &lt;- transform_sample_counts(phyloseq, function(x){x / sum(x)})
+phy$phyloseq_path_rpkm &lt;- merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %&gt;% as.matrix()))</code></pre>
 <p><strong><em>4. Saving RDS</em></strong></p>
 <pre class="r"><code># Saving object -----------------------------------------------------------
 
 write.csv(sample_result, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv&quot;)
-write_rds(phyloseq, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds&quot;)</code></pre>
+write_rds(phy, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds&quot;)</code></pre>
 </div>
 </div>
 

@@ -207,7 +207,7 @@ sample_result <- sample_result %>% mutate(
                 TRUE ~ sample_type)
 )
 
-                                
+
 ```
 
 #Merging all the output#                
@@ -219,14 +219,24 @@ sample_result <- sample_result %>% mutate(
 
 ***1. Loading phyloseq object***
 
-```{r warning=FALSE, `Loading phyloseq object`}
-                                
-#Loading phyloseq object
-setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_HOST_Depletion")
-phyloseq <- microbiome::read_biom2phyloseq("metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
 
-readstat <- read.csv("ReadStats.txt", sep = "\t") %>%
+```{r warning=FALSE, `Loading phyloseq object`}
+
+phyloseq <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
+
+#Contorl data
+phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/")
+#Merging
+phyloseq <- merge_phyloseq(phyloseq, phyloseq2)
+
+readstat <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt", sep = "\t") %>%
         rename(baylor_other_id = SampleID)
+#control data
+readstat2 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed", sep = "\t") %>%
+        rename(baylor_other_id = SampleID)
+#Merging
+readstat <- rbind(readstat1, readstat2)
+
 
 #Generating baylor ID
 sample_result <- sample_result %>%
@@ -281,7 +291,39 @@ sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %
         sample_data()
 
 
+write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
+
+
+
 ```
+
+Adding functional data
+
+```{r warning=FALSE, `Loading functional - RPKM`}
+                     
+#Loading phyloseq object
+setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/humann3")
+path_rpk <- read.csv("PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
+path_tax <- read.csv("PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F) %>%
+        select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
+row.names(path_tax) <- path_tax$pathway
+
+setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230401")
+path_rpk2 <- read.csv("humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
+path_tax2 <- read.csv("humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F) %>%
+        select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
+
+phy <- list()
+phy$phyloseq_count <- phyloseq
+phy$phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
+phy$phyloseq_path_rpkm <- merge_phyloseq(
+        merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %>% as.matrix())),
+        merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
+)
+
+```
+
+
 
 ***4. Saving RDS***
 
@@ -289,6 +331,6 @@ sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %
 # Saving object -----------------------------------------------------------
 
 write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
-write_rds(phyloseq, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
+write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
 
 ```

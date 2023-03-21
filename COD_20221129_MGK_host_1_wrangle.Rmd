@@ -225,17 +225,17 @@ sample_result <- sample_result %>% mutate(
 phyloseq <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
 
 #Contorl data
-phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/")
+##phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/")
 #Merging
-phyloseq <- merge_phyloseq(phyloseq, phyloseq2)
+##phyloseq <- merge_phyloseq(phyloseq, phyloseq2)
 
 readstat <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt", sep = "\t") %>%
         rename(baylor_other_id = SampleID)
 #control data
-readstat2 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed", sep = "\t") %>%
-        rename(baylor_other_id = SampleID)
+#readstat2 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed", sep = "\t") %>%
+#        rename(baylor_other_id = SampleID)
 #Merging
-readstat <- rbind(readstat1, readstat2)
+##readstat <- rbind(readstat1, readstat2)
 
 
 #Generating baylor ID
@@ -265,6 +265,7 @@ sample_data <- sample_data %>% data.frame %>%
 
 #Adding Treatment status
 sample_data$treated <- rowSums(sample_data[, c("lypma", "benzonase", "molysis", "host_zero", "qiaamp")])
+sample_data$treated <- ifelse(is.na(sample_data$treated), 0, sample_data$treated)
 
 # Adding library prep results --------------------------------------------
 lib_fail_list <- c("NS_6_b_lyPMA", "NS_8_b_lyPMA", "NS_17_b_lyPMA", "NS_21_b_host_zero", "NS_22_b_host_zero", "NS_19_d_molysis", "NS_21_d_molysis", "NS_22_d_molysis", "NS_23_d_molysis", "NS_26_b_lyPMA", "BAL_073_b_host_zero", "BAL_073_c_molysis", "BAL_078_d_lyPMA")
@@ -302,24 +303,24 @@ Adding functional data
 ```{r warning=FALSE, `Loading functional - RPKM`}
                      
 #Loading phyloseq object
-setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/humann3")
-path_rpk <- read.csv("PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
-path_tax <- read.csv("PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F) %>%
+setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed")
+path_rpk <- read.csv("20221102_PQ00331_Host_Depletion/humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
+path_tax <- read.csv("20221102_PQ00331_Host_Depletion/humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F) %>%
         select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
 row.names(path_tax) <- path_tax$pathway
 
-setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230401")
-path_rpk2 <- read.csv("humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
-path_tax2 <- read.csv("humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F) %>%
-        select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
+
+#path_rpk2 <- read.csv("20230401/humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
+#path_tax2 <- read.csv("20230401/humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F) %>%
+#        select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
 
 phy <- list()
 phy$phyloseq_count <- phyloseq
 phy$phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
-phy$phyloseq_path_rpkm <- merge_phyloseq(
-        merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %>% as.matrix())),
-        merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
-)
+phy$phyloseq_path_rpkm <- #merge_phyloseq(
+        merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %>% as.matrix()))#,
+        #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
+#)
 
 ```
 

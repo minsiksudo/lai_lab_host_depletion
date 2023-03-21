@@ -35,7 +35,7 @@ str_libraries <- c(
 
 path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2")
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "kableExtra")
         
 YAML_header <-
 '---
@@ -205,13 +205,20 @@ FUN.LineZero.Report()
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
 phyloseq <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
-
-sample_data <- read_csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
+                
+        ####Need to be removed after adding sequenicing data
+                data_qPCR <- read_csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
+                #qPCR data of all the samples sent out sequencing
+                data_qPCR <- subset(data_qPCR, data_qPCR$baylor_other_id %in% c(sample_names(phyloseq$phyloseq_count)) | data_qPCR$baylor_other_id %in% c(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/3_Documentation/Communications/2023-01-24_baylor_shipping_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx", skip = 27) %>% data.frame %>% .$`Optional..............secondary.ID`))
+                
+                data_qPCR <- subset(data_qPCR, data_qPCR$sample_type %in% c("BAL", "nasal_swab", "Sputum", "neg_depletion", "pos_depletion"))
+                data_qPCR$sample_type <- factor(data_qPCR$sample_type, levels = c("BAL", "nasal_swab", "Sputum", "pos_depletion", "neg_depletion"),
+                                                labels = c("BAL", "Nasal swab", "Sputum", "P depletion", "N depletion"))
+                data_qPCR$treatment <- factor(data_qPCR$treatment, levels = c("control", "lyPMA", "benzonase", "host_zero", "molysis", "qiaamp"),
+                                                labels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"))
 
 #sample data loading
-sample_data <- sample_data(phyloseq)
-
-#Relative abundacne transfromation
+sample_data <- sample_data(phyloseq$phyloseq_count)
         
 ```
 
@@ -225,12 +232,12 @@ sample_data <- sample_data(phyloseq)
 # Q1. How many samples failed in sequencing?#
 
 
-```{r}
+```{r warning=F, QC1}
 # Initail QC --------------------------------------------------------------
         #Quesetions - QC
         
 #Q0. How many samples failed in sequencing
- 
+
 ## figures -----raw data
 
 sample_data %>% 
@@ -242,12 +249,32 @@ sample_data %>%
         group_by(feature, sample_type) %>% 
         subset(., .$feature %in% c("Raw_reads", "Host_mapped", "Final_reads", "host_seq_percent")) %>%
         mutate(feature = factor(feature, levels = c("Raw_reads", "Host_mapped", "Final_reads", "host_seq_percent"), labels = c("Raw reads", "Host mapped", "Final reads", "Host %"))) %>%
-        ggplot(aes(x = log10(value), fill = treatment)) +
+        ggplot(aes(x = value, fill = treatment)) +
                 geom_histogram() +
                 theme(legend.position = "top") +
                 guides(fill=guide_legend(title="Treatment", nrow = 1)) +
                 facet_grid(sample_type~feature, scales = "free") +
                 ggtitle("log10 transfromed histrogram")
+             
+ 
+## figures -----log10
+
+sample_data %>% 
+        subset(., !is.na(.$subject_id)) %>%
+        data.frame() %>%
+        mutate(host_seq_percent = sqrt(sequencing_host_prop), 
+               .after = sequencing_host_prop,) %>% 
+        gather(feature, value, Raw_reads:host_seq_percent) %>%
+        group_by(feature, sample_type) %>% 
+        subset(., .$feature %in% c("Raw_reads", "Host_mapped", "Final_reads", "host_seq_percent")) %>%
+        mutate(feature = factor(feature, levels = c("Raw_reads", "Host_mapped", "Final_reads", "host_seq_percent"), labels = c("Raw reads", "Host mapped", "Final reads", "Host %"))) %>%
+        ggplot(aes(x = log10(value), fill = treatment)) +
+                geom_histogram() +
+                theme(legend.position = "top") +
+                guides(fill=guide_legend(title="Treatment", nrow = 1)) +
+                facet_grid(sample_type~feature, scales = "free") +
+                ggtitle("log10 for reads, sqrt for host % transfromed histrogram")
+             
              
 
 # no somaple showed 0 reads
@@ -267,10 +294,10 @@ ggarrange(ggplot(sample_data %>% subset(., !is.na(.$subject_id)) %>% data.frame(
           common.legend = T, ncol = 1)
 
 
-hist((log10((phyloseq %>% otu_table %>% colSums()) + 1)),100, main = "Histogram of total reads (sum of OTU table)") # 2 samples showed 0 total reads (sum of otu_table)
+hist((log10((phyloseq$phyloseq_count %>% otu_table %>% colSums()) + 1)),100, main = "Histogram of total reads (sum of OTU table)") # 2 samples showed 0 total reads (sum of otu_table)
 
 #how were the samples failed in library prep?
-sample_data %>% data.frame %>% mutate(total_read = phyloseq %>% otu_table %>% colSums()) %>% rownames_to_column(var = "baylor_other_id") %>%
+sample_data %>% data.frame %>% mutate(total_read = phyloseq$phyloseq_count %>% otu_table %>% colSums()) %>% rownames_to_column(var = "baylor_other_id") %>%
         ggplot(aes(x = reorder(baylor_other_id, -total_read),
                                y = log10(total_read + 1),
                                col = lib_failed)) +
@@ -283,13 +310,13 @@ sample_data %>% data.frame %>% mutate(total_read = phyloseq %>% otu_table %>% co
         ggtitle("Sum of OTU reads by library failure status")
 
 
-sample_data %>% data.frame %>% filter(phyloseq %>% otu_table %>% colSums() == 0) # two BAL sampels showed 0 total reads
-sample_data(phyloseq) %>% data.frame() %>% subset(., .$lib_failed)
+sample_data %>% data.frame %>% filter(phyloseq$phyloseq_count %>% otu_table %>% colSums() == 0) # two BAL sampels showed 0 total reads
+sample_data(phyloseq$phyloseq_count) %>% data.frame() %>% subset(., .$lib_failed)
 
 ```
 *Results:*
 
-*2.1.1 Modeling final read should be conducted with both linear and logistic regression*
+*2.1.1 Modeling final read should be conducted with both linear and logistic regression. Host % need no transformation, and should be tested for both linear and binomial methods*
 
 *2.1.2 13 samples failed in library prep*
 
@@ -303,7 +330,38 @@ Q: What was the lab's criteria for deciding which samples failed library prep.? 
 
 A: To determine whether a library attempt “passed or failed” the lab looks at the picogreen concentrations and a library fragment size distribution trace. The trace files are an output from either the Fragment Analyzer or TapeStation  (a copy of the trace files for PQ00331 is attached). If a sample has a background level pico concentration and no discernable fragment concentration on the trace  (i.e. a flat trace line) it is considered failed library. If the sample is below the level of detection of our standard library QC methods, it is considered failure. It’s still possible that there is some small amounts of library in those samples that were successfully sequenced, but often those samples do not generate a meaningful amount of sequence data.
 
-```{r}
+
+```{r, warning=F, error=FALSE, results='asis', QC2 Table}
+
+#sequencing result by sample type and control (1/0)
+options(dplyr.summarise.inform = FALSE)
+
+sample_data %>% data.frame() %>% 
+        group_by(sample_type, treated) %>% 
+        summarise(N = n(),
+                  `Raw reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Raw_reads/10000000),2),nsmall = 2, big.mark = ","), " [", format(round(quantile(Raw_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Raw_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+                  `Host reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Host_mapped/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Host_mapped/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Host_mapped/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+                  `Host reads proportion<br>(median [IQR])<br>[%]` = paste(format(round(median(sequencing_host_prop * 100),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(sequencing_host_prop * 100, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop * 100, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+                  `Final reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+        ) %>%
+        rename(`Sample type` = sample_type, Treated = treated) %>%
+        data.frame(check.names = F) %>% mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "serif")
+
+sample_data %>% data.frame() %>% 
+        #dplyr::filter(sample_type %in% c("Sputum", "nasal_swab", "BAL")) %>% 
+        group_by (sample_type, treatment) %>%
+        summarise(N = n(),
+              `Raw reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Raw_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Raw_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Raw_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+              `Host reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Host_mapped/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Host_mapped/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Host_mapped/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+              `Host reads proportion<br>(median [IQR])<br>[%]` = paste(format(round(median(sequencing_host_prop * 100),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(sequencing_host_prop * 100, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop * 100, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+              `Final reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+        ) %>% data.frame(check.names = F) %>% 
+        arrange(sample_type, treatment) %>%
+        rename(`Sample type` = sample_type, Treatment = treatment) %>%
+        mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "serif")
+```
+
+```{r, warning=F, QC2 Figure}
 
 # Summary figures - facet and z-score -------------------------------------
 
@@ -340,19 +398,19 @@ comment: Should I normalize z-score to mean value of control?
 # Q3. How was the extraction controls, both pos and neg?#
 
 
-```{r}
+```{r, warning=FALSE, QC3}
 
 #Loading theoretical mock community
 
 zymo_mock <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_sicas2/data_raw/DAR_20210929_zymo_mock_data.xlsx") %>%
-        data.frame(row.names = T) %>% rename(mock_theoretical = Mock) %>%
-        phyloseq(otu_table(., taxa_are_rows = T), tax_table(phyloseq))
+        data.frame(row.names = T) %>% rename(mock_theoretical = Mock) %>% mutate(mock_theoretical = mock_theoretical/100) %>%
+        merge_phyloseq(otu_table(., taxa_are_rows = T), tax_table(phyloseq$phyloseq_count))
 
 phyloseq_control_rel <- rbind(c("mock_theoretical", "mock")) %>% data.frame() %>%
         column_to_rownames(var = "X1") %>% rename(sample_type = X2) %>% #making sample_data of mock community
         merge_phyloseq(sample_data(.), zymo_mock) %>%        
-        merge_phyloseq(., subset_samples(phyloseq, sample_type == "Pos. ext." | sample_type == "Neg. ext." )) %>% #adding data of controls
-        transform_sample_counts(., function(x){x / sum(x)})
+        merge_phyloseq(., subset_samples(phyloseq$phyloseq_rel, sample_type == "Pos. ext." | sample_type == "Neg. ext." )) #adding data of controls
+
 
 #Species richness of each control groups
 cat("Species richness\n")
@@ -403,13 +461,13 @@ tax_table(phyloseq_control_rel) %>%
 
 # Q4. Prevalence filtering - red flag #
 
-```{r}
+```{r, warning=F, QC4}
 #Calculation of sample prevalence, standard deviation, median abundance across all samples for all bugs and making into a table.
 #
 #•	In initial analysis we will not perform prevalence or abundance filtering (though we may consider this for secondary differential abundance analyses to manage p (features) > n (sample size) problem and issues with multiple hypothesis correction)
-taxa_qc <- data.frame("species" =  otu_table(phyloseq_rel) %>% t() %>% colnames(),
-        "prevalence" = ifelse(phyloseq %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-        "mean_rel_abd" = phyloseq_rel %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
+taxa_qc <- data.frame("species" =  otu_table(phyloseq$phyloseq_rel) %>% t() %>% colnames(),
+        "prevalence" = ifelse(phyloseq$phyloseq_count %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+        "mean_rel_abd" = phyloseq$phyloseq_rel %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
 )
 
 
@@ -426,9 +484,9 @@ Although we don't consider the prevalence of abundance at this time, we can cons
 
 * 2. red flag
 
-```{r warning=FALSE}
+```{r warning=FALSE, "Red flag"}
 red_flag_taxa <- data.frame(species = taxa_qc$species,
-                          red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0)
+                          red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0)
 )
 ```
 
@@ -679,30 +737,126 @@ which(contamdf.freq$contaminant)#list of contam
 ***Analysis***
 
 
-	1. qPCR, by smaple type and treatment
-                A. Total DNA
-                B. Host DNA
-                C. Bacterial DNA
-                D. Host %
+
+0. calculation of alpha-diversity indices
+
+```{r warning=FALSE, Analysis 0}
+
+alpha_diversity <- function(data) {
+        otu_table <- otu_table(data) %>% .[colSums(.) !=0]
+        S.obs <- rowSums(t(otu_table) != 0)
+        sample_data <- sample_data(data)
+        data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
+        data_shannon <- vegan::diversity(t(otu_table), index = "shannon") # calculate Shannon index using vegan package
+        data_hill <- exp(data_shannon)                           # calculate Hills index
+        
+        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, aggregate = TRUE) # dominance (Berger-Parker index), etc.
+        data_invsimpson <- vegan::diversity(t(otu_table), index = "invsimpson")                          # calculate Shannon index using vegan package
+        alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
+        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
+}
+
+sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
+sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
+sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpkm))
+
 
 ```
+
+
+1. qPCR, by smaple type and treatment
+        A. Total DNA
+        B. Host DNA
+        C. Bacterial DNA
+        D. Host %
+
+```{r}
    
+#2A: Change in total DNA (qPCR)
+
+
+f2a <- ggplot(data_qPCR, aes(x = sample_type, y = log10(DNA_host_nondil + DNA_bac_nondil))) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("log<sub>10</sub>(qPCR total DNA)<br>(ng/μL)") +
+        xlab("Sample type") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "A") +
+        scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+        theme(plot.tag = element_text(size = 15), axis.title.y = element_markdown()) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1, title = "Treatment"))
+
+
+#2B: Change in human DNA (qPCR)
+f2b <- ggplot(data_qPCR, aes(x = sample_type, y = log10(DNA_host_nondil))) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33")) +
+        ylab("log<sub>10</sub>(qPCR host DNA)<br>(ng/μL)") +
+        xlab("Sample type") +
+        theme_classic (base_size = 12, base_family = "serif")+ 
+        labs(tag = "B") +
+        scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+        theme(plot.tag = element_text(size = 15), axis.title.y = element_markdown()) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1, title = "Treatment"))
+#2C: Change in 16S DNA (qPCR)
+f2c <- ggplot(data_qPCR, aes(x = sample_type, y = log10(DNA_bac_nondil))) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33")) +
+        ylab("log<sub>10</sub>(qPCR bacterial DNA)<br>(ng/μL)") +
+        xlab("Sample type") +
+        theme_classic (base_size = 12, base_family = "serif")+ 
+        labs(tag = "C") +
+        scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+        theme(plot.tag = element_text(size = 15), axis.title.y = element_markdown()) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1, title = "Treatment"))
+
+#2D. Change in % host (qPCR)
+f2d <- ggplot(data_qPCR, aes(x = sample_type, y = log10(host_proportion * 100))) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33")) +
+        ylab("log<sub>10</sub>(host DNA) (%)") +
+        xlab("Sample type") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "D") +
+        scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+        theme(plot.tag = element_text(size = 15), axis.title.y = element_markdown()) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1, title = "Treatment"))
+
+#output for markdown
+ggarrange(f2a, f2b, f2c, f2d, common.legend = T , align = "hv")
 
 ```
 
-	2. Sequencing results (treatment, raw reads, host reads, % host, final reads)
+2. Sequencing results (treatment, raw reads, host reads, % host, final reads)
 	--> both stratified and nonstratified
 	 library prep % vs sample_type + treatment + sample_type * treatment + subject_id (binary)
 	log10(Final reads) vs sample_type + treatment + sample_type * treatment + subject_id (linear or binary, see regular and cumulative distribution)
 	Host DNA % vs sample_type + treatment + sample_type * treatment + subject_id (linear or binary, see regular and cumulative distribution)
 	--> both stratified and nonstratified
 
-```
-   
+```{r warning=F, '2 Figure'}
+
+cat("Binomial - library failed? \n\n")
+glmer(lib_failed ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
+        summary %>% .$coefficients
+cat(" \n\nBinomial - Final reads? \n\n")
+glmer(log10(Final_reads) ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
+        summary %>% .$coefficients
+cat(" \n\n Linear - Final reads? \n\n")
+lmer(log10(Final_reads) ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
+        summary %>% .$coefficients
+
+glmer(sequencing_host_prop ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
+        summary %>% .$coefficients
+
+lmer(sequencing_host_prop ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
+        summary #%>% .$coefficients
+
+
 
 ```
 	
-	3. LM of taxa alpha diversity (richness)
+3. LM of taxa alpha diversity (richness)
 	--> both stratified and nonstratified
 
 ```
@@ -710,7 +864,7 @@ which(contamdf.freq$contaminant)#list of contam
 
 ```
 	
-	4. Permanova (Taxa dist ~ log10(final reads) + sample_type + treatment + sample_type * treatment + subject_id)
+4. Permanova (Taxa dist ~ log10(final reads) + sample_type + treatment + sample_type * treatment + subject_id)
 	--> both stratified and nonstratified
 
 ```
@@ -719,7 +873,7 @@ which(contamdf.freq$contaminant)#list of contam
 ```
 
 	
-	5. DA analysis for taxa, by sample type and treatment 
+5. DA analysis for taxa, by sample type and treatment 
 	--> both stratified and nonstratified
 	--> look at level groups as well - phylum, etc.
 	
@@ -730,7 +884,7 @@ which(contamdf.freq$contaminant)#list of contam
 ```
 	
 
-	6. Decontam - stratified by treatment
+6. Decontam - stratified by treatment
 	--> both stratified and nonstratified
 
 ```
@@ -738,62 +892,63 @@ which(contamdf.freq$contaminant)#list of contam
 
 ```
            
-	7. LM of taxa alpha diversity (Shannon)
+7. LM of taxa alpha diversity (Shannon)
 	--> both stratified and nonstratified
 ```
    
 
 ```
 	
-	8. LM of taxa alpha diversity (InvSimpson)
+8. LM of taxa alpha diversity (InvSimpson)
 	--> both stratified and nonstratified
 ```
    
 
 ```
 	
-	9. LM of taxa alpha diversity (BPI) 
+9. LM of taxa alpha diversity (BPI) 
 	--> both stratified and nonstratified
 ```
    
 
 ```
 	
-	10. LM of function alpha diversity (richness)
+10. LM of function alpha diversity (richness)
+	--> both stratified and nonstratified
+```
+   
+
+```
+11. LM of function alpha diversity (Shannon)
+	--> both stratified and nonstratified
+	
+```
+   
+
+```
+	
+12. LM of function alpha diversity (InvSimpson)
 	--> both stratified and nonstratified
 ```
    
 
 ```
 	
-	11. LM of function alpha diversity (Shannon)
+13. LM of function alpha diversity (BPI) 
 	--> both stratified and nonstratified
+
 ```
    
 
 ```
 	
-	12. LM of function alpha diversity (InvSimpson)
+14.  permanova of function alpha diversity
 	--> both stratified and nonstratified
 ```
    
 
 ```
-	
-	13. LM of function alpha diversity (BPI) 
-	--> both stratified and nonstratified
-```
-   
-
-```
-	
-	14.  permanova of function alpha diversity
-	--> both stratified and nonstratified
-```
-   
-
-```
-        15. DA analysis for function, by sample type and treatment 
+15. DA analysis for function, by sample type and treatment 
 	--> both stratified and nonstratified
 	--> multiple levels?
 ```

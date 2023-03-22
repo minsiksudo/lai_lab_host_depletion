@@ -285,7 +285,7 @@ sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %
         mutate(treatment = tolower(treatment), 
                treatment = factor(treatment,
                                   levels = c("control", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
-                                  labels = c("Control", "lyPMA", "Benzoanse", "Host zero", "Molysis", "QIAamp")),
+                                  labels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                sample_type = factor(sample_type,
                                     levels = c("BAL", "nasal_swab", "Sputum", "neg_extraction", "pos_extraction", "neg_depletion", "pos_depletion"), 
                                     labels = c("BAL", "Nasal swab", "Sputum", "Neg. ext.", "Pos. ext.", "Neg. dep.", "Pos. dep."))) %>%
@@ -334,4 +334,35 @@ phy$phyloseq_path_rpkm <- #merge_phyloseq(
 write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
 write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
 
+```
+
+
+
+```{r warning=FALSE }
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+    str_libraries |>
+        pacman::p_citation() |>
+        print(bibtex = FALSE) |>
+        capture.output() %>%
+        .[-1:-3] %>% .[. != ""] |>
+        stringr::str_squish() |>
+        stringr::str_replace("_", "") |>
+        cat()
+    cat("\n")
+}
+#===============================================================================
 ```

@@ -876,7 +876,8 @@ bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 	--> look at level groups as well - phylum, etc.
 	
 	
-```{r warning=FALSE, message=FALSE}
+```{r, echo=FALSE,message=FALSE, results='hide',fig.keep='all', "MaAslin taxa"}
+
 #DA analysis - MaAslin
 
 sample_data(phyloseq_rel_nz)$log10.Final_reads <- log10(sample_data(phyloseq_rel_nz)$Final_reads)

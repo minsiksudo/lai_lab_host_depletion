@@ -1121,6 +1121,7 @@ sample_data <- sample_data(phyloseq$phyloseq_path_rpkm) %>% data.frame(check.nam
 
 cat("Species richness of all samples\n\n")
 cat("S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer_sob <- lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
 lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data) %>% 
         summary() %>%
         .$coefficients %>%
@@ -1129,6 +1130,17 @@ lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), dat
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+
+cat("ANOVA for \n S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer_sob %>% 
+        anova() %>% 
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("\n 0.06 p-value for the interaction term. May include the interaction term. \n")
 
 #Species richness  - stratified 
 cat("Species richness at NS\n\n")
@@ -1166,9 +1178,56 @@ lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subse
 
         
 #Shannon
-cat("Shannon index\n\n")
+
+cat("Shannon of all samples\n\n")
+cat("Shannon ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer_shannon <- lmer(data_shannon ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
+lmer_shannon %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("ANOVA for \n Shannon ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer_shannon %>% 
+        anova() %>% 
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("\n 0.059 p-value for the interaction term. May include the interaction term. \n")
+
+#Shannon  - stratified 
+cat("Shannon at NS\n\n")
 cat("Shannon ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
-lmer(data_shannon ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample), data = sample_data) %>%
+lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("Shannon at BAL\n\n")
+cat("Shannon ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("Shannon at sputum\n\n")
+cat("Shannon ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -1179,9 +1238,103 @@ lmer(data_shannon ~ sample_type * treatment + log10 (Final_reads) + (1|original_
 
 
 #Simpson
-cat("Inverse Simpson index\n\n")
-cat("InvSimp ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
-lmer(data_invsimpson ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample), data = sample_data) %>%
+
+cat("Inverse Simpson of all samples\n\n")
+cat("Inverse Simpson ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer_invsimpson <- lmer(data_invsimpson ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
+lmer_invsimpson %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("ANOVA for \n Inverse Simpson ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer_invsimpson %>% 
+        anova() %>% 
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("\n 0.098 p-value for the interaction term. May include the interaction term. \n")
+
+#Inverse Simpson - stratified 
+cat("Inverse Simpson at NS\n\n")
+cat("Inverse Simpson ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("Inverse Simpson at BAL\n\n")
+cat("Inverse Simpson ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("Inverse Simpson at sputum\n\n")
+cat("Inverse Simpson ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+#BPI
+cat("BPI of all samples\n\n")
+cat("BPI ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer_dbp <- lmer(dbp ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
+lmer_dbp %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("ANOVA for \n BPI ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer_dbp %>% 
+        anova() %>% 
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("\n 0.07 p-value for the interaction term. May include the interaction term. \n")
+
+#Inverse Simpson - stratified 
+cat("BPI at NS\n\n")
+cat("BPI ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer(dbp ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+cat("BPI at BAL\n\n")
+cat("BPI ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -1191,10 +1344,9 @@ lmer(data_invsimpson ~ sample_type * treatment + log10 (Final_reads) + (1|origin
         kable_styling(full_width = 0, html_font = "serif")
 
 
-#BPI
-cat("Beger Parker index\n\n")
+cat("BPI at sputum\n\n")
 cat("BPI ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
-lmer(dbp ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample), data = sample_data) %>%
+lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -1236,7 +1388,7 @@ bray_perm_bal  <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample
 bray_perm_spt <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"), method="bray") ~ lypma + benzonase + host_zero + molysis + qiaamp + log10(Final_reads) + subject_id,
                                 data = subset_samples(phyloseq_rel_nz, sample_type == "Sputum") %>% sample_data %>% data.frame(check.names = F), permutations = 10000) 
 
-cat("\nUnivariate analysis\n")
+cat("\nCategorized analysis\n")
 
 bray_perm_uni %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
@@ -1250,7 +1402,7 @@ bray_perm_uni %>% data.frame(check.names = F) %>% rownames_to_column("row.names"
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 
-cat("\nDetailed treatment\n")
+cat("\nTreatment separated varaible\n")
 bray_perm %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "lypma" ~ 'lyPMA',
@@ -1282,6 +1434,7 @@ bray_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.nam
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+cat("\n Strata results: showing higher p values. None of the treatment methods significantly affected the beta-diversity index\n")
 
 cat("\n Interaction term \n")
 

@@ -1115,7 +1115,7 @@ taxa_names(phyloseq_rel_nz_family) <- tax_table(phyloseq_rel_nz_family) %>% data
 
 #all samples
 capture.output(maaslin_all = Maaslin2(input_data = otu_table(phyloseq_rel_nz_genus) %>% t %>% data.frame(), 
-                input_metadata = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F), 
+                input_metadata = phyloseq_rel_nz_genus %>% sample_data %>% data.frame(check.names = F), 
                 output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                 fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                 transform = "LOG", #default
@@ -1139,7 +1139,7 @@ maaslin_all %>% subset(., .$qval < 0.1 & .$coef > 0) %>% .$metadata %>% table()
 # # y ~ log(final reads) + sample_type + treatment 
 
 capture.output(fit_data_ns = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_genus, sample_type == "Nasal swab")) %>% t %>% data.frame(),
-                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab")) %>% data.frame(), 
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz_genus, sample_type == "Nasal swab")) %>% data.frame(), 
                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                        transform = "LOG", #default
@@ -1158,7 +1158,7 @@ fit_data_ns %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
 # # y ~ log(final reads) + sample_type + treatment 
 
 capture.output(fit_data_bal = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_genus, sample_type == "BAL")) %>% t %>% data.frame(),
-                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "BAL")) %>% data.frame(), 
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz_genus, sample_type == "BAL")) %>% data.frame(), 
                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                        transform = "LOG", #default
@@ -1176,7 +1176,7 @@ fit_data_bal %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
 # # y ~ log(final reads) + sample_type + treatment 
 
 capture.output(fit_data_spt = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_genus, sample_type == "Sputum")) %>% t %>% data.frame(),
-                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %>% data.frame(), 
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz_genus, sample_type == "Sputum")) %>% data.frame(), 
                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                        transform = "LOG", #default
@@ -1252,7 +1252,7 @@ cat("\n\n\nNumber of differentially abundant bugs by each metadata\n\n\n")
 
 #all samples
 capture.output(maaslin_all = Maaslin2(input_data = otu_table(phyloseq_rel_nz_family) %>% t %>% data.frame(), 
-                input_metadata = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F), 
+                input_metadata = phyloseq_rel_nz_family %>% sample_data %>% data.frame(check.names = F), 
                 output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                 fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                 transform = "LOG", #default
@@ -1276,7 +1276,7 @@ maaslin_all %>% subset(., .$qval < 0.1 & .$coef > 0) %>% .$metadata %>% table()
 # # y ~ log(final reads) + sample_type + treatment 
 
 capture.output(fit_data_ns = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_family, sample_type == "Nasal swab")) %>% t %>% data.frame(),
-                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab")) %>% data.frame(), 
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz_family, sample_type == "Nasal swab")) %>% data.frame(), 
                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                        transform = "LOG", #default
@@ -1294,8 +1294,8 @@ fit_data_ns %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
 #bal
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_bal = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_family_rel_nz, sample_type == "BAL")) %>% t %>% data.frame(),
-                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "BAL")) %>% data.frame(), 
+capture.output(fit_data_bal = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_family, sample_type == "BAL")) %>% t %>% data.frame(),
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz_family, sample_type == "BAL")) %>% data.frame(), 
                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                        transform = "LOG", #default
@@ -1312,8 +1312,8 @@ fit_data_bal %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
 #sputum
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_spt = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_familyel_nz, sample_type == "Sputum")) %>% t %>% data.frame(),
-                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %>% data.frame(), 
+capture.output(fit_data_spt = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_family, sample_type == "Sputum")) %>% t %>% data.frame(),
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz_family, sample_type == "Sputum")) %>% data.frame(), 
                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                        transform = "LOG", #default

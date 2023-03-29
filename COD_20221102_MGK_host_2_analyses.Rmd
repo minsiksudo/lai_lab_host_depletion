@@ -364,6 +364,7 @@ sample_data %>% data.frame() %>%
         mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "serif")
 
 ```
+
 # QC2 figure #
 
 ```{r, warning=F, `QC2 Figure`}
@@ -879,9 +880,7 @@ bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 ```{r, echo=FALSE,message=FALSE, results='hide',fig.keep='all', "MaAslin taxa"}
 
 #DA analysis - MaAslin
-
 sample_data(phyloseq_rel_nz)$log10.Final_reads <- log10(sample_data(phyloseq_rel_nz)$Final_reads)
-sample_data(phyloseq_rel_nz)$sampletype_treatment <- paste(sample_data(phyloseq_rel_nz)$sample_type, sample_data(phyloseq_rel_nz)$treatment, sep = ":")
 
 #Running MaAslin for all sample without decontam
 #for taxa differentially abundant by host depletion method, look to see which ones overlap with potential contaminant taxa
@@ -960,6 +959,7 @@ capture.output(fit_data_spt = Maaslin2(input_data = otu_table(subset_samples(phy
                        plot_heatmap = F,
                        plot_scatter = F)
 )
+
 fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
 
 cat("Number of differentially abundant bugs by each metadata in sputum")
@@ -1027,6 +1027,362 @@ fit_data_spt$data_sig
 	
 Results
 After adding control data, MaAslin needs to be reanalyzed. Adding controls (mock communities) for each treatment group will show more statistically valid results in y ~ log(final reads) + sample_type + treatment, (re = subject_id))
+
+
+* MaAsLin interaction term *
+
+
+```{r, echo=FALSE,message=FALSE, results='hide',fig.keep='all', "MaAslin taxa interaction"}
+
+#Generating interaction term
+sample_data(phyloseq_rel_nz)$sampletype_treatment <- paste(sample_data(phyloseq_rel_nz)$sample_type, sample_data(phyloseq_rel_nz)$treatment, sep = "*")
+
+
+
+capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq_rel_nz) %>% t %>% data.frame(), 
+                 input_metadata = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F), 
+                 output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                 fixed_effects = c("sample_type", "log10.Final_reads", "treatment", "sampletype_treatment"), 
+                 transform = "LOG", #default
+                 normalization = "TSS", # default
+                 random_effects = c("subject_id"), 
+                 reference = c("sample_type,BAL", "treatment,Control", "sampletype_treatment,BAL*Control"), 
+                 plot_heatmap = F,
+                 plot_scatter = F))
+
+maaslin_interaction <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+#Checking number of bugs for the main text of the manuscript 
+ cat("Number of differentially abundant bugs by each metadata")
+ maaslin_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+
+ #Checking number of bugs differentially abundance with interaction term 
+ cat("Number of differentially abundant bugs by each metadata, MaAslin with interaction term")
+ maaslin_interaction %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+maaslin_interaction
+#interaction term - ggplot
+ggplot(maaslin_interaction, aes(y = -log10(qval), x = coef, col = metadata)) +
+         theme_classic(base_family = "serif") +
+         #labs(tag = "A") +
+         ggtitle("MaAslin with interaction term")+
+         geom_point(size = 2) +
+         xlab("MaAslin coefficient") +
+         ylab("-log<sub>10</sub>(*q*-value)") +
+         geom_hline(yintercept = 1, col = "gray") +
+         geom_vline(xintercept = 0, col = "gray") +
+         geom_richtext(aes( 4, 8, label = "*q*-value = 0.1, fold-change = 0", vjust = -1, fontface = 1), col = "grey", size = 3, family = "serif") +
+         theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
+         scale_color_manual(values = c("#e41a1c",  "#377eb8", "#4daf4a", "#984ea3")) +
+         guides(col = guide_legend(title = "Fixed effects", title.position = "top", nrow = 3))
+         
+
+
+ cat("\n\nMasslin run results with q < 0.1 by variable, with interaction term\n")
+ maaslin_interaction %>% subset(., .$qval < 0.1) %>% .$name %>% table
+ cat("\n\nMasslin run results with q < 0.1 by variable, with interaction term\n")
+ maaslin_interaction %>% subset(., .$qval < 0.1 & .$coef > 0 & .$metadata == "treatment")
+ maaslin_interaction %>% subset(., .$qval < 0.1 & .$coef > 0 & .$metadata == "treatment") %>% select(c("feature", "value", "coef", "qval"))
+ cat("\n\nThese taxa were highly prevenlent by each treatmment.\n")
+ cat("But they are not contaminants, if 1) they are present in most of the treatments, or, 2) they are included in other interaction terms.\n")
+ cat("\n\nChecking Case 1 \n")
+ maaslin_interaction %>% subset(., .$qval < 0.1 & .$coef > 0 & .$metadata == "treatment") %>% select(c("feature", "value", "coef", "qval")) %>% .$feature %>% table
+ cat("\nMost of taxa were treatment specific, however they were found on most of treatments. They could be lab contaminants or newly found taxa. Further analysis is required with control groups.\n")
+ cat("\n\nChecking hypothesis 2\n")
+ subset(maaslin_interaction,
+        maaslin_interaction$feature %in% (maaslin_interaction %>% 
+                                                          subset(., .$qval < 0.1 & .$metadata == "treatment") %>%
+                                                          .$feature %>% table %>% names)) %>%
+         subset(., .$metadata == "sampletype_treatment" & .$qval < 0.1) %>% select(c("feature", "value", "coef", "qval"))
+ cat("\nAmong taxa that were treatment specific, some were `sampletype * treatment` specific at the same time. This may be due to the bacterial community is slightly weighted to the treated samples, as they have larger sample numbers. In detail, they were sample specific, therefore it is less likely they are contaminants appeared during the host-DNA depletion step.\n")
+
+
+```
+
+```{r, echo=FALSE,message=FALSE, results='hide',fig.keep='all', "MaAslin genus & family level"}
+
+#DA analysis - MaAslin
+sample_data(phyloseq_rel_nz)$log10.Final_reads <- log10(sample_data(phyloseq_rel_nz)$Final_reads)
+phyloseq_rel_nz_genus <- tax_glom(phyloseq_rel_nz, "Genus")
+phyloseq_rel_nz_family <- tax_glom(phyloseq_rel_nz, "Family")
+
+taxa_names(phyloseq_rel_nz_genus) <- tax_table(phyloseq_rel_nz_genus) %>% data.frame %>% .$Genus %>% gsub("g__", "", .)
+taxa_names(phyloseq_rel_nz_family) <- tax_table(phyloseq_rel_nz_family) %>% data.frame %>% .$Family %>% gsub("g__", "", .)
+
+#Running MaAslin for all sample without decontam
+#for taxa differentially abundant by host depletion method, look to see which ones overlap with potential contaminant taxa
+
+# Maaslin - # # y ~ log(final reads) + sample_type + treatment  -----------
+
+#all samples
+capture.output(maaslin_all = Maaslin2(input_data = otu_table(phyloseq_rel_nz_genus) %>% t %>% data.frame(), 
+                input_metadata = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F), 
+                output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
+                transform = "LOG", #default
+                normalization = "NONE", # for RPKM, normalization is bit hard
+                random_effects = c("subject_id"), 
+                reference = c("sample_type,BAL"), 
+                plot_heatmap = F,
+                plot_scatter = F))
+
+maaslin_all <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+#Checking number of bugs for the main text of the manuscript 
+cat("Number of differentially abundant bugs by each metadata")
+maaslin_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+cat("Decreased bugs by each metadata")
+maaslin_all %>% subset(., .$qval < 0.1 & .$coef < 0) %>% .$metadata %>% table()
+cat("Incrased")
+maaslin_all %>% subset(., .$qval < 0.1 & .$coef > 0) %>% .$metadata %>% table()
+
+#NS
+# # y ~ log(final reads) + sample_type + treatment 
+
+capture.output(fit_data_ns = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_genus, sample_type == "Nasal swab")) %>% t %>% data.frame(),
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab")) %>% data.frame(), 
+                       output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                       fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
+                       transform = "LOG", #default
+                       normalization = "TSS", # default
+                       random_effects = c("subject_id"), 
+                       plot_heatmap = F,
+                       plot_scatter = F)
+)
+fit_data_ns <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+#Checking number of bugs for the main text of the manuscript 
+cat("Number of differentially abundant bugs by each metadata in NS")
+fit_data_ns %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+
+#bal
+# # y ~ log(final reads) + sample_type + treatment 
+
+capture.output(fit_data_bal = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_genus, sample_type == "BAL")) %>% t %>% data.frame(),
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "BAL")) %>% data.frame(), 
+                       output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                       fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
+                       transform = "LOG", #default
+                       normalization = "TSS", # default
+                       random_effects = c("subject_id"), 
+                       plot_heatmap = F,
+                       plot_scatter = F)
+)
+fit_data_bal <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+cat("Number of differentially abundant bugs by each metadata in BAL")
+fit_data_bal %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+
+#sputum
+# # y ~ log(final reads) + sample_type + treatment 
+
+capture.output(fit_data_spt = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_genus, sample_type == "Sputum")) %>% t %>% data.frame(),
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %>% data.frame(), 
+                       output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                       fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
+                       transform = "LOG", #default
+                       normalization = "TSS", # default
+                       random_effects = c("subject_id"),
+                       plot_heatmap = F,
+                       plot_scatter = F)
+)
+
+fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+cat("Number of differentially abundant bugs by each metadata in sputum")
+fit_data_spt %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+
+cat("\nAdding control data to both all and stratified MaAslin will help identify the actual contaminant\n")
+
+#Making significance table for figure
+        # Define a function to make species names italicized
+species_italic <- function(data) {
+  rownames(data) <- paste("*", rownames(data), "*", sep = )
+  data
+}
+
+#volcano plot of MaAslin with all data
+
+ggplot(maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
+        theme_classic(base_family = "serif") +
+        #labs(tag = "A") +
+        ggtitle("MaAslin with treatment types")+
+        geom_point(size = 2) +
+        xlab("MaAslin coefficient") +
+        ylab("-log<sub>10</sub>(*q*-value)") +
+        geom_hline(yintercept = 1, col = "gray") +
+        geom_vline(xintercept = 0, col = "gray") +
+        geom_richtext(aes( 4, 8, label = "*q*-value = 0.1, fold-change = 0", vjust = -1, fontface = 1), col = "grey", size = 3, family = "serif") +
+        theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
+        scale_color_manual(values = c("#4daf4a",  "#984ea3", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628")) +
+        guides(col = guide_legend(title = "Fixed effects", title.position = "top", nrow = 3))
+
+# Make a significance table for each figure (top 20 taxa)
+
+make_sig_table <- function(data) {
+  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
+  sig_data$min <- apply(sig_data, 1, FUN = min)
+  sig_data <- sig_data[order(sig_data$min),] %>% .[1:10,]
+  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads"))
+  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA)
+  return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
+}
+fit_data_bal <- make_sig_table(fit_data_bal)
+fit_data_ns <- make_sig_table(fit_data_ns)
+fit_data_spt <- make_sig_table(fit_data_spt)
+fit_data_ns
+fit_data_ns$data
+
+
+cat("\n\nStratified Masslin - significant of each but by treatment in BAL\n")
+fit_data_bal$data_sig
+cat("\n\nStratified Masslin - significant of each but by treatment in nasal swab\n")
+fit_data_ns$data_sig
+cat("\n\nStratified Masslin - significant of each but by treatment in Sputum\n")
+fit_data_spt$data_sig
+
+
+
+cat("\n\n\nNumber of differentially abundant bugs by each metadata\n\n\n")
+
+
+#Running MaAslin for all sample without decontam
+#for taxa differentially abundant by host depletion method, look to see which ones overlap with potential contaminant taxa
+
+# Maaslin - # # y ~ log(final reads) + sample_type + treatment  -----------
+
+#all samples
+capture.output(maaslin_all = Maaslin2(input_data = otu_table(phyloseq_rel_nz_family) %>% t %>% data.frame(), 
+                input_metadata = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F), 
+                output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
+                transform = "LOG", #default
+                normalization = "NONE", # for RPKM, normalization is bit hard
+                random_effects = c("subject_id"), 
+                reference = c("sample_type,BAL"), 
+                plot_heatmap = F,
+                plot_scatter = F))
+
+maaslin_all <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+#Checking number of bugs for the main text of the manuscript 
+cat("Number of differentially abundant bugs by each metadata")
+maaslin_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+cat("Decreased bugs by each metadata")
+maaslin_all %>% subset(., .$qval < 0.1 & .$coef < 0) %>% .$metadata %>% table()
+cat("Incrased")
+maaslin_all %>% subset(., .$qval < 0.1 & .$coef > 0) %>% .$metadata %>% table()
+
+#NS
+# # y ~ log(final reads) + sample_type + treatment 
+
+capture.output(fit_data_ns = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_family, sample_type == "Nasal swab")) %>% t %>% data.frame(),
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab")) %>% data.frame(), 
+                       output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                       fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
+                       transform = "LOG", #default
+                       normalization = "TSS", # default
+                       random_effects = c("subject_id"), 
+                       plot_heatmap = F,
+                       plot_scatter = F)
+)
+fit_data_ns <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+#Checking number of bugs for the main text of the manuscript 
+cat("Number of differentially abundant bugs by each metadata in NS")
+fit_data_ns %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+
+#bal
+# # y ~ log(final reads) + sample_type + treatment 
+
+capture.output(fit_data_bal = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_family_rel_nz, sample_type == "BAL")) %>% t %>% data.frame(),
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "BAL")) %>% data.frame(), 
+                       output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                       fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
+                       transform = "LOG", #default
+                       normalization = "TSS", # default
+                       random_effects = c("subject_id"), 
+                       plot_heatmap = F,
+                       plot_scatter = F)
+)
+fit_data_bal <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+cat("Number of differentially abundant bugs by each metadata in BAL")
+fit_data_bal %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+
+#sputum
+# # y ~ log(final reads) + sample_type + treatment 
+
+capture.output(fit_data_spt = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz_familyel_nz, sample_type == "Sputum")) %>% t %>% data.frame(),
+                       input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %>% data.frame(), 
+                       output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                       fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
+                       transform = "LOG", #default
+                       normalization = "TSS", # default
+                       random_effects = c("subject_id"),
+                       plot_heatmap = F,
+                       plot_scatter = F)
+)
+
+fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
+cat("Number of differentially abundant bugs by each metadata in sputum")
+fit_data_spt %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
+
+cat("\nAdding control data to both all and stratified MaAslin will help identify the actual contaminant\n")
+
+#Making significance table for figure
+        # Define a function to make species names italicized
+species_italic <- function(data) {
+  names <- gsub("_", " ", rownames(data))
+  names <- gsub("[]]|[[]", "", names)
+  names <- gsub(" sp", " sp.", names)
+  names <- gsub(" sp.", "* sp.", names)
+  names <- gsub(" group", "* group.", names)
+  names <- ifelse(grepl("[*]", names), paste("*", names, sep = ""), paste("*", names, "*", sep = ""))
+  rownames(data) <- names
+  data
+}
+
+#volcano plot of MaAslin with all data
+
+ggplot(maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
+        theme_classic(base_family = "serif") +
+        #labs(tag = "A") +
+        ggtitle("MaAslin with treatment types")+
+        geom_point(size = 2) +
+        xlab("MaAslin coefficient") +
+        ylab("-log<sub>10</sub>(*q*-value)") +
+        geom_hline(yintercept = 1, col = "gray") +
+        geom_vline(xintercept = 0, col = "gray") +
+        geom_richtext(aes( 4, 8, label = "*q*-value = 0.1, fold-change = 0", vjust = -1, fontface = 1), col = "grey", size = 3, family = "serif") +
+        theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
+        scale_color_manual(values = c("#4daf4a",  "#984ea3", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628")) +
+        guides(col = guide_legend(title = "Fixed effects", title.position = "top", nrow = 3))
+
+# Make a significance table for each figure (top 20 taxa)
+
+make_sig_table <- function(data) {
+  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
+  sig_data$min <- apply(sig_data, 1, FUN = min)
+  sig_data <- sig_data[order(sig_data$min),] %>% .[1:10,]
+  sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
+  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads"))
+  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA)
+  return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
+}
+
+fit_data_bal <- make_sig_table(fit_data_bal)
+fit_data_ns <- make_sig_table(fit_data_ns)
+fit_data_spt <- make_sig_table(fit_data_spt)
+
+cat("\n\nStratified Masslin - significant of each but by treatment in BAL\n")
+fit_data_bal$data_sig
+cat("\n\nStratified Masslin - significant of each but by treatment in nasal swab\n")
+fit_data_ns$data_sig
+cat("\n\nStratified Masslin - significant of each but by treatment in Sputum\n")
+fit_data_spt$data_sig
+
+```
 
 
 # A6. Decontam - stratified by treatment #
@@ -1520,6 +1876,7 @@ Thread: https://forum.biobakery.org/t/maaslin-with-shortbred-results-and-panphla
 ```{r, echo=FALSE,message=FALSE, results='hide',fig.keep='all', "MaAslin function"}
 sample_data(phyloseq_rel_nz)$log10.Final_reads <- log10(sample_data(phyloseq_rel_nz)$Final_reads)
 sample_data(phyloseq_rel_nz)$sampletype_treatment <- paste(sample_data(phyloseq_rel_nz)$sample_type, sample_data(phyloseq_rel_nz)$treatment, sep = ":")
+taxa_names(phyloseq_rel_nz) <- tax_table(phyloseq_rel_nz) %>% data.frame() %>% .$group
 
 #Running MaAslin for all sample without decontam
 #for taxa differentially abundant by host depletion method, look to see which ones overlap with potential contaminant taxa
@@ -1646,6 +2003,8 @@ cat("\n\nStratified Masslin - significant of each but by treatment in Sputum\n")
 fit_data_spt2$data_sig
 
 ```
+	
+
 	
 Done.
 

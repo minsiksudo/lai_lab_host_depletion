@@ -1,7 +1,7 @@
 ---
-title: "COD_20230301_HOST_1_QC_analysis"
+title: "COD_20230330_HOST_1_QC_analysis"
 author: "Minsik Kim"
-date: "2023-03-14"
+date: "2023-03-30"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -51,7 +51,7 @@ output:
         fig_width: 6
         fig_height: 6
 ---'
-seed <- "20230314"
+seed <- "20230330"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -200,14 +200,14 @@ FUN.LineZero.Report()
 
 
 
-#Loading data#
+# Loading data #
 
 
 ```{r warning=F, message=FALSE, "Data loading"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
 phyloseq <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
-                
+
         ####Need to be removed after adding sequenicing data
                 data_qPCR <- read_csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
                 #qPCR data of all the samples sent out sequencing
@@ -231,9 +231,9 @@ sample_data <- sample_data(phyloseq$phyloseq_count)
         Q3. How were the extraction controls
         Q4. Decontam - were there any contaminants?
 
-# Q1. How many samples failed in sequencing?#
+# Q1. How were sequencing results? #
 
-
+## Histogram of reads counts and host % {.tabset}
 
 ### Figure - regular scale
 
@@ -256,21 +256,22 @@ sample_data %>%
         mutate(feature = factor(feature, levels = c("Raw_reads", "Host_mapped", "Final_reads", "host_seq_percent"), labels = c("Raw reads", "Host mapped", "Final reads", "Host %"))) %>%
         ggplot(aes(x = value, fill = treatment)) +
                 geom_histogram(bins = 97) +
-                theme(legend.position = "top") +
                 guides(fill=guide_legend(title="Treatment", nrow = 1)) +
                 facet_grid(sample_type~feature, scales = "free") +
-                ggtitle("log10 transfromed histrogram")
+                ggtitle("log10 transfromed histrogram") +
+                theme_classic() +
+                theme(legend.position = "top") 
+
 ```
 
 ### Figure - log10 scale
 
 ```{r warning=F, QC1.2}
 ## figures -----log10
-
 sample_data %>% 
         subset(., !is.na(.$subject_id)) %>%
         data.frame() %>%
-        mutate(host_seq_percent = sqrt(sequencing_host_prop), 
+        mutate(host_seq_percent = 100 * sequencing_host_prop, 
                .after = sequencing_host_prop,) %>% 
         gather(feature, value, Raw_reads:host_seq_percent) %>%
         group_by(feature, sample_type) %>% 
@@ -278,18 +279,39 @@ sample_data %>%
         mutate(feature = factor(feature, levels = c("Raw_reads", "Host_mapped", "Final_reads", "host_seq_percent"), labels = c("Raw reads", "Host mapped", "Final reads", "Host %"))) %>%
         ggplot(aes(x = log10(value), fill = treatment)) +
                 geom_histogram(bins = 97) +
-                theme(legend.position = "top") +
-                guides(fill=guide_legend(title="Treatment", nrow = 1)) +
                 facet_grid(sample_type~feature, scales = "free") +
-                ggtitle("log10 for reads, sqrt for host % transfromed histrogram")
-             
+                ggtitle("log10 for reads, sqrt for host % transfromed histrogram") +
+                guides(fill=guide_legend(title="Treatment", nrow = 1)) +
+                theme_classic() +
+                theme(legend.position = "top")
 
+```
+### Figure - scaling host proportion
+
+```{r warning=F, QC1.2.1}
+## figures -----log10
+sample_data %>% 
+        subset(., !is.na(.$subject_id)) %>%
+        data.frame() %>%
+        mutate(host_seq_percent = 100 * sequencing_host_prop, 
+               log_seq_percent = log10(host_seq_percent), 
+               sqrt_seq_percent = sqrt(host_seq_percent), 
+               .after = sequencing_host_prop,) %>% 
+        gather(feature, value, Raw_reads:sqrt_seq_percent) %>%
+        group_by(feature, sample_type) %>% 
+        subset(., .$feature %in% c("host_seq_percent", "log_seq_percent", "sqrt_seq_percent")) %>%
+        mutate(feature = factor(feature, levels = c("host_seq_percent", "log_seq_percent", "sqrt_seq_percent"), labels = c("Host %", "log10 (host %)", "Sqrt(host %)")))  %>% 
+        ggplot(aes(x = value, fill = treatment)) +
+                geom_histogram(bins = 97) +
+                facet_grid(sample_type~feature, scales = "free") +
+                ggtitle("log10 for reads, sqrt for host % transfromed histrogram") +
+                guides(fill=guide_legend(title="Treatment", nrow = 1)) +
+                theme_classic() +
+                theme(legend.position = "top")
 
 ```
 
-No somaple showed 0 reads
-
-### Figure - log10 scale
+### Figure - log10 scale by treatment
 
 ```{r warning=F, QC1.3}
 
@@ -309,12 +331,19 @@ ggarrange(ggplot(sample_data %>% subset(., !is.na(.$subject_id)) %>% data.frame(
 
 ```
 
-### Histogram of total reads (sum of OTU table)
+
+### Histogram (sum of OTU table)
+
 
 ```{r warning=F, QC1.4}
-
 hist((log10((phyloseq$phyloseq_count %>% otu_table %>% colSums()) + 1)),100, main = "Histogram of total reads (sum of OTU table)") # 2 samples showed 0 total reads (sum of otu_table)
+```
 
+
+### Final reads of library prep failed samples
+
+
+```{r warning=F, QC1.5}
 #how were the samples failed in library prep?
 sample_data %>% data.frame %>% mutate(total_read = phyloseq$phyloseq_count %>% otu_table %>% colSums()) %>% rownames_to_column(var = "baylor_other_id") %>%
         ggplot(aes(x = reorder(baylor_other_id, -total_read),
@@ -330,7 +359,7 @@ sample_data %>% data.frame %>% mutate(total_read = phyloseq$phyloseq_count %>% o
 
 ```
 
-### Samples failed in sequencing
+### List of samples failed in sequencing
 
 ```{r warning=F, QC1.5}
 
@@ -339,18 +368,18 @@ sample_data(phyloseq$phyloseq_count) %>% data.frame() %>% subset(., .$lib_failed
 
 ```
 
-
 ## {-}
 
-*Results:*
 
-*2.1.1 Modeling final read should be conducted with both linear and logistic regression. Host % need no transformation, and should be tested for both linear and binomial methods*
+***QC 1 Results:***
 
-*2.1.2 13 samples failed in library prep*
+***1.1 Modeling final read should be conducted with log transfrom. Host % need no transformation.***
 
-*2.1.3. Two BAL sampels showed 0 total reads*
+***1.2 13 samples failed in library prep***
 
-*2.1.4. Sequencing fail ≠ library prep fail*
+***1.3. Two BAL sampels showed 0 total reads***
+
+***1.4. Sequencing fail ≠ library prep fail***
 
 Comments from Baylor:
 
@@ -358,10 +387,11 @@ Q: What was the lab's criteria for deciding which samples failed library prep.? 
 
 A: To determine whether a library attempt “passed or failed” the lab looks at the picogreen concentrations and a library fragment size distribution trace. The trace files are an output from either the Fragment Analyzer or TapeStation  (a copy of the trace files for PQ00331 is attached). If a sample has a background level pico concentration and no discernable fragment concentration on the trace  (i.e. a flat trace line) it is considered failed library. If the sample is below the level of detection of our standard library QC methods, it is considered failure. It’s still possible that there is some small amounts of library in those samples that were successfully sequenced, but often those samples do not generate a meaningful amount of sequence data.
 
-# QC2 table #
+# QC2 Chagnes of reads and host % by treatment #
 
+For detailed analysis, sequencing matrices were analyzed by each sample type and treatment
 
-## Results {.tabset}
+## Reads and host % by treatment {.tabset}
 
 ### QC table by treated (binary)
 
@@ -401,9 +431,8 @@ sample_data %>% data.frame() %>%
 
 ```
 
-## {-}
 
-# QC2 figure #
+### Figure of reads by treatment (z-score)
 
 ```{r, warning=F, `QC2 Figure`}
 
@@ -430,16 +459,21 @@ sample_data %>%
 
 ```
 
-*Results:*
+***Results:***
 
-*2.2.1. There were no differences between raw reads, however, final reads increased after some treatment, and host DNA proportion decreased *
+***2.1. There were no differences in raw reads. ***
 
-*2.2.2. The changes in final reads were varied by treatment and sample type *
-
-comment: Should I normalize z-score to mean value of control?
+***2.2.  However, final reads increased after some treatment, and host DNA proportion decreased ***
 
 
-# Q3. How was the extraction controls, both pos and neg?#
+
+# QC3. Positive and negative controls #
+
+Positive and negative controls were compared with mock community
+
+## Reads and host % by treatment {.tabset}
+
+### Species richness of controls
 
 
 ```{r, warning=FALSE, QC3}
@@ -457,13 +491,22 @@ phyloseq_control_rel <- rbind(c("mock_theoretical", "mock")) %>% data.frame() %>
 
 
 #Species richness of each control groups
-cat("Species richness of controls\n")
 
-rowSums(t(otu_table(phyloseq_control_rel)) != 0)
+rowSums(t(otu_table(phyloseq_control_rel)) != 0) %>% kbl(format = "html", caption = "Species richness of controls") %>% 
+        kable_styling(full_width = 0, html_font = "serif")
 
+
+```
+
+### Bar plot of controls
+
+```{r, warning=FALSE, QC3.1}
+
+#Making label for the controls
 sample_data(phyloseq_control_rel)$sample_type <- factor(sample_data(phyloseq_control_rel)$sample_type,
                                                         levels = c("mock", "2", "1"),
                                                         labels = c("Mock, 10 spp.", "Pos., 41 spp.", "Neg., 3 spp."))
+
 
 #Manipulating phyloseq - only top 10 
 
@@ -489,26 +532,22 @@ tax_table(phyloseq_control_rel) %>%
 
 ```
 
-*Results*
+## {-}
 
-*2.3.1. Negative control showed minimal number of possible contaminants*
+***Results***
 
-*2.3.2. Positive control contained various contaminants*
+***2.3.1. Negative control showed minimal number of possible contaminants***
 
-
-
-*Results:*
-
-*2.2.1. There were no differences between raw reads, however, final reads increased after some treatment, and host DNA proportion decreased *
-
-*2.2.2. The changes in final reads were varied by treatment and sample type *
+***2.3.2. Positive control contained various contaminants***
 
 
-# Q4. Prevalence filtering - red flag #
+# QC4. Prevalence and abundacne filtering - red flag #
 
-## Results {.tabset}
+Taxa prevance and abundance were checked.
 
-### Prelanence taxa - histogram
+## Taxa abundance and prevalence {.tabset}
+
+###  Histogram of prelanence taxa
 
 ```{r, warning=F, QC4}
 #Calculation of sample prevalence, standard deviation, median abundance across all samples for all bugs and making into a table.
@@ -524,39 +563,37 @@ hist(log10(taxa_qc$prevalence), xlab = "log10(Taxa prevalence)", main = "Histogr
 
 ```
 
-### Mean abundance taxa - histogram
+### Histogram of mean abundance
 
 ```{r, warning=F, QC4.1}
 hist(log10(taxa_qc$mean_rel_abd), xlab = "log10(Mean relative abundance)", main = "Histogram of mean relative abundance")
 
 ```
 
-## {-}
-
-Results:
-
-•	In initial analysis we will not perform prevalence or abundance filtering (though we may consider this for secondary differentialabundance analyses to manage p (features) > n (sample size) problem and issues with multiple hypothesis correction)
-
-•	Calculation of sample prevalence, standard deviation, median abundance across all samples for all bugs and making into a table.
-        
-Although we don't consider the prevalence of abundance at this time, we can consider their red-flags after running the DA analysis
-
-* 2. red flag
+### Red flag taxa
 
 ```{r warning=FALSE, "Red flag"}
 red_flag_taxa <- data.frame(species = taxa_qc$species,
-                          red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0)
-)
+                          red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0))
+red_flag_taxa
 ```
 
 
 
+## {-}
+
+***QC 3 results:***
+
+***3.1. In initial analysis we will not perform prevalence or abundance filtering (though we may consider this for secondary differentialabundance analyses to manage p (features) > n (sample size) problem and issues with multiple hypothesis correction)***
+
+***3.2. Red flags were made for taxa not satisfying the criteria (prev < 0.05 & mean rel < 0.75Q)***
+        
+***3.3. Although we don't consider the prevalence of abundance at this time, we can consider their red-flags after running the DA analysis***
+
+
 # Analysis #
 
-
-
-# A0. calculation of alpha-diversity indices #
-
+Before anlayzing, alpha diversity indices were calculated for all phyloseq objects
 
 ```{r warning=FALSE, `Analysis 0`}
 
@@ -581,12 +618,11 @@ sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq
 
 ```
 
+# A1. Host DNA, bacterial DNA by smaple type and treatment #
+        
+## qPCR and sequencing results {.tabset}
 
-# A1. qPCR, by smaple type and treatment #
-        A. Total DNA
-        B. Host DNA
-        C. Bacterial DNA
-        D. Host %
+### qPCR result
 
 ```{r}
    
@@ -645,68 +681,257 @@ ggarrange(f2a, f2b, f2c, f2d, common.legend = T , align = "hv")
 
 ```
 
-# A2. Sequencing results (treatment, raw reads, host reads, % host, final reads) #
-	--> both stratified and nonstratified
-	 library prep % vs sample_type + treatment + sample_type * treatment + subject_id (binary)
-	log10(Final reads) vs sample_type + treatment + sample_type * treatment + subject_id (linear or binary, see regular and cumulative distribution)
-	Host DNA % vs sample_type + treatment + sample_type * treatment + subject_id (linear or binary, see regular and cumulative distribution)
-	--> both stratified and nonstratified
+Figure 2. qPCR result of host depletion study. A. Total DNA B. Host DNA C. Bacterial DNA D. Host %
 
-## Results {.tabset}
+### Sequencing result
+
+```{r}
+ 
+f3a <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "Nasal swab", "BAL")), aes(x = sample_type, y = Raw_reads)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Sample type")+
+        ylab("Raw reads") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "A") +
+        theme(plot.tag = element_text(size = 15)) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1))
+
+#	- Host_mapped
+
+
+f3b <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "Nasal swab", "BAL")), aes(x = sample_type, y = Host_mapped)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Sample type")+
+        ylab("Host mapped reaeds") +
+        theme_classic (base_size = 12, base_family = "serif")+ 
+        labs(tag = "B") +
+        theme(plot.tag = element_text(size = 15)) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1))
+
+
+#	- % Host (we have used Host_mapped/Raw_reads in prior papers)
+
+
+
+f3c <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "Nasal swab", "BAL")), aes(x = sample_type, y = Host_mapped/Raw_reads)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Sample type")+
+        ylab("Sequencing host DNA (%)") +
+        theme_classic (base_size = 12, base_family = "serif")+ 
+        labs(tag = "C") +
+        theme(plot.tag = element_text(size = 15)) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1))
+
+
+#	- Final_reads
+
+f3d <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "Nasal swab", "BAL")), aes(x = sample_type, y = Final_reads)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Sample type")+
+        ylab("Final reads") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "D") +
+        theme(plot.tag = element_text(size = 15)) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1))
+
+
+ggarrange(f3a, f3b, f3c, f3d, common.legend = T, align = "hv")
+
+
+```
+
+Figure 3. Sequencing result of host depletion study. A. Total DNA B. Host DNA C. Bacterial DNA D. Host %
+
+
+## {-}
+
+
+*** Results A1 ***
+
+
+*** 1.1. Some changed were observed, for both host DNA and bacterial DNA. ***
+*** 1.2. Sequencing results need to be added ***
+*** This will be Fig 2. of the manuscript, after removing positives and negatives ***
+
+# A2. Modeling on sequencing results #
+
+As some changed were observed after treatment, linear mixed effect models were employed for testing.
+
+## Test results {.tabset}
 
 ### Library failure
 
+Some samples failed in library prep. What type of sample were fragile to treatments?
+
+1. library prep vs sample_type + treatment + sample_type * treatment + subject_id (binary)
+
 ```{r warning=F, 'LMER library fail'}
 
-cat("Binomial - library failed? \n\n")
-
 glmer(lib_failed ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
-        summary %>% .$coefficients %>% data.frame(check.names = F) %>%
+        summary %>% .$coefficients %>% data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`t value`) > 2 ~ "*", .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 
 ```
 
+
+### Library failure - ANOVA
+
+```{r}
+
+glmer(lib_failed ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
+        anova %>% data.frame(check.names = F) %>%
+        mutate(` ` = case_when(abs(`F value`) > 2 ~ "*", .default = " ")) %>% 
+        kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
+```
+
+
 ### log10(Final reads)
 
+*** Which methods was effective in increasing the fianl reads? ***
+
+2. log10(Final reads) vs sample_type + treatment + sample_type * treatment + subject_id (linear)
+
 ```{r warning=F, 'LMER final reads'}
-cat("Linear - Final reads? \n\n")
 lmer(log10(Final_reads) ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
         summary %>% .$coefficients %>% data.frame(check.names = F) %>%
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% column_to_rownames(var = "x") %>% 
+        kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
+```
+
+### log10(Final reads) - ANOVA
+
+```{r}
+
+lmer(log10(Final_reads) ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
+        anova %>% data.frame(check.names = F) %>%
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*", .default = " ")) %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 ```
 
 ### Host %
 
+*** Which methods was effective in lowering host % ***
+
+
+3. Host DNA % vs sample_type + treatment + sample_type * treatment + subject_id (linear), both stratified and nonstratified
+
 ```{r warning=F, 'LMER host %'}
-
-
-cat("Linear - Host DNA proportion? \n\n")
 lmer(sequencing_host_prop ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
         summary %>% .$coefficients %>% data.frame(check.names = F) %>%
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 
 ```
 
+### Host % ANOVA
+
+```{r}
+
+lmer(sequencing_host_prop ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
+        anova %>% data.frame(check.names = F) %>%
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*", .default = " ")) %>% 
+        kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
+```
+
+
 ## {-}
 	
-# A3. LM of taxa alpha diversity #
-	--> both stratified and nonstratified
-	
-	
-	
-## Results {.tabset}
+***Results***	
 
-### Species richness
+***1. Library failure was associated with nasal swab, especially after lyPMA and Molysis treatment***
+
+***2. Benzonase, host-zero, Molysis, and QIAamp increased final reads ***
+
+***3. Host-zero lowered host %. For otheres, there were significant sample_type specific treatment efficiencies ***
+
+	
+# A3. LM of taxa alpha diversity #
+
+Alpha diversity chould be having changes due to treatment.
+
+Both stratified and nonstratified analyses were conducted.
+
+
+Figure - Alpha diversity
+
+
+```{r}
+sample_data <- sample_data(phyloseq$phyloseq_count)
+f4a <-        ggplot(subset(sample_data(phyloseq$phyloseq_count), sample_data$sample_type %in% c("Sputum", "Nasal swab", "BAL")), aes(y = S.obs)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Species richness") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "A") +
+        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        facet_wrap(~sample_type) + 
+        guides(fill = guide_legend(nrow = 1))
+
+
+f4b <-        ggplot(subset(sample_data(phyloseq$phyloseq_count), sample_data$sample_type %in% c("Sputum", "Nasal swab", "BAL")), aes(y = data_shannon)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Shannon") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "B") +
+        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        facet_wrap(~sample_type) + 
+        guides(fill = guide_legend(nrow = 1))
+
+f4c <-        ggplot(subset(sample_data(phyloseq$phyloseq_count), sample_data$sample_type %in% c("Sputum", "Nasal swab", "BAL")), aes(y = data_invsimpson)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Inverse simpson") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "C") +
+        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        facet_wrap(~sample_type) + 
+        guides(fill = guide_legend(nrow = 1))
+
+f4d <-        ggplot(subset(sample_data(phyloseq$phyloseq_count), sample_data$sample_type %in% c("Sputum", "Nasal swab", "BAL")), aes(y = dbp)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
+        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Berger-Parker index") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "D") +
+        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        facet_wrap(~sample_type) + 
+        guides(fill = guide_legend(nrow = 1))
+
+ggarrange(f4a, f4b, f4c, f4d, common.legend = T, align = "hv") # alpha diversity plots
+
+
+```
+
+## Test result of alpha diversity {.tabset}
+
+### Species richness (all samples)
+
+All samples:
+
+S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
+
+Stratified:
+
+S.obs ~ sample_type + log10 (Final_reads) + (1|original_sample)
 
 ``` {r warning=F, "species richness"}
 
 sample_data <- sample_data(phyloseq$phyloseq_count) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))
-
-cat("Species richness of all samples\n\n")
-cat("S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
 lmer_sob <- lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
 lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data) %>% 
         summary() %>%
@@ -716,8 +941,11 @@ lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), dat
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("ANOVA for \n S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+### Species richness (all samples) - ANOVA
+
+```{r}
 lmer_sob %>% 
         anova() %>% 
         data.frame(check.names = F) %>% 
@@ -726,11 +954,16 @@ lmer_sob %>%
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 
-cat("\n 0.06 p-value for the interaction term. May include the interaction term. \n")
+```
 
-#Species richness  - stratified 
-cat("Species richness at NS\n\n")
-cat("S.obs ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+All terms were significant.
+
+
+### Species richness  - stratified (NS)
+
+
+
+```{r}
 lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -739,9 +972,11 @@ lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sam
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("Species richness at BAL\n\n")
-cat("S.obs ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+### Species richness at BAL
+
+```{r}
 lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -751,8 +986,11 @@ lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subse
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 
-cat("Species richness at sputum\n\n")
-cat("S.obs ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+```
+
+### Species richness at sputum
+
+```{r}
 lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -763,14 +1001,21 @@ lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subse
         kable_styling(full_width = 0, html_font = "serif")
 ```
 
-### Shannon
+
+### Shannon (all samples)
+
+All samples:
+
+Shannon ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
+
+Stratified:
+
+Shannon ~ sample_type + log10 (Final_reads) + (1|original_sample)
 
 ``` {r warning=F, "Shannon"}        
 
 #Shannon
 
-cat("Shannon of all samples\n\n")
-cat("Shannon ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
 lmer_shannon <- lmer(data_shannon ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
 lmer_shannon %>% 
         summary() %>%
@@ -780,8 +1025,11 @@ lmer_shannon %>%
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("ANOVA for \n Shannon ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+### ANOVA Shannon
+
+```{r}
 lmer_shannon %>% 
         anova() %>% 
         data.frame(check.names = F) %>% 
@@ -790,11 +1038,11 @@ lmer_shannon %>%
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 
-cat("\n 0.059 p-value for the interaction term. May include the interaction term. \n")
+```
 
-#Shannon  - stratified 
-cat("Shannon at NS\n\n")
-cat("Shannon ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+### Shannon  - stratified (NS)
+
+```{r}
 lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -803,9 +1051,12 @@ lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|subject_id), data = sub
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("Shannon at BAL\n\n")
-cat("Shannon ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+### Shannon  - stratified (BAL)
+
+
+```{r}
 lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -814,9 +1065,11 @@ lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data 
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("Shannon at sputum\n\n")
-cat("Shannon ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+### Shannon  - stratified (Spt)
+
+```{r}
 lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -830,12 +1083,15 @@ lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data 
 
 ### Simpson
 
+Inverse Simpson of all samples:
+
+Inverse Simpson ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
+
+
 ``` {r warning=F, "Simpson"}        
 
 #Simpson
 
-cat("Inverse Simpson of all samples\n\n")
-cat("Inverse Simpson ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
 lmer_invsimpson <- lmer(data_invsimpson ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
 lmer_invsimpson %>% 
         summary() %>%
@@ -845,7 +1101,11 @@ lmer_invsimpson %>%
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
+### Inv Simp - ANOVA
+
+```{r}
 cat("ANOVA for \n Inverse Simpson ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
 lmer_invsimpson %>% 
         anova() %>% 
@@ -854,12 +1114,15 @@ lmer_invsimpson %>%
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("\n 0.098 p-value for the interaction term. May include the interaction term. \n")
 
-#Inverse Simpson - stratified 
-cat("Inverse Simpson at NS\n\n")
-cat("Inverse Simpson ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+### Inverse Simpson - stratified (NS)
+
+
+Inverse Simpson ~ sample_type + log10 (Final_reads) + (1|original_sample)
+
+```{r}
 lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -868,9 +1131,11 @@ lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|subject_id), data = 
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("Inverse Simpson at BAL\n\n")
-cat("Inverse Simpson ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+### Inverse Simpson - stratified (BAL)
+
+```{r}
 lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -879,9 +1144,11 @@ lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), da
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("Inverse Simpson at sputum\n\n")
-cat("Inverse Simpson ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+### Inverse Simpson - stratified (NS)
+
+```{r}
 lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -892,13 +1159,15 @@ lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), da
         kable_styling(full_width = 0, html_font = "serif")
 ```
 
-### BPI
+### BPI - all samples
+
+BPI of all samples:
+
+BPI ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
 
 ``` {r warning=F, "BPI"}        
 
 #BPI
-cat("BPI of all samples\n\n")
-cat("BPI ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
 lmer_dbp <- lmer(dbp ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
 lmer_dbp %>% 
         summary() %>%
@@ -908,8 +1177,12 @@ lmer_dbp %>%
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("ANOVA for \n BPI ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)\n\n")
+### BPI -ANOVA
+
+
+```{r}
 lmer_dbp %>% 
         anova() %>% 
         data.frame(check.names = F) %>% 
@@ -918,11 +1191,15 @@ lmer_dbp %>%
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 
-cat("\n 0.07 p-value for the interaction term. May include the interaction term. \n")
+```
 
-#Inverse Simpson - stratified 
-cat("BPI at NS\n\n")
-cat("BPI ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+
+### BPI - stratified (NS)
+
+BPI ~ sample_type + log10 (Final_reads) + (1|original_sample)
+
+```{r}
+
 lmer(dbp ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -931,9 +1208,11 @@ lmer(dbp ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sampl
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("BPI at BAL\n\n")
-cat("BPI ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
+### BPI - stratified (BAL)
+
+```{r}
 lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
         summary() %>%
         .$coefficients %>%
@@ -942,8 +1221,11 @@ lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
+### BPI - stratified (spt)
 
+```{r}
 cat("BPI at sputum\n\n")
 cat("BPI ~ sample_type + log10 (Final_reads) + (1|original_sample)\n\n")
 lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
@@ -959,7 +1241,10 @@ lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(
 ```
 
 ## {-}
-	
+
+*** Results: ***
+
+
 # A4. Taxa beta diversity#
 Permanova (Taxa dist ~ log10(final reads) + sample_type + treatment + sample_type * treatment + subject_id) 
 	--> both stratified and nonstratified
@@ -999,7 +1284,6 @@ bray_perm_spt <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_
 
 ``` {r warning=F, "Perm taxa 1"}        
 
-cat("\nUnivariate analysis\n")
 
 bray_perm_uni %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
@@ -1017,9 +1301,6 @@ bray_perm_uni %>% data.frame(check.names = F) %>% rownames_to_column("row.names"
 ###  Detailed treatment
 
 ``` {r warning=F, "perm taxa 2"}        
-
-
-cat("\nDetailed treatment\n")
 bray_perm %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "lypma" ~ 'lyPMA',
@@ -1038,11 +1319,9 @@ bray_perm %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>
 
 ```
 
-### Strata term
+### Strata term (detailed treatment)
 
 ``` {r warning=F, "perm taxa 3"}
-
-cat("\n Strata -detailed treatment\n")
 bray_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "lypma" ~ 'lyPMA',
@@ -1063,15 +1342,12 @@ bray_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.nam
 ### Interaction term
 
 ``` {r warning=F, "perm taxa 4"}
-
-cat("\n Interaction term \n")
-
 bray_perm_inter %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "treatment" ~ 'Treatment',
                                      row.names == "subject_id" ~ 'Subject',
                                      row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
-                                     row.names == "sample_type:treatment" ~ 'Sample type X treatment',
+                                     row.names == "sample_type:treatment" ~ 'Sample type * treatment',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
         round(3) %>% mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
@@ -1085,8 +1361,6 @@ bray_perm_inter %>% data.frame(check.names = F) %>% rownames_to_column("row.name
 ### Stratified
 
 ``` {r warning=F, "perm taxa 5"}
-
-cat("\n Stratified - nasal swab \n")
 
 bray_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -1102,9 +1376,11 @@ bray_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names')
                                .default = " ")) %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
+```
 
-cat("\n Stratified - BAL \n")
+### Stratified (BAL)
 
+``` {r warning=F, "perm taxa 6"}
 
 bray_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -1121,7 +1397,11 @@ bray_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 
-cat("\n Stratified - sputum \n")
+```
+
+### Stratified (spt)
+
+``` {r warning=F, "perm taxa 6"}
 
 bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -1143,13 +1423,12 @@ bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 ## {-}
 	
 # A5. DA analysis for taxa, by sample type and treatment #
-	--> both stratified and nonstratified
-	--> look at level groups as well - phylum, etc.
-	
+
+Both stratified and nonstratified were conducted.
+
+Looked at other level groups as well - family and genus
 	
 ## Results {.tabset}
-
-### MaAslin without interaction
 
 	
 ```{r warning=FALSE, message=FALSE,  "MaAslin taxa"}
@@ -1228,7 +1507,7 @@ fit_data_bal <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik
 #sputum
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %>% t %>% data.frame(),
+capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %>% t %>% data.frame(),
                        input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %>% data.frame(), 
                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
@@ -1242,28 +1521,15 @@ fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik
 
 ```
 
+### MaAslin without interaction - volcano plot
+
+```{r warning=FALSE, message=FALSE, "MaAslin taxa continued0"}
+
+```
+
+### MaAslin without interaction - sample tables
 
 ```{r warning=FALSE, message=FALSE, "MaAslin taxa continued"}
-
-#Checking number of bugs for the main text of the manuscript 
-
-cat("Number of differentially abundant bugs by each metadata")
-maaslin_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
-cat("Decreased bugs by each metadata")
-maaslin_all %>% subset(., .$qval < 0.1 & .$coef < 0) %>% .$metadata %>% table()
-cat("Incrased")
-maaslin_all %>% subset(., .$qval < 0.1 & .$coef > 0) %>% .$metadata %>% table()
-
-cat("Number of differentially abundant bugs by each metadata in NS")
-fit_data_ns %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
-
-cat("Number of differentially abundant bugs by each metadata in BAL")
-fit_data_bal %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
-
-cat("Number of differentially abundant bugs by each metadata in sputum")
-fit_data_spt %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
-cat("\nAdding control data to both all and stratified MaAslin will help identify the actual contaminant\n")
-
 
 #Making significance table for figure
         # Define a function to make species names italicized
@@ -1278,12 +1544,41 @@ species_italic <- function(data) {
   data
 }
 
-#volcano plot of MaAslin with all data
+# Make a significance table for each figure (top 20 taxa)
+make_sig_table <- function(data) {
+  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
+  sig_data$min <- apply(sig_data, 1, FUN = min)
+  sig_data <- sig_data[order(sig_data$min),] %>% select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:20,]
+  sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
+  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-"))
+  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame %>% 
+          rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
+  return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
+}
+fit_data_bal <- make_sig_table(fit_data_bal)
+fit_data_ns <- make_sig_table(fit_data_ns)
+fit_data_spt <- make_sig_table(fit_data_spt)
 
-ggplot(maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
+spt_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"),
+                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %in% fit_data_spt$data$feature)
+fit_data_spt$rel <- cbind(spt_sig %>% otu_table %>% t, spt_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>% 
+        .[row.names(fit_data_spt$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
+
+ns_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab"),
+                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab")) %in% fit_data_ns$data$feature)
+fit_data_ns$rel <- cbind(ns_sig %>% otu_table %>% t, ns_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>%
+        .[row.names(fit_data_ns$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
+
+bal_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "BAL"),
+                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "BAL")) %in% fit_data_bal$data$feature)
+fit_data_bal$rel <- cbind(bal_sig %>% otu_table %>% t, bal_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>% 
+        .[row.names(fit_data_bal$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
+
+#Volcano plot
+
+f5a <- ggplot(maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
         theme_classic(base_family = "serif") +
-        #labs(tag = "A") +
-        ggtitle("MaAslin with treatment types")+
+        labs(tag = "A") +
         geom_point(size = 2) +
         xlab("MaAslin coefficient") +
         ylab("-log<sub>10</sub>(*q*-value)") +
@@ -1291,34 +1586,68 @@ ggplot(maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
         geom_vline(xintercept = 0, col = "gray") +
         geom_richtext(aes( 4, 8, label = "*q*-value = 0.1, fold-change = 0", vjust = -1, fontface = 1), col = "grey", size = 3, family = "serif") +
         theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
-        scale_color_manual(values = c("#4daf4a",  "#984ea3", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628")) +
-        guides(col = guide_legend(title = "Fixed effects", title.position = "top", nrow = 3))
+        scale_color_manual(values = c("#4daf4a",  "#984ea3", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628"),
+                           breaks = c("log10.Final_reads", "sample_type", "lypma", "benzonase", "host_zero",  "molysis", "qiaamp"), 
+                           labels = c("log10 (Final reads)", "Sample type", "lyPMA", "Benzonase", "Host zero",  "Molysis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        guides(col = guide_legend(title = "Covariates", title.position = "top", nrow = 3))
 
-# Make a significance table for each figure (top 20 taxa)
+#ffff33 qia
 
-make_sig_table <- function(data) {
-  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
-  sig_data$min <- apply(sig_data, 1, FUN = min)
-  sig_data <- sig_data[order(sig_data$min),] %>% .[1:20,]
-  sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
-  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads"))
-  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA)
-  return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
-}
+f5b <- ggballoonplot(fit_data_ns$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
+        theme_classic(base_family = "serif") +
+        scale_fill_viridis() +
+        xlab("Experimental group") +
+        ylab("Species") +
+        labs(tag = "B") +
+        theme(panel.grid.major = element_line(colour = "grey"), axis.text.x = element_text(vjust = 0.5, hjust=0.5), axis.text.y = ggtext::element_markdown())  +
+        geom_text(data = fit_data_ns$data_sig %>%
+                          rownames_to_column("feature") %>%
+                          gather(treatment, significance, lyPMA:QIAamp, factor_key=TRUE),
+                  aes(y = feature, x = treatment, label = significance, col = significance), hjust = -2, vjust = 0.8, size = 5) +
+        guides(col = guide_legend(nrow = 3, override.aes = aes(label = "*", size = 10, color = "red"), title="Significance", title.position = "top", order = 3), size = guide_legend(title = "Relative abundance", title.position = "top", order = 1, nrow = 2), fill = F) + 
+        scale_x_discrete(labels=c("control" = "Control", "lypma" = "lyPMA", "benzonase" = "Benzonase", "host_zero" = "Host-zero", "molysis" = "Molysis", "qiaamp" = "QIAamp"))
+        
+legend_1 <- get_legend(f5a)
+legend_2 <- get_legend(f5b)
+rm_legend <- function(p){p + theme(legend.position = "none")}
 
-fit_data_bal <- make_sig_table(fit_data_bal)
-fit_data_ns <- make_sig_table(fit_data_ns)
-fit_data_spt <- make_sig_table(fit_data_spt)
+f5c <- ggballoonplot(fit_data_spt$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
+        theme_classic(base_family = "serif") +
+        scale_fill_viridis() +
+        xlab("Experimental group") +
+        ylab("Species") +
+        labs(tag = "C") +
+        theme(panel.grid.major = element_line(colour = "grey"),
+              legend.position = "none", axis.text.x = element_text(vjust = 0.5, hjust=0.5),
+              axis.text.y = ggtext::element_markdown())  +
+        geom_text(data = fit_data_spt$data_sig %>%
+                          rownames_to_column("feature") %>%
+                          gather(treatment, significance, lyPMA:QIAamp, factor_key=TRUE),
+                  aes(y = feature, x = treatment, label = significance, col = significance), hjust = -2, vjust = 0.8, size = 5) +
+        guides(fill = FALSE, shape = F, col = F) +
+        scale_x_discrete(labels=c("control" = "Control", "lypma" = "lyPMA", "benzonase" = "Benzonase", "host_zero" = "Host-zero", "molysis" = "Molysis", "qiaamp" = "QIAamp"))
 
-fit_data_ns$data
+
+f5d <- ggballoonplot(fit_data_bal$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
+        theme_classic(base_family = "serif") +
+        scale_fill_viridis() +
+        xlab("Experimental group") +
+        ylab("Species") +
+        labs(tag = "D") +
+        theme(panel.grid.major = element_line(colour = "grey"),
+              legend.position = "none", axis.text.x = element_text(vjust = 0.5, hjust=0.5),
+              axis.text.y = ggtext::element_markdown())  +
+        geom_text(data = fit_data_bal$data_sig %>%
+                          rownames_to_column("feature") %>%
+                          gather(treatment, significance, lyPMA:QIAamp, factor_key=TRUE),
+                  aes(y = feature, x = treatment, label = significance), hjust = -2, vjust = 0.8, size = 5) +
+        guides(fill = FALSE, shape = F, col = F) +
+        scale_x_discrete(labels=c("control" = "Control", "lypma" = "lyPMA", "benzonase" = "Benzonase", "host_zero" = "Host-zero", "molysis" = "Molysis", "qiaamp" = "QIAamp"))
 
 
-cat("\n\nStratified Masslin - significant of each but by treatment in BAL\n")
-fit_data_bal$data_sig
-cat("\n\nStratified Masslin - significant of each but by treatment in nasal swab\n")
-fit_data_ns$data_sig
-cat("\n\nStratified Masslin - significant of each but by treatment in Sputum\n")
-fit_data_spt$data_sig
+ggarrange(ggarrange(legend_1, legend_2, align = "hv"),
+        ggarrange(rm_legend(f5a), rm_legend(f5b)),
+        ggarrange(f5c, f5d), ncol = 1, heights = c(2, 5, 5))
 
 
 ```

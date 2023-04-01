@@ -1951,7 +1951,7 @@ capture.output(fit_data_spt = Maaslin2(input_data = otu_table(subset_samples(phy
 fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
 ```
 
-### MaAslin with interaction - f
+### MaAslin with interaction
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE, results='hide', "MaAslin genus run cont"}
 
@@ -1983,19 +1983,19 @@ species_italic <- function(data) {
 
 #volcano plot of MaAslin with all data
 
-ggplot(maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
-        theme_classic(base_family = "serif") +
-        #labs(tag = "A") +
-        ggtitle("MaAslin with treatment types")+
-        geom_point(size = 2) +
-        xlab("MaAslin coefficient") +
-        ylab("-log<sub>10</sub>(*q*-value)") +
-        geom_hline(yintercept = 1, col = "gray") +
-        geom_vline(xintercept = 0, col = "gray") +
-        geom_richtext(aes( 4, 8, label = "*q*-value = 0.1, fold-change = 0", vjust = -1, fontface = 1), col = "grey", size = 3, family = "serif") +
-        theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
-        scale_color_manual(values = c("#4daf4a",  "#984ea3", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628")) +
-        guides(col = guide_legend(title = "Fixed effects", title.position = "top", nrow = 3))
+ggplot(maaslin_interaction, aes(y = -log10(qval), x = coef, col = metadata)) +
+         theme_classic(base_family = "serif") +
+         #labs(tag = "A") +
+         ggtitle("MaAslin with interaction term")+
+         geom_point(size = 2) +
+         xlab("MaAslin coefficient") +
+         ylab("-log<sub>10</sub>(*q*-value)") +
+         geom_hline(yintercept = 1, col = "gray") +
+         geom_vline(xintercept = 0, col = "gray") +
+         geom_richtext(aes( 4, 8, label = "*q*-value = 0.1, fold-change = 0", vjust = -1, fontface = 1), col = "grey", size = 3, family = "serif") +
+         theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
+         scale_color_manual(values = c("#e41a1c",  "#377eb8", "#4daf4a", "#984ea3")) +
+         guides(col = guide_legend(title = "Fixed effects", title.position = "top"))
 
 # Make a significance table for each figure (top 20 taxa)
 
@@ -3221,15 +3221,6 @@ maaslin_interaction <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/
 ```
 
 ```{r warning=FALSE, message=FALSE, "MaAslin Function interaction-continued"}
-
-#Checking number of bugs for the main text of the manuscript 
- cat("Number of differentially abundant bugs by each metadata")
- maaslin_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
-
- #Checking number of bugs differentially abundance with interaction term 
- cat("Number of differentially abundant bugs by each metadata, MaAslin with interaction term")
- maaslin_interaction %>% subset(., .$qval < 0.1) %>% .$metadata %>% table()
-maaslin_interaction
 #interaction term - ggplot
 ggplot(maaslin_interaction, aes(y = -log10(qval), x = coef, col = metadata)) +
          theme_classic(base_family = "serif") +
@@ -3243,8 +3234,7 @@ ggplot(maaslin_interaction, aes(y = -log10(qval), x = coef, col = metadata)) +
          geom_richtext(aes( 4, 8, label = "*q*-value = 0.1, fold-change = 0", vjust = -1, fontface = 1), col = "grey", size = 3, family = "serif") +
          theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
          scale_color_manual(values = c("#e41a1c",  "#377eb8", "#4daf4a", "#984ea3")) +
-         guides(col = guide_legend(title = "Fixed effects", title.position = "top", nrow = 3))
-         
+         guides(col = guide_legend(title = "Fixed effects", title.position = "top"))
 
 
  cat("\n\nMasslin run results with q < 0.1 by variable, with interaction term\n")

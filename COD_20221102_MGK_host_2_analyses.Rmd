@@ -2270,7 +2270,6 @@ sample_data <- sample_data(phyloseq$phyloseq_path_rpkm) %>% data.frame(check.nam
 phyloseq_rel_nz <- subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal swab", "Sputum"))
 sample_data(phyloseq_rel_nz)$log10.Final_reads <- log10(sample_data(phyloseq_rel_nz)$Final_reads)
 sample_data(phyloseq_rel_nz)$sampletype_treatment <- paste(sample_data(phyloseq_rel_nz)$sample_type, sample_data(phyloseq_rel_nz)$treatment, sep = ":")
-taxa_names(phyloseq_rel_nz) <- tax_table(phyloseq_rel_nz) %>% data.frame() %>% .$group
 
 ```
 
@@ -3053,6 +3052,7 @@ fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik
 #Making significance table for figure
         # Define a function to make species names italicized
 # Make a significance table for each figure (top 20 taxa)
+
 make_sig_table <- function(data) {
   sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
   sig_data$min <- apply(sig_data, 1, FUN = min)
@@ -3063,23 +3063,40 @@ make_sig_table <- function(data) {
           rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
   return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
 }
+
 fit_data_bal <- make_sig_table(fit_data_bal)
 fit_data_ns <- make_sig_table(fit_data_ns)
 fit_data_spt <- make_sig_table(fit_data_spt)
 
 spt_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"),
-                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %in% fit_data_spt$data$feature)
-fit_data_spt$rel <- cbind(spt_sig %>% otu_table %>% t, spt_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>% 
+                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Sputum")) %>%
+                               gsub("-", ".", .) %in% fit_data_spt$data$feature)
+fit_data_spt$rel <- cbind(spt_sig %>% otu_table %>% t, spt_sig %>% sample_data) %>% 
+        group_by(treatment) %>%
+        summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>%
+        column_to_rownames(., "treatment") %>% t () %>% data.frame(check.names = F) %>% 
+        rownames_to_column("row") %>% mutate(row = gsub("-", ".", row)) %>% column_to_rownames("row") %>%
         .[row.names(fit_data_spt$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
 ns_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab"),
-                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab")) %in% fit_data_ns$data$feature)
-fit_data_ns$rel <- cbind(ns_sig %>% otu_table %>% t, ns_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>%
+                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Nasal swab"))%>%
+                               gsub("-", ".", .) %in% fit_data_ns$data$feature)
+
+fit_data_ns$rel <- cbind(ns_sig %>% otu_table %>% t, ns_sig %>% sample_data) %>% 
+        group_by(treatment) %>%
+        summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>%
+        column_to_rownames(., "treatment") %>% t () %>% data.frame(check.names = F) %>% 
+        rownames_to_column("row") %>% mutate(row = gsub("-", ".", row)) %>% column_to_rownames("row") %>%
         .[row.names(fit_data_ns$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
 bal_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "BAL"),
-                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "BAL")) %in% fit_data_bal$data$feature)
-fit_data_bal$rel <- cbind(bal_sig %>% otu_table %>% t, bal_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>% 
+                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "BAL")) %>%
+                               gsub("-", ".", .) %in% fit_data_bal$data$feature)
+fit_data_bal$rel <- cbind(bal_sig %>% otu_table %>% t, bal_sig %>% sample_data) %>% 
+        group_by(treatment) %>%
+        summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>%
+        column_to_rownames(., "treatment") %>% t () %>% data.frame(check.names = F) %>% 
+        rownames_to_column("row") %>% mutate(row = gsub("-", ".", row)) %>% column_to_rownames("row") %>%
         .[row.names(fit_data_bal$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
 #Volcano plot
@@ -3151,6 +3168,7 @@ ggballoonplot(fit_data_spt$rel %>% gather(treatment, value, Control:QIAamp, fact
 ### Baloon plot - BAL
 
 ```{r warning=FALSE, message=FALSE}
+
 ggballoonplot(fit_data_bal$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
         scale_fill_viridis() +

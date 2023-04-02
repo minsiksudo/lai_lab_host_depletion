@@ -37,7 +37,7 @@ str_libraries <- c(
 
 path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree")
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car")
         
 YAML_header <-
 '---
@@ -754,12 +754,14 @@ Figure 3. Sequencing result of host depletion study. A. Total DNA B. Host DNA C.
 ## {-}
 
 
-*** Results A1 ***
+***Results A1 ***
 
 
-*** 1.1. Some changed were observed, for both host DNA and bacterial DNA. ***
-*** 1.2. Sequencing results need to be added ***
-*** This will be Fig 2. of the manuscript, after removing positives and negatives ***
+***1.1. Some changed were observed, for both host DNA and bacterial DNA. ***
+
+***1.2. Sequencing results need to be added ***
+
+***This will be Fig 2. of the manuscript, after removing positives and negatives ***
 
 # A2. Modeling on sequencing results #
 
@@ -771,14 +773,15 @@ As some changed were observed after treatment, linear mixed effect models were e
 
 Some samples failed in library prep. What type of sample were fragile to treatments?
 
-1. library prep vs sample_type + treatment + sample_type * treatment + subject_id (binary)
+glm ( library fail ~ sample_type + treatment + sample_type * treatment + subject_id )
 
 ```{r warning=F, 'LMER library fail'}
 
 glmer(lib_failed ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
         summary %>% .$coefficients %>% data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`t value`) > 2 ~ "*", .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% column_to_rownames(var = "x") %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>% 
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 
 ```
@@ -787,25 +790,26 @@ glmer(lib_failed ~ sample_type + treatment + sample_type * treatment + (1|subjec
 ### Library failure - ANOVA
 
 ```{r}
-
 glmer(lib_failed ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
-        anova %>% data.frame(check.names = F) %>%
-        mutate(` ` = case_when(abs(`F value`) > 2 ~ "*", .default = " ")) %>% 
+        Anova %>% data.frame(check.names = F) %>%
+        mutate(` ` = case_when(abs(`Pr(>Chisq)`) < 0.05 ~ "*", .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub(":", " * ", x)) %>% column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 ```
 
 
 ### log10(Final reads)
 
-*** Which methods was effective in increasing the fianl reads? ***
+***Which methods was effective in increasing the fianl reads? ***
 
-2. log10(Final reads) vs sample_type + treatment + sample_type * treatment + subject_id (linear)
+lmer( log10(Final reads) vs sample_type + treatment + sample_type * treatment + subject_id )
 
 ```{r warning=F, 'LMER final reads'}
 lmer(log10(Final_reads) ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
         summary %>% .$coefficients %>% data.frame(check.names = F) %>%
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% column_to_rownames(var = "x") %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>% 
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 ```
 
@@ -816,21 +820,22 @@ lmer(log10(Final_reads) ~ sample_type + treatment + sample_type * treatment + (1
 lmer(log10(Final_reads) ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
         anova %>% data.frame(check.names = F) %>%
         mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*", .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub(":", " * ", x)) %>% column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 ```
 
 ### Host %
 
-*** Which methods was effective in lowering host % ***
+***Which methods was effective in lowering host % ***
 
-
-3. Host DNA % vs sample_type + treatment + sample_type * treatment + subject_id (linear), both stratified and nonstratified
+lmer( Host DNA % vs sample_type + treatment + sample_type * treatment + (1|subject_id) ) 
 
 ```{r warning=F, 'LMER host %'}
 lmer(sequencing_host_prop ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
         summary %>% .$coefficients %>% data.frame(check.names = F) %>%
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% column_to_rownames(var = "x") %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 
 ```
@@ -842,6 +847,7 @@ lmer(sequencing_host_prop ~ sample_type + treatment + sample_type * treatment + 
 lmer(sequencing_host_prop ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame) %>%
         anova %>% data.frame(check.names = F) %>%
         mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*", .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub(":", " * ", x)) %>% column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "serif")
 ```
 
@@ -928,22 +934,6 @@ Stratified:
 
 S.obs ~ sample_type + log10 (Final_reads) + (1|original_sample)
 
-### Species richness (all samples)
-
-``` {r warning=F, "species richness"}
-
-sample_data <- sample_data(phyloseq$phyloseq_count) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))
-lmer_sob <- lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
-lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data) %>% 
-        summary() %>%
-        .$coefficients %>%
-        data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        kbl(format = "html") %>%
-        kable_styling(full_width = 0, html_font = "serif")
-```
-
 ### Species richness (all samples) - ANOVA
 
 ```{r}
@@ -957,12 +947,28 @@ lmer_sob %>%
 
 ```
 
+### Species richness (all samples)
+
+``` {r warning=F, "species richness"}
+
+sample_data <- sample_data(phyloseq$phyloseq_count) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))
+lmer_sob <- lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
+lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+```
+
 All terms were significant.
 
 
 ### Species richness  - stratified (NS)
-
-
 
 ```{r}
 lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
@@ -971,6 +977,8 @@ lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sam
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
@@ -984,6 +992,8 @@ lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subse
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 
@@ -998,11 +1008,11 @@ lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subse
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
-
-
 
 
 ## Shannon {.tabset}
@@ -1014,6 +1024,21 @@ Shannon ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
 Stratified:
 
 Shannon ~ sample_type + log10 (Final_reads) + (1|original_sample)
+
+### ANOVA Shannon
+
+```{r}
+lmer_shannon %>% 
+        anova() %>% 
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+```
 
 ### Shannon (all samples)
 
@@ -1028,21 +1053,10 @@ lmer_shannon %>%
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
-```
-
-### ANOVA Shannon
-
-```{r}
-lmer_shannon %>% 
-        anova() %>% 
-        data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        kbl(format = "html") %>%
-        kable_styling(full_width = 0, html_font = "serif")
-
 ```
 
 ### Shannon  - stratified (NS)
@@ -1054,12 +1068,13 @@ lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|subject_id), data = sub
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
 
 ### Shannon  - stratified (BAL)
-
 
 ```{r}
 lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
@@ -1068,6 +1083,8 @@ lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data 
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
@@ -1081,6 +1098,8 @@ lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data 
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 
@@ -1092,31 +1111,13 @@ lmer(data_shannon ~ treatment + log10 (Final_reads) + (1|original_sample), data 
 
 Inverse Simpson of all samples:
 
-Inverse Simpson ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
+Inverse Simpson ~ sample_type * treatment + (1|original_sample)
 
 
 Stratified:
 
-Inverse Simpson ~ treatment + log10 (Final_reads) + (1|original_sample)
+Inverse Simpson ~ treatment + (1|original_sample)
 
-### Simpson (all samples)
-
-
-
-``` {r warning=F, "Simpson"}        
-
-#Simpson
-
-lmer_invsimpson <- lmer(data_invsimpson ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
-lmer_invsimpson %>% 
-        summary() %>%
-        .$coefficients %>%
-        data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        kbl(format = "html") %>%
-        kable_styling(full_width = 0, html_font = "serif")
-```
 
 ### Inv Simp - ANOVA
 
@@ -1127,10 +1128,31 @@ lmer_invsimpson %>%
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
 
+### Simpson (all samples)
+
+
+``` {r warning=F, "Simpson"}        
+
+#Simpson
+
+lmer_invsimpson <- lmer(data_invsimpson ~ sample_type * treatment + (1|subject_id), data = sample_data)
+lmer_invsimpson %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+```
 
 ### Inverse Simpson - stratified (NS)
 
@@ -1138,12 +1160,14 @@ lmer_invsimpson %>%
 Inverse Simpson ~ sample_type + log10 (Final_reads) + (1|original_sample)
 
 ```{r}
-lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
+lmer(data_invsimpson ~ treatment + (1|subject_id), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
@@ -1151,25 +1175,29 @@ lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|subject_id), data = 
 ### Inverse Simpson - stratified (BAL)
 
 ```{r}
-lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
+lmer(data_invsimpson ~ treatment + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
 
-### Inverse Simpson - stratified (NS)
+### Inverse Simpson - stratified (spt)
 
 ```{r}
-lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
+lmer(data_invsimpson ~ treatment + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Sputum")) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
@@ -1178,11 +1206,27 @@ lmer(data_invsimpson ~ treatment + log10 (Final_reads) + (1|original_sample), da
 
 BPI of all samples:
 
-BPI ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
+BPI ~ sample_type + treatment + log10 (Final_reads) + (1|original_sample)
 
 BPI stratified:
 
-BPI ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
+BPI ~ treatment + log10 (Final_reads) + (1|original_sample)
+
+### BPI -ANOVA
+
+
+```{r}
+lmer_dbp %>% 
+        anova() %>% 
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+```
 
 ### BPI - all samples
 
@@ -1197,22 +1241,23 @@ lmer_dbp %>%
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        kbl(format = "html") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        kbl(format = "html", caption = "Without interaction term") %>%
         kable_styling(full_width = 0, html_font = "serif")
-```
 
-### BPI -ANOVA
-
-
-```{r}
+#BPI
+lmer_dbp <- lmer(dbp ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data)
 lmer_dbp %>% 
-        anova() %>% 
+        summary() %>%
+        .$coefficients %>%
         data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.05 ~ "*",
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        kbl(format = "html") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        kbl(format = "html", caption = "With interaction term") %>%
         kable_styling(full_width = 0, html_font = "serif")
-
 ```
 
 
@@ -1228,6 +1273,7 @@ lmer(dbp ~ treatment + log10 (Final_reads) + (1|subject_id), data = subset(sampl
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
@@ -1241,6 +1287,7 @@ lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
 ```
@@ -1256,6 +1303,7 @@ lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(
         data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "serif")
         
@@ -1271,9 +1319,9 @@ lmer(dbp ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(
 Permanova (Taxa dist ~ log10(final reads) + sample_type + treatment + sample_type * treatment + subject_id) 
 	--> both stratified and nonstratified
 
-### Beta diversity figure
+## Beta diversity figures {.tabset}
 
-PCoA based on Bray-Curtis dissimilarities
+### PCoA based on Bray-Curtis dissimilarities
 
 ``` {r}
 
@@ -1330,7 +1378,7 @@ ordinate(phyloseq_rel_nz,  method = "PCoA", distance = "bray") %>%
 
 ### Beta diversity boxplot
 
-Distances within subject
+Distances between samples within each subject. Mean distance between control <-> treatment for each subject
 
 ``` {r}
 
@@ -1383,7 +1431,15 @@ ggplot(path_bray_dist_long_within_sampleid_from_control, aes(y = dist, fill = tr
 
 ## PERMANOVA test results {.tabset}
 
-### Treatment 1/0
+### Subject as fixed effect vs strata term
+
+**Subject as fixed effect**
+
+adonis (dist ~ sample_type + log10(Final_reads) + treated + subject)
+
+**With strata**
+
+adonis (dist ~ sample_type + log10(Final_reads) + treated, strata = subject)
 
 ``` {r warning=F, "Perm taxa 1"}        
 
@@ -1416,11 +1472,11 @@ bray_perm_uni_strata %>% data.frame(check.names = F) %>% rownames_to_column("row
 
 Treatment significantly affected the beta-diversity. 
 
-Strata term is better representing our study aim.
+**Strata term is better representing our study aim.**
 
 What type of method affected the community at the most?
 
-### Strata term (detailed treatment)
+### PERMANOVA on each treatment
 
 dist ~ sample_type + log10(Final_reads) + lypma + benzonase + host_zero + molysis + qiaamp, strata = subject
 
@@ -1444,7 +1500,7 @@ bray_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.nam
 
 QIAamp showed highest changes. But, it could be sample type specific.
 
-### Interaction term
+### PERMANOVA with interaction term
 
 dist ~ sample_type * treatment + log10(Final_reads), strata = subject
 
@@ -1467,7 +1523,7 @@ bray_perm_inter %>% data.frame(check.names = F) %>% rownames_to_column("row.name
 
 It was sample type specific. We need stratified analysis
 
-### Stratified
+### Stratified (nasal swab)
 
 ``` {r warning=F, "perm taxa 5"}
 
@@ -1545,6 +1601,54 @@ Sputum was affected by Molysis and QIAamp.
 4.2. NS showed no significant change by QIAamp method
 
 4.3. Sputum showed high change after Molysis and QIAamp. However, here, high change may be meaning higher (better) detection efficiencies. Therefore further analysis is required.
+
+# Intermediate results #
+
+```{r}
+
+matrix(nrow=3,ncol=5) %>% data.frame() %>% rename(lyPMA = X1, Benzonase = X2, `Host zero` = X3, Molysis = X4, QIAamp = X5) %>%
+        rownames_to_column("x") %>% mutate(x = c("BAL", "Nasal swab", "Sputum"),
+                                           lyPMA = c("No increase in final reads",
+                                                     "No increase in final reads",
+                                                     "No increase in final reads"),
+                                           Benzonase = c("No decrease in host %",
+                                                         "No decrease in host %",
+                                                         "No decrease in host %"),
+                                           `Host zero` = c(NA,
+                                                           NA,
+                                                           NA),
+                                           Molysis = c("No decrease in host %",
+                                                       "High cahnge of failure in library pep",
+                                                       NA),
+                                           QIAamp = c("No decrease in host %",
+                                                      NA,
+                                                      "No decrease in host %")) %>% column_to_rownames("x") %>%
+        kbl(format = "html", caption = "Table of issues of each treatment method") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+
+matrix(nrow=3,ncol=5) %>% data.frame() %>% rename(lyPMA = X1, Benzonase = X2, `Host zero` = X3, Molysis = X4, QIAamp = X5) %>%
+        rownames_to_column("x") %>% mutate(x = c("BAL", "Nasal swab", "Sputum"),
+                                           lyPMA = c(NA,
+                                                           "Beta changed",
+                                                           "Shannon +"),
+                                           Benzonase = c(NA,
+                                                           NA,
+                                                           "Richness + Shannon + InvSimp +"),
+                                           `Host zero` = c(NA,
+                                                           "Richness + Shannon + InvSimp + BPI -",
+                                                           NA),
+                                           Molysis = c(NA,
+                                                           "Richness + Shannon + InvSimp + BPI -",
+                                                           "Beta changed"),
+                                           QIAamp = c("Beta changed",
+                                                           NA,
+                                                           "Beta  changed")) %>% column_to_rownames("x") %>%
+        kbl(format = "html", caption = "Table of community changes induced by each treatment method") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+```
+
 
 	
 # A5. DA analysis for taxa, by sample type and treatment #

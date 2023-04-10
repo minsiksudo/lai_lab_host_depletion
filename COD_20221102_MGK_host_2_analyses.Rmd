@@ -1,7 +1,7 @@
 ---
-title: "COD_20230330_HOST_1_QC_analysis"
+title: "COD_20230409_HOST_1_QC_analysis"
 author: "Minsik Kim"
-date: "2023-03-30"
+date: "2023-04-09"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -44,7 +44,7 @@ YAML_header <-
 '---
 title: "Host-DNA depletion 1: data wrangling"
 author: "Minsik Kim"
-date: "2032.03.10"
+date: "2032.04.09"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -201,6 +201,45 @@ sample_data <- sample_data(phyloseq$phyloseq_count)
 
 ## Histogram of reads counts and host % {.tabset}
 
+
+### Host proportion calculation
+
+**Host mapped / Total mapped will be used instead of Host mapped / Raw reads**
+
+```{r warning=F, QC1.2.1}
+## figures -----log10
+
+ggarrange(sample_data %>% 
+        subset(., !is.na(.$subject_id)) %>%
+        data.frame() %>%
+        mutate(`Host mapped / Raw reads` = 100 * sequencing_host_prop, 
+               `Host mapped / Total mapped` = Host_mapped / (Host_mapped + Final_reads)) %>% 
+        ggplot(aes(x = host_proportion, y = `Host mapped / Raw reads`)) +
+                geom_point() +
+                theme_classic(base_family = "serif") +
+                ggtitle("Host reads / Raw reads") +
+                theme(legend.position = "top") +
+                xlab("Host % by qPCR"), 
+        sample_data %>% 
+        subset(., !is.na(.$subject_id)) %>%
+        data.frame() %>%
+        mutate(`Host mapped / Raw reads` = 100 * sequencing_host_prop, 
+                `Host mapped / Total mapped` = Host_mapped / (Host_mapped + Final_reads) * 100) %>% 
+        ggplot(aes(x = host_proportion, y = `Host mapped / Total mapped`)) +
+                geom_point() +
+                theme_classic(base_family = "serif") +
+                ggtitle("Host reads / Total mapped reads") +
+                theme(legend.position = "top") +
+                xlab("Host % by qPCR")
+)
+
+sample_data(phyloseq$phyloseq_count)$sequencing_host_prop <- sample_data$Host_mapped / (sample_data$Host_mapped + sample_data$Metaphlan_mapped)
+sample_data(phyloseq$phyloseq_rel)$sequencing_host_prop <- sample_data$Host_mapped / (sample_data$Host_mapped + sample_data$Metaphlan_mapped)
+sample_data(phyloseq$phyloseq_path_rpkm)$sequencing_host_prop <- sample_data$Host_mapped / (sample_data$Host_mapped + sample_data$Metaphlan_mapped)
+
+```
+
+
 ### Figure - regular scale
 
 **Raw scale is not normally distributed**
@@ -263,7 +302,7 @@ sample_data %>%
 
 **Raw % will be used for host%**
 
-```{r warning=F, QC1.2.1}
+```{r warning=F, QC1.2.22}
 ## figures -----log10
 sample_data %>% 
         subset(., !is.na(.$subject_id)) %>%
@@ -1189,7 +1228,7 @@ Inverse Simpson \~ treatment + (1\|original_sample)
 
 
 ```{r}
-lmer_invsimpson <- lmer(data_invsimpson ~ sample_type * treatment + (1|subject_id), data = sample_data)
+lmer_invsimpson <- lmer(data_invsimpson ~ sample_type * treatment + log10(Final_reads) + (1|subject_id), data = sample_data)
 
 lmer_invsimpson %>% 
         anova() %>% 

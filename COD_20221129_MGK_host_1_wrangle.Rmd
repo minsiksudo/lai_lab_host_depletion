@@ -288,7 +288,8 @@ sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %
                                   labels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                sample_type = factor(sample_type,
                                     levels = c("BAL", "nasal_swab", "Sputum", "neg_extraction", "pos_extraction", "neg_depletion", "pos_depletion"), 
-                                    labels = c("BAL", "Nasal swab", "Sputum", "Neg. ext.", "Pos. ext.", "Neg. dep.", "Pos. dep."))) %>%
+                                    labels = c("BAL", "Nasal", "Sputum", "Neg. ext.", "Pos. ext.", "Neg. dep.", "Pos. dep."))) %>%
+        #rename(subject_id = "original_sample") %>%
         sample_data()
 
 

@@ -171,35 +171,45 @@ Fig. 6. Functional analysis by sample type and treatment
 As positive controls are not attached to the phyloseq object yet, the file need not be loaded separately. This need to be revised afterward.
 
 ```{r Loading data}
-setwd(path_working)
-phyloseq <- read_rds("PHY_20221129_MGK_host_tidy_tax.rds")
-phyloseq_path <- read_rds("PHY_20221229_MGK_host_tidy_path.rds")
-controls <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
+phyloseq <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
+
+
+        ####Need to be removed after adding sequenicing data
+                data_qPCR <- read_csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
+                #qPCR data of all the samples sent out sequencing
+                data_qPCR <- subset(data_qPCR, data_qPCR$baylor_other_id %in% c(sample_names(phyloseq$phyloseq_count)) | data_qPCR$baylor_other_id %in% c(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/3_Documentation/Communications/2023-01-24_baylor_shipping_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx", skip = 27) %>% data.frame %>% .$`Optional..............secondary.ID`))
+                
+                data_qPCR <- subset(data_qPCR, data_qPCR$sample_type %in% c("BAL", "nasal_swab", "Sputum", "neg_depletion", "pos_depletion"))
+                data_qPCR$sample_type <- factor(data_qPCR$sample_type, levels = c("BAL", "nasal_swab", "Sputum", "pos_depletion", "neg_depletion"),
+                                                labels = c("BAL", "Nasal", "Sputum", "P depletion", "N depletion"))
+                data_qPCR$treatment <- factor(data_qPCR$treatment, levels = c("control", "lyPMA", "benzonase", "host_zero", "molysis", "qiaamp"),
+                                                labels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"))
+
 
 ```
+
+
 
 ##Loading each data and modification
 
 
 ```{r Calculation of alpha diversity, echo=T}
+
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(data)
+        otu_table <- otu_table(data) %>% .[colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
-        data_shannon <- vegan::diversity(t(otu_table), index = "shannon")                           # calculate Shannon index using vegan package
+        data_shannon <- vegan::diversity(t(otu_table), index = "shannon") # calculate Shannon index using vegan package
         data_hill <- exp(data_shannon)                           # calculate Hills index
-        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, relative = A, aggregate = TRUE) # dominance (Berger-Parker index), etc.
+        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, aggregate = TRUE) # dominance (Berger-Parker index), etc.
         data_invsimpson <- vegan::diversity(t(otu_table), index = "invsimpson")                          # calculate Shannon index using vegan package
         alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
-        alpha_diversity$Row.names <- row.names(alpha_diversity)
-        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = "Row.names")
-        sample_data$sample_type <- as.character(sample_data$sample_type)
-        row.names(sample_data) <- sample_data$Row.names
-        sample_data
+        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
 }
-                                
-sample_data(phyloseq) <- sample_data(alpha_diversity(phyloseq)) 
+sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
+sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
+sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpkm))                                
 #sample_data(phyloseq_path) <- sample_data(alpha_diversity(phyloseq_path)) 
 ```
 
@@ -207,30 +217,20 @@ sample_data(phyloseq) <- sample_data(alpha_diversity(phyloseq))
 ```{r Creating label and setting factor levels}
 
 #sample data loading
-sample_data <- sample_data(phyloseq) %>% data.frame(check.names = F)
-sample_data_path <- phyloseq_path %>% sample_data %>% data.frame(check.names = F)
-
-#making labe4ls for sample type
-label <-  c("BAL","Nasal swab","Sputum")
-names(label) <- c("BAL","nasal_swab","Sputum")
-
-
-#Formattings
-sample_data <- sample_data(phyloseq) %>% data.frame(check.names = F)
-sample_data$treatment <- factor(sample_data$treatment, levels =c("control","lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
+sample_data <- sample_data(phyloseq$phyloseq_count) %>% data.frame(check.names = F)
+sample_data_path <- phyloseq$phyloseq_path_rpkm %>% sample_data %>% data.frame(check.names = F)
 
 ```
 
 
 ```{r relatie abundance calculation and subsetting control/sequencing failed data}
 #phyloseq object
-phyloseq_rel = transform_sample_counts(phyloseq, function(x){x / sum(x)})
+phyloseq_rel = phyloseq$phyloseq_rel
 phyloseq_rel_nz = subset_samples(phyloseq_rel, S.obs != 0)
-phyloseq_rel_control = subset_samples(phyloseq_rel_nz, sample_type != "nasal_swab")
+phyloseq_rel_control = subset_samples(phyloseq_rel_nz, sample_type != "Nasal")
 phyloseq_rel_nz = subset_samples(phyloseq_rel_nz, sample_type != "pos_control" & sample_type != "neg_control")
-phyloseq_path_rel = transform_sample_counts(phyloseq_path, function(x){x / sum(x)})
-phyloseq_path_rel_nz = subset_samples(phyloseq_path_rel, S.obs != 0)
-phyloseq_path_rel_nz = subset_samples(phyloseq_path_rel_nz, sample_type != "pos_control" & sample_type != "neg_control")
+phyloseq_path_nz = subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0)
+phyloseq_path_nz = subset_samples(phyloseq_path_nz, sample_type != "pos_control" & sample_type != "neg_control")
 ```
 
 
@@ -243,70 +243,52 @@ Overview of study design (like Birdy's Figure 1; make it simple and clear, or li
 ```{r}
 
 #2A: Change in total DNA (qPCR)
-
-f2a <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = DNA_host_nondil + DNA_bac_nondil)) +
+f2a <- ggplot(data_qPCR, aes(x = sample_type, y = log10(DNA_host_nondil + DNA_bac_nondil))) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Total DNA by qPCR (ng/μL)") +
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("log<sub>10</sub>(qPCR total DNA)<br>(ng/μL)") +
+        xlab("Sample type") +
         theme_classic (base_size = 12, base_family = "serif") + 
         labs(tag = "A") +
-        theme(plot.tag = element_text(size = 15), legend.position = "top") +              # Plot title size
-        guides(fill = guide_legend(nrow = 1))
-f2a
+        scale_x_discrete(label = c("BAL", "Nasal", "Sputum", "Pos.", "Neg.")) +
+        theme(plot.tag = element_text(size = 15), axis.title.y = element_markdown()) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1, title = "Treatment"))
+
+
 #2B: Change in human DNA (qPCR)
-
-
-f2b <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = DNA_host_nondil)) +
+f2b <- ggplot(data_qPCR, aes(x = sample_type, y = log10(DNA_host_nondil))) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Host DNA (ng/μL)") +
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")) +
+        ylab("log<sub>10</sub>(qPCR host DNA)<br>(ng/μL)") +
+        xlab("Sample type") +
         theme_classic (base_size = 12, base_family = "serif")+ 
         labs(tag = "B") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
-        guides(fill = guide_legend(nrow = 1))
-
-
-
+        scale_x_discrete(label = c("BAL", "Nasal", "Sputum", "Pos.", "Neg.")) +
+        theme(plot.tag = element_text(size = 15), axis.title.y = element_markdown()) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1, title = "Treatment"))
 #2C: Change in 16S DNA (qPCR)
-
-
-f2c <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = DNA_bac_nondil)) +
+f2c <- ggplot(data_qPCR, aes(x = sample_type, y = log10(DNA_bac_nondil))) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridisscale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Bacterial DNA (ng/μL)") +
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")) +
+        ylab("log<sub>10</sub>(qPCR bacterial DNA)<br>(ng/μL)") +
+        xlab("Sample type") +
         theme_classic (base_size = 12, base_family = "serif")+ 
         labs(tag = "C") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
-        guides(fill = guide_legend(nrow = 1))
-
-
+        scale_x_discrete(label = c("BAL", "Nasal", "Sputum", "Pos.", "Neg.")) +
+        theme(plot.tag = element_text(size = 15), axis.title.y = element_markdown()) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1, title = "Treatment"))
 
 #2D. Change in % host (qPCR)
-
-f2d <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = proportion * 100)) +
+f2d <- ggplot(data_qPCR, aes(x = sample_type, y = host_proportion)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Host DNA by qPCR (%)") +
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")) +
+        ylab("Host DNA ratio") +
+        xlab("Sample type") +
         theme_classic (base_size = 12, base_family = "serif") + 
         labs(tag = "D") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
-        guides(fill = guide_legend(nrow = 1))
+        scale_x_discrete(label = c("BAL", "Nasal", "Sputum", "Pos.", "Neg.")) +
+        theme(plot.tag = element_text(size = 15), axis.title.y = element_markdown()) +              # Plot title size
+        guides(fill = guide_legend(nrow = 1, title = "Treatment"))
 
 
 
@@ -325,93 +307,6 @@ ggarrange(f2a, f2b, f2c, f2d, common.legend = T , align = "hv")
 ```
 
 
-# log - scale fig 2 -------------------------------------------------------
-
-```{r}
-#2A: Change in total DNA (qPCR)
-
-
-f2a_log <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = log10(DNA_host_nondil + DNA_bac_nondil))) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("log10(Total DNA) (ng/μL)") +
-        theme_classic (base_size = 12, base_family = "serif") + 
-        labs(tag = "A") +
-        theme(plot.tag = element_text(size = 15), legend.position = "top") +              # Plot title size
-        guides(fill = guide_legend(nrow = 1))
-f2a
-#2B: Change in human DNA (qPCR)
-
-
-f2b_log <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = log10(DNA_host_nondil))) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("log10(Host DNA) (ng/μL)") +
-        theme_classic (base_size = 12, base_family = "serif")+ 
-        labs(tag = "B") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
-        guides(fill = guide_legend(nrow = 1))
-
-
-
-#2C: Change in 16S DNA (qPCR)
-
-
-f2c_log <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = log10(DNA_bac_nondil))) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridisscale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("log10(Bacterial DNA) (ng/μL)") +
-        theme_classic (base_size = 12, base_family = "serif")+ 
-        labs(tag = "C") +
-        
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
-        guides(fill = guide_legend(nrow = 1))
-
-
-
-#2D. Change in % host (qPCR)
-
-f2d <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = proportion * 100)) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Host DNA by qPCR (%)") +
-        theme_classic (base_size = 12, base_family = "serif") + 
-        labs(tag = "D") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
-        guides(fill = guide_legend(nrow = 1))
-
-
-
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_log.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 183, # The height of the plot in inches
-    units = "mm",
-    res = 600
-) #fixing multiple page issue
-ggarrange(f2a_log, f2b_log, f2c_log, f2d, common.legend = T , align = "hv")
-
-dev.off()
-
-#output for markdown
-ggarrange(f2a_log, f2b_log, f2c_log, f2d, common.legend = T , align = "hv")
-```
-
 ##Figure S1, data of control group
 
 ```{r}
@@ -421,7 +316,7 @@ controls$treatment <- factor(controls$treatment, levels = c("control","lyPMA", "
 fSa <- ggplot(controls, aes(x = sample_type, y = DNA_host_nondil + DNA_bac_nondil)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_x_discrete(name ="Sample type",
                          labels=c("HD_neg","HD_pos","EXT_neg", "EXT_pos"))+
         ylab("Total DNA by qPCR (ng/μL)") +
@@ -433,7 +328,7 @@ fSa <- ggplot(controls, aes(x = sample_type, y = DNA_host_nondil + DNA_bac_nondi
 fSa_log <- ggplot(controls, aes(x = sample_type, y = log10(DNA_host_nondil + DNA_bac_nondil))) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_x_discrete(name ="Sample type",
                          labels=c("HD_neg","HD_pos","EXT_neg", "EXT_pos"))+
         ylab("log10(Total DNA) (ng/μL)") +
@@ -448,7 +343,7 @@ fSa_log
 fSb <-ggplot(controls, aes(x = sample_type, y = DNA_host_nondil)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_x_discrete(name ="Sample type",
                          labels=c("HD_neg","HD_pos","EXT_neg", "EXT_pos"))+
         ylab("Host DNA (ng/μL)") +
@@ -460,7 +355,7 @@ fSb <-ggplot(controls, aes(x = sample_type, y = DNA_host_nondil)) +
 fSb_log <-ggplot(controls, aes(x = sample_type, y = log10(DNA_host_nondil))) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_x_discrete(name ="Sample type",
                          labels=c("HD_neg","HD_pos","EXT_neg", "EXT_pos"))+
         ylab("log10(Host DNA) (ng/μL)") +
@@ -476,7 +371,7 @@ fSb_log <-ggplot(controls, aes(x = sample_type, y = log10(DNA_host_nondil))) +
 fSc <- ggplot(controls, aes(x = sample_type, y = DNA_bac_nondil)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_x_discrete(name ="Sample type",
                          labels=c("HD_neg","HD_pos","EXT_neg", "EXT_pos"))+
         ylab("Bacterial DNA (ng/μL)") +
@@ -488,7 +383,7 @@ fSc <- ggplot(controls, aes(x = sample_type, y = DNA_bac_nondil)) +
 fSc_log <- ggplot(controls, aes(x = sample_type, y = log10(DNA_bac_nondil))) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_x_discrete(name ="Sample type",
                          labels=c("HD_neg","HD_pos","EXT_neg", "EXT_pos"))+
         ylab("log10(Bacterial DNA) (ng/μL)") +
@@ -504,7 +399,7 @@ fSc
 fSd <- ggplot(controls, aes(x = sample_type, y = proportion * 100)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_x_discrete(name ="Sample type",
                          labels=c("HD_neg","HD_pos","EXT_neg", "EXT_pos"))+
         ylab("Host DNA (%)") +
@@ -551,67 +446,59 @@ ggarrange(f2a_log, f2b_log, f2c_log, f2d, common.legend = T , align = "hv")
 #	- Final_reads
 
 
-f3a <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = Raw_reads)) +
+f3a <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(x = sample_type, y = log10(Raw_reads))) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Raw reads") +
         theme_classic (base_size = 12, base_family = "serif") + 
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Sample type")+
+        theme(axis.title.y = element_markdown(),
+              plot.tag = element_text(size = 15)) +
+        ylab("log<sub>10</sub>(raw reads)") +
         labs(tag = "A") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
         guides(fill = guide_legend(nrow = 1))
 
 #	- Host_mapped
 
 
-f3b <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = Host_mapped)) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Host mapped reaeds") +
+f3b <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(x = sample_type, y = log10(Host_mapped))) +
         theme_classic (base_size = 12, base_family = "serif")+ 
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Sample type")+
+        theme(axis.title.y = element_markdown(),
+              plot.tag = element_text(size = 15)) +
+        ylab("log<sub>10</sub>(host reads)") +
         labs(tag = "B") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
         guides(fill = guide_legend(nrow = 1))
 
 
 #	- % Host (we have used Host_mapped/Raw_reads in prior papers)
 
+#	- Final_reads
 
-
-f3c <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = Host_mapped/Raw_reads)) +
+f3c <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(x = sample_type, y = log10(Final_reads))) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Sequencing host DNA (%)") +
-        theme_classic (base_size = 12, base_family = "serif")+ 
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Sample type")+
+        ylab("log<sub>10</sub>(final reads)") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        theme(axis.title.y = element_markdown(),
+              plot.tag = element_markdown(size = 15)) +
         labs(tag = "C") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
         guides(fill = guide_legend(nrow = 1))
 
 
-#	- Final_reads
-
-f3d <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(x = sample_type, y = Final_reads)) +
+#	- % Host (we have used Host_mapped/Raw_reads in prior papers)
+f3d <- ggplot(subset(sample_data, sample_data$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(x = sample_type, y = sequencing_host_prop)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        theme_classic (base_size = 12, base_family = "serif")+ 
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum"))+
-        ylab("Final reads") +
-        theme_classic (base_size = 12, base_family = "serif") + 
+                         breaks=c("BAL","Nasal","Sputum"))+
+        theme(axis.title.y = element_markdown(),
+              plot.tag = element_text(size = 15)) +
+        ylab("Host ratio by sequencing") +
         labs(tag = "D") +
-        theme(plot.tag = element_text(size = 15)) +              # Plot title size
         guides(fill = guide_legend(nrow = 1))
 
 
@@ -638,96 +525,29 @@ ggarrange(f3a, f3b, f3c, f3d, common.legend = T, align = "hv")
 
 #Using the boxplots/PCoA you have shown previously alone will make the reader misinterpret the result without showing this relationship
 
-
-facet_figure <- function(data, target) {
-        sample_data <- sample_data(data) %>% data.frame(check.names = F)
-        sample_data$treatment <- factor(sample_data$treatment, levels = c("control", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
-        sample_data$sample_type <- tolower(sample_data$sample_type)
-        sample_data$`log10(Final_reads)` <- log10(sample_data$Final_reads)
-        names(sample_data) <- ifelse(names(sample_data) == "S.obs", "species_richness", names(sample_data))
-        names(sample_data) <- ifelse(names(sample_data) == "dbp", "berger_parker", names(sample_data))
-        sample_data$sample_type <- factor(sample_data$sample_type, levels = c("bal", "nasal_swab", "sputum"))
-        file1_long <- sample_data %>%
-                filter(sample_type %in% c("bal", "nasal_swab", "sputum")) %>%
-                select(sample_type, treatment, Raw_reads, Host_mapped, Final_reads, "log10(Final_reads)",Metaphlan_mapped, sequencing_host_prop, total_reads, species_richness, data_invsimpson, data_shannon, berger_parker) %>%
-                pivot_longer(cols = c("Raw_reads", "Host_mapped", "Final_reads", "log10(Final_reads)", "total_reads", "Metaphlan_mapped", "sequencing_host_prop", "species_richness", "data_shannon", "data_invsimpson", "berger_parker"), names_to = "feature", values_to = "value") %>% 
-                mutate(feature = factor(feature, levels = c("Raw_reads", "Host_mapped", "Final_reads","log10(Final_reads)", "total_reads", "Metaphlan_mapped", "sequencing_host_prop", "species_richness", "data_shannon", "data_invsimpson", "berger_parker"))) 
-        p2 <- file1_long %>% 
-                filter(feature == target) %>%
-                ggboxplot(x = "treatment", y = "value", fill= "treatment", palette = viridis(6)) +
-                guides(fill=guide_legend(title="Treatment"))
-        
-        facet(p2 + theme_classic(), facet.by = c("sample_type", "feature"), scales = "free_y") +
-                xlab("Treatment") +
-                #guides(x =  guide_axis(angle = 90)) +
-                aes(fill = viridis(6))
-        # + guides(x =  guide_axis(angle = 90))                                                
-}
-
-
-facet_figure(phyloseq, c("data_shannon", "data_invsimpson", "berger_parker")) +
-#scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) +
-        scale_x_discrete(name ="Sample type",
-                         breaks=c("BAL","nasal_swab","Sputum"),
-                         labels=c("BAL","Nasal swab","Sputum")) +
-        ylab("") +
-        theme_classic (base_size = 6, base_family = "serif") + 
-        labs(tag = "D") +
-        theme(plot.tag = element_text(size = 10)) 
-
-
-
-label <-  c("BAL","Nasal swab","Sputum")
-names(label) <- c("BAL","nasal_swab","Sputum")
-
-f4a <-        ggplot(subset(sample_data(phyloseq), sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(y = S.obs)) +
+f4a <- ggplot(subset(sample_data(phyloseq$phyloseq_count), sample_data$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(y = S.obs)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         ylab("Species richness") +
         theme_classic (base_size = 12, base_family = "serif") + 
         labs(tag = "A") +
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label)) + 
+        facet_wrap(~sample_type) + 
         guides(fill = guide_legend(nrow = 1))
 
-
-f4b <-        ggplot(subset(sample_data(phyloseq), sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(y = data_shannon)) +
+f4b <-        ggplot(subset(sample_data(phyloseq$phyloseq_count), sample_data$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(y = data_invsimpson)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Shannon") +
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Inverse simpson") +
         theme_classic (base_size = 12, base_family = "serif") + 
         labs(tag = "B") +
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label)) + 
-        guides(fill = guide_legend(nrow = 1))
-
-f4c <-        ggplot(subset(sample_data(phyloseq), sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(y = data_invsimpson)) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Inverse simpson") +
-        theme_classic (base_size = 12, base_family = "serif") + 
-        labs(tag = "C") +
-        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label)) + 
-        guides(fill = guide_legend(nrow = 1))
-
-f4d <-        ggplot(subset(sample_data(phyloseq), sample_data$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(y = dbp)) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Berger-Parker index") +
-        theme_classic (base_size = 12, base_family = "serif") + 
-        labs(tag = "D") +
-        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label)) + 
+        facet_wrap(~sample_type) + 
         guides(fill = guide_legend(nrow = 1))
 
 
-
-f4ad <- ggarrange(f4a, f4b, f4c, f4d, common.legend = T, align = "hv") # alpha diversity plots
+f4ad <- ggarrange(f4a, f4b, common.legend = T, align = "hv") # alpha diversity plots
 
 
 #Relative abundacnes for beta diveristy indices
@@ -739,12 +559,12 @@ pca_bray <- ordinate(phyloseq_rel_nz,  method = "PCoA", distance = "bray")
 f4e <- ordinate(phyloseq_rel_nz,  method = "PCoA", distance = "bray") %>%
         plot_ordination(phyloseq_rel_nz, ., col = "treatment", shape = "sample_type" ) + 
         #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) +
-        scale_color_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_shape(name = "Sample type", labels = c("BAL", "Nasal swab", "Sputum")) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_shape(name = "Sample type", labels = c("BAL", "Nasal swab", "Sputum", "Pos.", "Neg.")) +
         geom_point(size = 3) +
         theme_classic (base_size = 12, base_family = "serif") +
         theme(plot.tag = element_text(size = 15), legend.spacing = unit(0, 'cm'), legend.key.height = unit(0.4, "cm")) + #legend.position = c(0.9, 0.4)
-        labs(tag = "E")
+        labs(tag = "C")
 
 f4e
 
@@ -780,19 +600,19 @@ bray_dist_long_within_sampleid <- subset(bray_dist_long, bray_dist_long$sample_i
 bray_dist_long_within_sampleid_from_control <- subset(bray_dist_long_within_sampleid, bray_dist_long_within_sampleid$method_1 == "control" | bray_dist_long_within_sampleid$method_2 == "control" )
 bray_dist_long_within_sampleid_from_control$treatment <- bray_dist_long_within_sampleid_from_control$method_1
 bray_dist_long_within_sampleid_from_control$treatment <- ifelse(bray_dist_long_within_sampleid_from_control$treatment == "control", bray_dist_long_within_sampleid_from_control$method_2, bray_dist_long_within_sampleid_from_control$treatment)
-bray_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", bray_dist_long_within_sampleid_from_control$iso1), "nasal_swab",
+bray_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", bray_dist_long_within_sampleid_from_control$iso1), "Nasal",
                                                                   ifelse(grepl("CFB", bray_dist_long_within_sampleid_from_control$iso1), "Sputum",
                                                                          ifelse(grepl("BAL", bray_dist_long_within_sampleid_from_control$iso1), "BAL", NA)))
 bray_dist_long_within_sampleid_from_control
 f4f <- ggplot(bray_dist_long_within_sampleid_from_control, aes(y = dist, fill = treatment)) +
         geom_boxplot() +
         #scale_fill_manual(values = c(viridis(6)[2:6])) +
-        scale_fill_manual(values = c("#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Sample pair distances") +
+        scale_fill_manual(values = c("#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Distances within subject") +
         theme_classic (base_size = 12, base_family = "serif") + 
-        labs(tag = "F") +
+        labs(tag = "D") +
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label))
+        facet_wrap(~sample_type)
 
 
 
@@ -802,7 +622,7 @@ png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microb
     units = "mm",
     res = 600
 ) #fixing multiple page issue
-ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 1, align = "hv"), ncol = 1, align = "hv") +
+ggarrange(f4ad, f4e, f4f, ncol = 1, align = "hv") +
         guides(fill = guide_legend(nrow = 1))
  # alpha diversity plots
 #ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
@@ -812,7 +632,7 @@ ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 1, align = "hv"), ncol = 1, align = "
 dev.off()
 
 #markdown output
-ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 1, align = "hv"), ncol = 1, align = "hv") +
+ggarrange(f4ad, f4e, f4f, ncol = 1, align = "hv") +
         guides(fill = guide_legend(nrow = 1))
 
 
@@ -821,6 +641,148 @@ ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 1, align = "hv"), ncol = 1, align = "
 
 
 
+
+##Figure 4 stratified beta
+
+```{r}
+
+#Alpha and beta diversity. I think we are going to have to highlight somehow the relationship between effective sequencing depth (ie Final_reads) and alpha diversity/beta diversity.
+
+#Using the boxplots/PCoA you have shown previously alone will make the reader misinterpret the result without showing this relationship
+
+f4a <- ggplot(subset(sample_data(phyloseq$phyloseq_count), sample_data$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(y = S.obs)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Species richness") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "A") +
+        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        facet_wrap(~sample_type) + 
+        guides(fill = guide_legend(nrow = 1))
+
+f4b <-        ggplot(subset(sample_data(phyloseq$phyloseq_count), sample_data$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(y = data_invsimpson)) +
+        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
+        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Inverse simpson") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "B") +
+        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        facet_wrap(~sample_type) + 
+        guides(fill = guide_legend(nrow = 1))
+
+
+f4ad <- ggarrange(f4a, f4b, common.legend = T, align = "hv") # alpha diversity plots
+
+
+#Relative abundacnes for beta diveristy indices
+
+pca_bray <- ordinate(phyloseq_rel_nz,  method = "PCoA", distance = "bray")
+
+pca_bray_bal <- ordinate(subset_samples(phyloseq_rel_nz, sample_type == "BAL"),  method = "PCoA", distance = "bray")
+pca_bray_ns <- ordinate(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"),  method = "PCoA", distance = "bray")
+pca_bray_spt <- ordinate(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"),  method = "PCoA", distance = "bray")
+#ordination plot
+
+f4c <- ordinate(subset_samples(phyloseq_rel_nz, sample_type == "BAL"),  method = "PCoA", distance = "bray") %>%
+        plot_ordination(phyloseq_rel_nz, ., col = "original_sample", shape = "treatment") + 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Subject",
+                           labels = c("A","B", "C", "D", "E", "F", "G", "H", "I", "J", "K")) + 
+        scale_shape_discrete(name = "Treatment") + 
+        geom_point(size = 3) +
+        theme_classic (base_size = 12, base_family = "serif") +
+        theme(plot.tag = element_text(size = 15), legend.spacing = unit(0, 'cm'), legend.key.height = unit(0.4, "cm")) + #legend.position = c(0.9, 0.4)
+        labs(tag = "C")
+f4d <- ordinate(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"),  method = "PCoA", distance = "bray") %>%
+        plot_ordination(phyloseq_rel_nz, ., col = "original_sample", shape = "treatment") + 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3", "red", "blue", "green", "gray"), name = "Subject",
+                           labels = c("A","B", "C", "D", "E", "F", "G", "H", "I", "J", "K")) + 
+        scale_shape_discrete(name = "Treatment") + 
+        geom_point(size = 3) +
+        theme_classic (base_size = 12, base_family = "serif") +
+        theme(plot.tag = element_text(size = 15), legend.spacing = unit(0, 'cm'), legend.key.height = unit(0.4, "cm")) + #legend.position = c(0.9, 0.4)
+        labs(tag = "D")
+f4e <- ordinate(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"),  method = "PCoA", distance = "bray") %>%
+        plot_ordination(phyloseq_rel_nz, ., col = "original_sample", shape = "treatment") + 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Subject",
+                           labels = c("A","B", "C", "D", "E", "F", "G", "H", "I", "J", "K")) + 
+        scale_shape_discrete(name = "Treatment") + 
+        geom_point(size = 3) +
+        theme_classic (base_size = 12, base_family = "serif") +
+        theme(plot.tag = element_text(size = 15), legend.spacing = unit(0, 'cm'), legend.key.height = unit(0.4, "cm")) + #legend.position = c(0.9, 0.4)
+        labs(tag = "E")
+
+f4ce <- ggarrange(f4c, f4d, f4e, common.legend = T, align = "hv", ncol = 3, legend = "right") # alpha diversity plots
+
+
+#distances of betadiversity - boxplots
+library(harrietr)
+
+bray_dist_long <- distance(phyloseq_rel_nz, method="bray") %>% as.matrix() %>% melt_dist() #making long data of distance matrices
+#Adding sample type and treatment name. 
+#this can be also done by merging metadata into the `bray_dist_long`
+names <- data.frame(str_split_fixed(bray_dist_long$iso1, "_", 3))
+names2 <- data.frame(str_split_fixed(bray_dist_long$iso2, "_", 3))
+bray_dist_long$sample_id_1 <- paste(names$X1, names$X2, sep = "_")
+bray_dist_long$method_1 <- ifelse(grepl("control", bray_dist_long$iso1),"control", 
+                                  ifelse(grepl("lyPMA", bray_dist_long$iso1),"lypma", 
+                                         ifelse(grepl("benzonase", bray_dist_long$iso1),"benzonase", 
+                                                ifelse(grepl("host", bray_dist_long$iso1),"host_zero", 
+                                                       ifelse(grepl("qia", bray_dist_long$iso1),"qiaamp", 
+                                                              ifelse(grepl("moly", bray_dist_long$iso1),"molysis", 
+                                                                     NA))))))
+#Adding data for iso 2 also should be done
+bray_dist_long$sample_id_2 <- paste(names2$X1, names2$X2, sep = "_")
+bray_dist_long$method_2 <-ifelse(grepl("control", bray_dist_long$iso2),"control", 
+                                 ifelse(grepl("lyPMA", bray_dist_long$iso2),"lypma", 
+                                        ifelse(grepl("benzonase", bray_dist_long$iso2),"benzonase", 
+                                               ifelse(grepl("host", bray_dist_long$iso2),"host_zero", 
+                                                      ifelse(grepl("qia", bray_dist_long$iso2),"qiaamp", 
+                                                             ifelse(grepl("moly", bray_dist_long$iso2),"molysis", 
+                                                                    NA))))))
+#subsetting distances of my interest
+bray_dist_long_within_sampleid <- subset(bray_dist_long, bray_dist_long$sample_id_1 == bray_dist_long$sample_id_2)
+bray_dist_long_within_sampleid_from_control <- subset(bray_dist_long_within_sampleid, bray_dist_long_within_sampleid$method_1 == "control" | bray_dist_long_within_sampleid$method_2 == "control" )
+bray_dist_long_within_sampleid_from_control$treatment <- bray_dist_long_within_sampleid_from_control$method_1
+bray_dist_long_within_sampleid_from_control$treatment <- ifelse(bray_dist_long_within_sampleid_from_control$treatment == "control", bray_dist_long_within_sampleid_from_control$method_2, bray_dist_long_within_sampleid_from_control$treatment)
+bray_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", bray_dist_long_within_sampleid_from_control$iso1), "Nasal",
+                                                                  ifelse(grepl("CFB", bray_dist_long_within_sampleid_from_control$iso1), "Sputum",
+                                                                         ifelse(grepl("BAL", bray_dist_long_within_sampleid_from_control$iso1), "BAL", NA)))
+bray_dist_long_within_sampleid_from_control
+f4f <- ggplot(bray_dist_long_within_sampleid_from_control, aes(y = dist, fill = treatment)) +
+        geom_boxplot() +
+        #scale_fill_manual(values = c(viridis(6)[2:6])) +
+        scale_fill_manual(values = c("#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Distances within subject") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        labs(tag = "D") +
+        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") +
+        facet_wrap(~sample_type)
+
+
+
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_stratified.png",   # The directory you want to save the file in
+    width = 183, # The width of the plot in inches
+    height = 220, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+ggarrange(f4ad, f4ce, f4f, ncol = 1, align = "hv") +
+        guides(fill = guide_legend(nrow = 1))
+ # alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+
+dev.off()
+
+#markdown output
+ggarrange(f4ad, f4ce, f4f, ncol = 1, align = "hv") +
+        guides(fill = guide_legend(nrow = 1))
+
+
+
+```
 
 ##Figure 5.
 Differential abundance.
@@ -882,7 +844,7 @@ fit_data$results %>% subset(., .$metadata != "sample_type") %>%  subset(., .$qva
 #NS
 # # y ~ log(final reads) + sample_type + treatment 
 
-phyloseq_rel_nz_ns <- subset_samples(phyloseq_rel_nz, sample_type == "nasal_swab")
+phyloseq_rel_nz_ns <- subset_samples(phyloseq_rel_nz, sample_type == "Nasal")
 sample_data_sample <- sample_data(phyloseq_rel_nz_ns) %>% data.frame()
 otu_data_sample <- otu_table(phyloseq_rel_nz_ns) %>% t %>% data.frame()
 sample_data_sample$sampletype_treatment <- paste(sample_data_sample$sample_type, sample_data_sample$treatment, sep = ":")
@@ -988,8 +950,8 @@ species_italic <- function(data) {
         names <- gsub(" sp.", "* sp.", names)
         names <- gsub(" group", "* group.", names)
         names <- ifelse(grepl("[*]", names), 
-                                                        paste("*", names, sep = ""), 
-                                                        paste("*", names, "*", sep = ""))
+                        paste("*", names, sep = ""), 
+                        paste("*", names, "*", sep = ""))
         rownames(data) <- names
         data
 }
@@ -1002,22 +964,17 @@ phyloseq_rel_nz_ns_sig_fig
 
 #qval sig table
 
+sig_data_ns <- ifelse(fit_data_ns_20 %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads")) < 0.1, "*", NA)
+sig_data_bal <- ifelse(fit_data_bal_20 %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads")) < 0.1,"*", NA)
+sig_data_spt <- ifelse(fit_data_spt_20 %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads")) < 0.1,"*", NA)
 
-        sig_data_ns <- ifelse(fit_data_ns_20 %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads")) < 0.1,
-                              "*", NA)
-        
-        sig_data_bal <- ifelse(fit_data_bal_20 %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads")) < 0.1,
-                               "*", NA)
-        
-        sig_data_spt <- ifelse(fit_data_spt_20 %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-", "min", "log10.Final_reads")) < 0.1,
-                               "*", NA)
-        sig_data_spt <- gather(data.frame(sig_data_spt) %>% rownames_to_column(var = "feature"), treatment, significance, benzonase:qiaamp, factor_key=TRUE)
-        sig_data_ns <- gather(data.frame(sig_data_ns) %>% rownames_to_column(var = "feature"), treatment, significance, benzonase:qiaamp, factor_key=TRUE)
-        sig_data_bal <- gather(data.frame(sig_data_bal) %>% rownames_to_column(var = "feature"), treatment, significance, benzonase:qiaamp, factor_key=TRUE)
+sig_data_spt <- gather(data.frame(sig_data_spt) %>% rownames_to_column(var = "feature"), treatment, significance, benzonase:qiaamp, factor_key=TRUE)
+sig_data_ns <- gather(data.frame(sig_data_ns) %>% rownames_to_column(var = "feature"), treatment, significance, benzonase:qiaamp, factor_key=TRUE)
+sig_data_bal <- gather(data.frame(sig_data_bal) %>% rownames_to_column(var = "feature"), treatment, significance, benzonase:qiaamp, factor_key=TRUE)
 
-        sig_data_spt$treatment <- factor(sig_data_spt$treatment, levels =c("control","lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
-        sig_data_bal$treatment <- factor(sig_data_bal$treatment, levels =c("control","lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
-        sig_data_ns$treatment <- factor(sig_data_ns$treatment, levels =c("control","lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
+sig_data_spt$treatment <- factor(sig_data_spt$treatment, levels =c("control","lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
+sig_data_bal$treatment <- factor(sig_data_bal$treatment, levels =c("control","lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
+sig_data_ns$treatment <- factor(sig_data_ns$treatment, levels =c("control","lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
         
 phyloseq_rel_nz_bal_sig_fig[phyloseq_rel_nz_bal_sig_fig == 0] <- NA
 phyloseq_rel_nz_ns_sig_fig[phyloseq_rel_nz_ns_sig_fig == 0] <- NA
@@ -1117,67 +1074,44 @@ functional analysis
 
 # 
 
-f6a <-        ggplot(subset(sample_data(phyloseq_path), sample_data_path$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(y = S.obs)) +
+f6a <-        ggplot(subset(sample_data(phyloseq_path), sample_data_path$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(y = S.obs)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         ylab("Species richness") +
         theme_classic (base_size = 12, base_family = "serif") + 
         labs(tag = "A") +
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label)) + 
+        facet_wrap(~sample_type) + 
         guides(fill = guide_legend(nrow = 1))
 
 
-f6b <-        ggplot(subset(sample_data(phyloseq_path), sample_data_path$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(y = data_shannon)) +
+f6b <-  ggplot(subset(sample_data(phyloseq_path), sample_data_path$sample_type %in% c("Sputum", "Nasal", "BAL")), aes(y = data_invsimpson)) +
         geom_boxplot(aes(fill = treatment), lwd = 0.2) +
         #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Shannon") +
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ylab("Inverse simpson") +
         theme_classic (base_size = 12, base_family = "serif") + 
         labs(tag = "B") +
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label)) + 
-        guides(fill = guide_legend(nrow = 1))
-
-f6c <-        ggplot(subset(sample_data(phyloseq_path), sample_data_path$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(y = data_invsimpson)) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Inverse simpson") +
-        theme_classic (base_size = 12, base_family = "serif") + 
-        labs(tag = "C") +
-        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label)) + 
-        guides(fill = guide_legend(nrow = 1))
-
-f6d <-        ggplot(subset(sample_data(phyloseq_path), sample_data_path$sample_type %in% c("Sputum", "nasal_swab", "BAL")), aes(y = dbp)) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        #scale_fill_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + # color using viridis
-        scale_fill_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Berger-Parker index") +
-        theme_classic (base_size = 12, base_family = "serif") + 
-        labs(tag = "D") +
-        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label)) + 
+        facet_wrap(~sample_type) + 
         guides(fill = guide_legend(nrow = 1))
 
 
-
-f6ad <- ggarrange(f6a, f6b, f6c, f6d, common.legend = T, align = "hv") # alpha diversity plots
+f6ad <- ggarrange(f6a, f6b, common.legend = T, align = "hv") # alpha diversity plots
 
 
 #Relative abundacnes for beta diveristy indices
 
 
-pca_bray_path <- ordinate(phyloseq_path_rel_nz,  method = "PCoA", distance = "bray")
+pca_bray_path <- ordinate(phyloseq_path_nz,  method = "PCoA", distance = "bray")
 
 #ordination plot
 
-f6e <- ordinate(phyloseq_path_rel_nz,  method = "PCoA", distance = "bray") %>%
-        plot_ordination(phyloseq_path_rel_nz, ., col = "treatment", shape = "sample_type" ) + 
+f6e <- ordinate(phyloseq_path_nz,  method = "PCoA", distance = "bray") %>%
+        plot_ordination(phyloseq_path_nz, ., col = "treatment", shape = "sample_type" ) + 
         #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) +
-        scale_color_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         scale_shape(name = "Sample type", labels = c("BAL", "Nasal swab", "Sputum")) +
         geom_point(size = 3) +
         theme_classic (base_size = 12, base_family = "serif") +
@@ -1188,7 +1122,7 @@ f6e <- ordinate(phyloseq_path_rel_nz,  method = "PCoA", distance = "bray") %>%
 #distances of betadiversity - boxplots
 library(harrietr)
 
-bray_dist_long_path <- distance(phyloseq_path_rel_nz, method="bray") %>% as.matrix() %>% melt_dist() #making long data of distance matrices
+bray_dist_long_path <- distance(phyloseq_path_nz, method="bray") %>% as.matrix() %>% melt_dist() #making long data of distance matrices
 #Adding sample type and treatment name. 
 #this can be also done by merging metadata into the `bray_dist_long`
 names <- data.frame(str_split_fixed(bray_dist_long_path$iso1, "_", 3))
@@ -1215,7 +1149,7 @@ path_bray_dist_long_within_sampleid <- subset(bray_dist_long_path, bray_dist_lon
 path_bray_dist_long_within_sampleid_from_control <- subset(path_bray_dist_long_within_sampleid, path_bray_dist_long_within_sampleid$method_1 == "control" | path_bray_dist_long_within_sampleid$method_2 == "control" )
 path_bray_dist_long_within_sampleid_from_control$treatment <- path_bray_dist_long_within_sampleid_from_control$method_1
 path_bray_dist_long_within_sampleid_from_control$treatment <- ifelse(path_bray_dist_long_within_sampleid_from_control$treatment == "control", path_bray_dist_long_within_sampleid_from_control$method_2, path_bray_dist_long_within_sampleid_from_control$treatment)
-path_bray_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", path_bray_dist_long_within_sampleid_from_control$iso1), "nasal_swab",
+path_bray_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", path_bray_dist_long_within_sampleid_from_control$iso1), "Nasal",
                                                                   ifelse(grepl("CFB", path_bray_dist_long_within_sampleid_from_control$iso1), "Sputum",
                                                                          ifelse(grepl("BAL", path_bray_dist_long_within_sampleid_from_control$iso1), "BAL", NA)))
 
@@ -1223,12 +1157,12 @@ path_bray_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS
 f6f <- ggplot(path_bray_dist_long_within_sampleid_from_control, aes(y = dist, fill = treatment)) +
         geom_boxplot() +
         #scale_fill_manual(values = c(viridis(6)[2:6])) +
-        scale_fill_manual(values = c("#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         ylab("Sample pair distances") +
         theme_classic (base_size = 12, base_family = "serif") + 
         labs(tag = "F") +
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") +
-        facet_wrap(~sample_type, labeller = labeller(sample_type = label))
+        facet_wrap(~sample_type)
 
 
 

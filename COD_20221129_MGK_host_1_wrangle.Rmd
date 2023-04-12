@@ -260,7 +260,7 @@ sample_data <- merge(readstat, sample_result, by = "baylor_other_id") %>%
 ```{r, warning=F, `Adding more data to phyloseq object`}
 #Adding host DNA proportion of sequencing results
 sample_data <- sample_data %>% data.frame %>% 
-        mutate(sequencing_host_prop = Host_mapped/Raw_reads, .after = Metaphlan_mapped) %>%
+        mutate(sequencing_host_prop = Host_mapped/Reads_after_trim, .after = Metaphlan_mapped) %>%
         sample_data
 
 #Adding Treatment status

@@ -1,7 +1,7 @@
 ---
-title: "COD_20230301_HOST_1_Wrangle"
+title: "COD_20230412_HOST_1_Wrangle"
 author: "Minsik Kim"
-date: "2023-03-14"
+date: "2023-04-12"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -222,21 +222,30 @@ sample_result <- sample_result %>% mutate(
 
 ```{r warning=FALSE, `Loading phyloseq object`}
 
-phyloseq <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
+phyloseq1 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
+phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
 
-#Contorl data
-##phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/")
+
 #Merging
-##phyloseq <- merge_phyloseq(phyloseq, phyloseq2)
 
-readstat <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt", sep = "\t") %>%
+readstat1 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt", sep = "\t") %>%
         rename(baylor_other_id = SampleID)
 #control data
-#readstat2 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed", sep = "\t") %>%
-#        rename(baylor_other_id = SampleID)
-#Merging
-##readstat <- rbind(readstat1, readstat2)
+readstat2 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/ReadStats.txt", sep = "\t") %>%
+        rename(baylor_id = SampleID)
 
+baylor_ids <- rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/3_Documentation/Communications/2022-06-22_baylor_shipping_host_depletion_lowinput/CMMR_MetadataCapture_20220622_LaiP-PQ00181_Host DNADepletion.xlsx", skip = 27),
+                    baylor_ids2 <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx", skip = 27)
+)
+
+baylor_ids <- baylor_ids %>% select(c("UNIQUE alphanumeric ID", "Optional              secondary ID")) %>%
+        rename(baylor_id = "UNIQUE alphanumeric ID",
+               baylor_other_id = "Optional              secondary ID",) %>%
+        subset(., !is.na(.$baylor_other_id))
+
+#Merging
+readstat <- rbind(merge(readstat1, baylor_ids, by = "baylor_other_id"),
+                  merge(readstat2, baylor_ids, by = "baylor_id"))
 
 #Generating baylor ID
 sample_result <- sample_result %>%
@@ -249,17 +258,26 @@ sample_result <- sample_result %>%
             grepl("NS_26|NS_37", sample_id) ~ paste(sample_id, aliquot, treatment, sep = "_"),
             TRUE ~ paste(sample_id, treatment, sep = "_"))) %>%
         mutate(baylor_other_id = gsub("20220610", "20220606", baylor_other_id)) # older extraction date used for baylor shipping log
+        
+
 #Merging Readstat + metadata
-sample_data <- merge(readstat, sample_result, by = "baylor_other_id") %>%
-        column_to_rownames(var = "baylor_other_id") %>%
+sample_data1 <- merge(readstat, sample_result, by = "baylor_other_id") %>%
+        mutate(baylor_other_id2 = baylor_other_id) %>%
+        column_to_rownames(var = "baylor_other_id2") %>%
         sample_data()
+sample_data2 <- merge(readstat, sample_result, by = "baylor_other_id") %>%
+        mutate(baylor_id2 = baylor_id) %>%
+        column_to_rownames(var = "baylor_id2") %>%
+        sample_data()
+phyloseq <- merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1), merge_phyloseq(sample_data(sample_data2), phyloseq2))
+
 ```
 
 ***2. Adding more data to the phyloseq - sampledata***
 
 ```{r, warning=F, `Adding more data to phyloseq object`}
 #Adding host DNA proportion of sequencing results
-sample_data <- sample_data %>% data.frame %>% 
+sample_data <- sample_data(phyloseq) %>% data.frame %>% 
         mutate(sequencing_host_prop = Host_mapped/Reads_after_trim, .after = Metaphlan_mapped) %>%
         sample_data
 
@@ -269,11 +287,11 @@ sample_data$treated <- ifelse(is.na(sample_data$treated), 0, sample_data$treated
 
 # Adding library prep results --------------------------------------------
 lib_fail_list <- c("NS_6_b_lyPMA", "NS_8_b_lyPMA", "NS_17_b_lyPMA", "NS_21_b_host_zero", "NS_22_b_host_zero", "NS_19_d_molysis", "NS_21_d_molysis", "NS_22_d_molysis", "NS_23_d_molysis", "NS_26_b_lyPMA", "BAL_073_b_host_zero", "BAL_073_c_molysis", "BAL_078_d_lyPMA")
-sample_data$lib_failed <- row.names(sample_data) %in% lib_fail_list
+sample_data$lib_failed <- sample_data$baylor_other_id %in% lib_fail_list
 
 #constructing phylose object
 phyloseq <- merge_phyloseq(phyloseq, sample_data)
-                            
+
 ```
 
 ***3. Factorize predictors***
@@ -292,17 +310,14 @@ sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %
         #rename(subject_id = "original_sample") %>%
         sample_data()
 
-
-write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
-
-
-
 ```
 
 Adding functional data
 
-```{r warning=FALSE, `Loading functional - RPKM`}
-                     
+
+
+```{r warning=FALSE, `Loading phyloseq object`}
+                 
 #Loading phyloseq object
 setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed")
 path_rpk <- read.csv("20221102_PQ00331_Host_Depletion/humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
@@ -310,18 +325,35 @@ path_tax <- read.csv("20221102_PQ00331_Host_Depletion/humann3/PathAbundance.rela
         select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
 row.names(path_tax) <- path_tax$pathway
 
+path_rpk2 <- read.csv("20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
+path_tax2 <- read.csv("20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt", sep = "\t", check.names = F) %>%
+        select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
+row.names(path_tax2) <- path_tax2$pathway
 
-#path_rpk2 <- read.csv("20230401/humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
-#path_tax2 <- read.csv("20230401/humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F) %>%
-#        select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
+#Merging Readstat + metadata
 
-phy <- list()
-phy$phyloseq_count <- phyloseq
-phy$phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
-phy$phyloseq_path_rpkm <- #merge_phyloseq(
+phyloseq_path_rpkm1 <- #merge_phyloseq(
         merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %>% as.matrix()))#,
         #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
-#)
+
+phyloseq_path_rpkm2 <- #merge_phyloseq(
+        merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))#,
+        #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
+
+
+phyloseq_path_rpkm <- merge_phyloseq(phyloseq_path_rpkm1, phyloseq_path_rpkm2)
+
+```
+
+```{r warning=FALSE, `Loading functional - RPKM`}
+    
+phy <- list()
+sample_names(phyloseq) <- sample_data$baylor_other_id
+sample_names(phyloseq_path_rpkm) <- sample_data$baylor_other_id
+phy$phyloseq_count <- phyloseq
+phy$phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
+phy$phyloseq_path_rpkm <-phyloseq_path_rpkm
+
 
 ```
 

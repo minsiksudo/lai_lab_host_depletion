@@ -118,7 +118,7 @@ setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/
         #Additional BAl and NS data
         sample_data4 <- read_excel("SOP_20220606_MGK_BAL_NB_host_depletion.xlsx", sheet = 2)
         #control_data
-        sample_data5 <- read_excel("SOP_20230112_MGK_host_depletion_controls.xlsx", sheet = 2)
+        sample_data5 <- read_excel("SOP_20230112_MGK_host_depletion_controls.xlsx", sheet = 2) %>% subset(., .$sample_type != "nasal_swab")
         
 #Laoding the qPCR data
         #Loading data  - host

@@ -278,8 +278,7 @@ phyloseq <- merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1),
 ```{r, warning=F, `Adding more data to phyloseq object`}
 #Adding host DNA proportion of sequencing results
 sample_data <- sample_data(phyloseq) %>% data.frame %>% 
-        mutate(sequencing_host_prop = Host_mapped/Reads_after_trim, .after = Metaphlan_mapped) %>%
-        sample_data
+        mutate(sequencing_host_prop = Host_mapped/Reads_after_trim, .after = Metaphlan_mapped)
 
 #Adding Treatment status
 sample_data$treated <- rowSums(sample_data[, c("lypma", "benzonase", "molysis", "host_zero", "qiaamp")])
@@ -288,9 +287,8 @@ sample_data$treated <- ifelse(is.na(sample_data$treated), 0, sample_data$treated
 # Adding library prep results --------------------------------------------
 lib_fail_list <- c("NS_6_b_lyPMA", "NS_8_b_lyPMA", "NS_17_b_lyPMA", "NS_21_b_host_zero", "NS_22_b_host_zero", "NS_19_d_molysis", "NS_21_d_molysis", "NS_22_d_molysis", "NS_23_d_molysis", "NS_26_b_lyPMA", "BAL_073_b_host_zero", "BAL_073_c_molysis", "BAL_078_d_lyPMA")
 sample_data$lib_failed <- sample_data$baylor_other_id %in% lib_fail_list
-
 #constructing phylose object
-phyloseq <- merge_phyloseq(phyloseq, sample_data)
+phyloseq <- merge_phyloseq(otu_table(phyloseq), tax_table(phyloseq), sample_data(sample_data))
 
 ```
 
@@ -305,10 +303,17 @@ sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %
                                   levels = c("control", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
                                   labels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                sample_type = factor(sample_type,
-                                    levels = c("BAL", "nasal_swab", "Sputum", "neg_extraction", "pos_extraction", "neg_depletion", "pos_depletion"), 
-                                    labels = c("BAL", "Nasal", "Sputum", "Neg. ext.", "Pos. ext.", "Neg. dep.", "Pos. dep."))) %>%
+                                    levels = c("BAL", "nasal_swab", "Sputum", "pos_extraction", "pos_depletion", "neg_depletion",  "neg_extraction"), 
+                                    #labels = c("BAL", "Nasal", "Sputum", "Neg. ext.", "Pos. ext.", "Neg. dep.", "Pos. dep."))) %>%
+                                    labels = c("BAL", "Nasal", "Sputum", "Mock", "Mock", "Neg.", "Neg."))) %>%
         #rename(subject_id = "original_sample") %>%
         sample_data()
+
+
+sample_data(phyloseq)$subject_id <- ifelse(is.na(sample_data(phyloseq)$subject_id), as.character(sample_data(phyloseq)$sample_type), sample_data(phyloseq)$subject_id)
+sample_data(phyloseq)$subject_id <- ifelse(sample_data(phyloseq)$subject_id == "lab_member", as.character(sample_data(phyloseq)$original_sample),
+                                           sample_data(phyloseq)$subject_id)
+
 
 ```
 

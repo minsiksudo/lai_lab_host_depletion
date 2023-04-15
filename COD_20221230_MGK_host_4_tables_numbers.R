@@ -19,22 +19,13 @@ rm(list = ls())
 phyloseq <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
 phyloseq_path <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221229_MGK_host_tidy_path.rds")
 #sample data loading
-sample_data <- sample_data(phyloseq) %>% data.frame(check.names = F)
 
 
 #Formattings
-sample_data <- sample_data(phyloseq) %>% data.frame(check.names = F)
-sample_data$treatment <- factor(sample_data$treatment, levels =c("control","lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
+sample_data <- sample_data(phyloseq$phyloseq_count) %>% data.frame(check.names = F)
 sample_data$treatment
 
 #phyloseq object
-phyloseq_rel = transform_sample_counts(phyloseq, function(x){x / sum(x)})
-phyloseq_rel_nz = subset_samples(phyloseq_rel, S.obs != 0)
-phyloseq_rel_nz = subset_samples(phyloseq_rel_nz, sample_type != "pos_control" & sample_type != "neg_control")
-phyloseq_path_rel = transform_sample_counts(phyloseq_path, function(x){x / sum(x)})
-phyloseq_path_rel_nz = subset_samples(phyloseq_path_rel, S.obs != 0)
-phyloseq_path_rel_nz = subset_samples(phyloseq_path_rel_nz, sample_type != "pos_control" & sample_type != "neg_control")
-
 
 
 
@@ -64,7 +55,9 @@ sample_data %>% data.frame() %>%
         ) %>% data.frame(check.names = F) %>%
         arrange(sample_type, control) %>% mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0)
 
-#qPCR result by treatment method
+
+# #qPCR result by treatment method ----------------------------------------
+
 sample_data %>% data.frame() %>% 
         dplyr::filter(sample_type %in% c("Sputum", "nasal_swab", "BAL")) %>% 
         mutate(host_perc_seq = Host_mapped/Raw_reads * 100) %>% 
@@ -94,8 +87,8 @@ sample_data %>% data.frame() %>%
 
 
 
-#Table2 - numbers
 
+# #Table2 - numbers -------------------------------------------------------
 
 #seqeuncing results of all samples
 
@@ -136,35 +129,35 @@ sample_data %>% data.frame() %>%
 
 
 #Figure3 or table (Table 1)
-
+sample_data$sample_type
 sample_data %>% data.frame() %>% 
-        dplyr::filter(sample_type %in% c("Sputum", "nasal_swab", "BAL")) %>% 
+        dplyr::filter(sample_type %in% c("Sputum", "Nasal swab", "BAL")) %>% 
         mutate(host_perc_seq = Host_mapped/Raw_reads * 100) %>% 
         mutate(`Sample type` = case_when(sample_type == "BAL" ~ 'BAL',
-                                         sample_type == "nasal_swab" ~ 'Nasal swab',
+                                         sample_type == "Nasal swab" ~ 'Nasal swab',
                                          sample_type == "Sputum" ~ 'Sputum',)) %>%
-        mutate(Treatment = case_when(treatment == "control" ~ 'Control',
-                                     treatment == "lypma" ~ 'lyPMA',
-                                     treatment == "benzonase" ~ 'Benzonase',
-                                     treatment == "host_zero" ~ 'Host-zero',
-                                     treatment == "molysis" ~ 'Molysis',
-                                     treatment == "qiaamp" ~ 'QIAamp',)) %>%
+        mutate(Treatment = case_when(treatment == "Control" ~ 'Control',
+                                     treatment == "lyPMA" ~ 'lyPMA',
+                                     treatment == "Benzonase" ~ 'Benzonase',
+                                     treatment == "Host zero" ~ 'Host-zero',
+                                     treatment == "Molysis" ~ 'Molysis',
+                                     treatment == "QIAamp" ~ 'QIAamp',)) %>%
         group_by (`Sample type`, `Treatment`) %>%
-        arrange(proportion) %>% 
+        arrange(host_perc_seq) %>% 
         summarise(N = n(),
               #    `Raw reads (mean ± SD)` = paste(format(round(mean(Raw_reads),0), nsmall = 2, big.mark = ","), format(round(sd(Raw_reads),0), nsmall = 2, big.mark = ","), sep = " ± "),
               #    `Host reads (mean ± SD)` = paste(format(round(mean(Host_mapped),0), nsmall = 2, big.mark = ","), format(round(sd(Host_mapped),0), nsmall = 2, big.mark = ","), sep = " ± "),
               #    `% host reads (mean ± SD)` = paste(round(mean(host_perc_seq), 2), round(sd(host_perc_seq), 2), sep = " ± "),
               #    `Final reads (mean ± SD)` = paste(format(round(mean(Final_reads),0), nsmall = 2, big.mark = ","), format(round(sd(Final_reads),0), nsmall = 2, big.mark = ","), sep = " ± "),
-              `Raw reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Raw_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Raw_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Raw_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `Host reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Host_mapped/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Host_mapped/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Host_mapped/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `Host reads proportion<br>(median [IQR])<br>[%]` = paste(format(round(median(sequencing_host_prop * 100),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(sequencing_host_prop * 100, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop * 100, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `Final reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+              `Raw reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Raw_reads/10000000),2), nsmall = 2, big.mark = ","), "<br>[", format(round(quantile(Raw_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Raw_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+              `Host reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Host_mapped/10000000),2), nsmall = 2, big.mark = ","), "<br>[", format(round(quantile(Host_mapped/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Host_mapped/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+              `Host reads proportion<br>(median [IQR])<br>[%]` = paste(format(round(median(sequencing_host_prop * 100),2), nsmall = 2, big.mark = ","), "<br>[", format(round(quantile(sequencing_host_prop * 100, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop * 100, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+              `Final reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), "<br>[", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
         ) %>% data.frame(check.names = F) %>% 
         mutate(Treatment = factor(Treatment, levels = c("Control", "lyPMA", "Benzonase", "Host-zero", "Molysis", "QIAamp"))) %>% 
         arrange(`Sample type`, `Treatment`) %>%
-        mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0) #%>%
-        #save_kable(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Table1_IQR.html", self_contained = T)
+        mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0) %>%
+        save_kable(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Table1_IQR.html", self_contained = T)
 
 
 
@@ -206,7 +199,7 @@ lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|original_sample)
         save_kable(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/TableS3.html", self_contained = T)
 
 #Table S4
-lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "nasal_swab")) %>% summary() %>% .$coefficients %>%
+lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "Nasal swab")) %>% summary() %>% .$coefficients %>%
         kbl %>% save_kable(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/TableS4.html", self_contained = T)
 #Table S5
 lmer(S.obs ~ treatment + log10 (Final_reads) + (1|original_sample), data = subset(sample_data, sample_data$sample_type == "BAL")) %>% summary()%>% .$coefficients %>%
@@ -262,8 +255,6 @@ bray_perm <- vegan::adonis2(distance(phyloseq_rel_nz, method="bray") ~ sample_ty
                             data = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F), permutations = 10000) 
 
 
-bray_perm
-bray_perm_
 bray_perm %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "lypma" ~ 'lyPMA',
@@ -512,4 +503,96 @@ subset(sample_data(phyloseq_path), sample_data(phyloseq_path)$sample_type %in% c
 
 path_bray_dist_long_within_sampleid_from_control %>% lm(dist ~ sample_type + treatment, data = .) %>% summary
 
+
+
+# Summary table -----------------------------------------------------------
+
+
+
+## Final results summary {.tabset}
+
+### Sequencing results
+
+matrix(nrow=3,ncol=5) %>% data.frame() %>% rename(lyPMA = X1, Benzonase = X2, `Host zero` = X3, Molysis = X4, QIAamp = X5) %>%
+        rownames_to_column("x") %>% mutate(x = c("BAL", "Nasal swab", "Sputum"),
+                                           lyPMA = c("No increase in final reads<br>Taxa beta changed",
+                                                     "No increase in final reads",
+                                                     "No increase in final reads"),
+                                           Benzonase = c("No decrease in host %",
+                                                         "No decrease in host %",
+                                                         "No decrease in host %"),
+                                           `Host zero` = c(NA,
+                                                           NA,
+                                                           NA),
+                                           Molysis = c("No decrease in host %",
+                                                       "High cahnge of failure in library pep",
+                                                       NA),
+                                           QIAamp = c("No decrease in host %",
+                                                      NA,
+                                                      "No decrease in host %")) %>% column_to_rownames("x") %>%
+        kbl(format = "html", caption = "Table of issues of each treatment method") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+
+matrix(nrow=3,ncol=5) %>% data.frame() %>% rename(lyPMA = X1, Benzonase = X2, `Host zero` = X3, Molysis = X4, QIAamp = X5) %>%
+        rownames_to_column("x") %>% mutate(x = c("BAL", "Nasal swab", "Sputum"),
+                                           lyPMA = c(NA,
+                                                     "Shannon +"),
+                                           Benzonase = c(NA,
+                                                         NA,
+                                                         "Richness + Shannon + InvSimp +"),
+                                           `Host zero` = c(NA,
+                                                           "Richness + Shannon + InvSimp + BPI -",
+                                                           NA),
+                                           Molysis = c(NA,
+                                                       "Richness + Shannon + InvSimp + BPI -",
+                                                       "Beta changed"),
+                                           QIAamp = c("Beta changed",
+                                                      NA,
+                                                      "Beta  changed")) %>% column_to_rownames("x") %>%
+        kbl(format = "html", caption = "Table of community changes induced by each treatment method") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+
+matrix(nrow=3,ncol=5) %>% data.frame() %>% rename(lyPMA = X1, Benzonase = X2, `Host zero` = X3, Molysis = X4, QIAamp = X5) %>%
+        rownames_to_column("x") %>% mutate(x = c("BAL", "Nasal swab", "Sputum"),
+                                           lyPMA = c(NA,
+                                                     NA,
+                                                     "Shannon +"),
+                                           Benzonase = c(NA,
+                                                         NA,
+                                                         "Shannon +"),
+                                           `Host zero` = c(NA,
+                                                           "Richness +",
+                                                           "Shannon +"),
+                                           Molysis = c(NA,
+                                                       "Richness + InvSimp + BPI +",
+                                                       "Shannon +"),
+                                           QIAamp = c(NA,
+                                                      "Richness + Shannon +",
+                                                      "Shannon +")) %>% column_to_rownames("x") %>%
+        kbl(format = "html", caption = "Table of functional diversity changes induced by each treatment method") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+
+matrix(nrow=3,ncol=5) %>% data.frame() %>% rename(lyPMA = X1, Benzonase = X2, `Host zero` = X3, Molysis = X4, QIAamp = X5) %>%
+        rownames_to_column("x") %>% mutate(x = c("BAL", "Nasal swab", "Sputum"),
+                                           lyPMA = c("Listeria",
+                                                     "Listeria",
+                                                     "Listeria, Candida, Corynebacterium"),
+                                           Benzonase = c("Listeria",
+                                                         "Listeria",
+                                                         "Listeria, Candida, Corynebacterium"),
+                                           `Host zero` = c("Listeria",
+                                                           "Listeria",
+                                                           "Listeria, Candida, Corynebacterium"),
+                                           Molysis = c("Streptococcaceae, Listeria",
+                                                       "Streptococcaceae, Listeria",
+                                                       "Streptococcaceae, Listeria, Candida, Corynebacterium"),
+                                           QIAamp = c("Listeria",
+                                                      "Listeria",
+                                                      "Listeria, Candida, Corynebacterium")) %>% column_to_rownames("x") %>%
+        kbl(format = "html", caption = "Table of potential contaminants identified by decontam and DA analysis") %>%
+        kable_styling(full_width = 0, html_font = "serif") %>%
+        column_spec(2:6, italic = T) #%>%
 

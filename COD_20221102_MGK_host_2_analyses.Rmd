@@ -2505,10 +2505,8 @@ Strategy:
 
 # common contaminants across all the treatment methods
 #Decontam - were there any contaminants?#
-
-sample_data(phyloseq$phyloseq_rel)$is.neg <- grepl("Neg. ext.", sample_data(phyloseq$phyloseq_rel)$sample_type)
+sample_data(phyloseq$phyloseq_rel)$is.neg <- grepl("Neg", sample_data(phyloseq$phyloseq_rel)$sample_type)
 phyloseq_rel_nz <- subset_samples(phyloseq$phyloseq_rel, S.obs != 0)
-
 #With all sampels
 dec_f_all <- isContaminant(phyloseq_rel_nz, method="frequency", conc="DNA_bac_well")
 dec_p_all <- isContaminant(phyloseq_rel_nz, method="prevalence", neg="is.neg", threshold=0.5)
@@ -2522,7 +2520,7 @@ cat("decontam combined - all sample")
 dec_c_all %>% subset(.,.$contaminant)
 ```
 
-### decontam - stratified
+### decontam - stratified 
 
 **Stratified analysis** showed **no contaminants** in **NS** and **BAL**
 
@@ -2533,41 +2531,41 @@ dec_c_all %>% subset(.,.$contaminant)
 #Stratified by sample type
 
 cat("decontam prevalence - BAL")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("BAL", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("BAL", "Neg")) %>%
         isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.5) %>% subset(.,.$contaminant)
 cat("decontam prevalence - Nasal")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("Nasal", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("Nasal", "Neg")) %>%
         isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.5) %>% subset(.,.$contaminant)
 cat("decontam prevalence - Sputum")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("Sputum", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("Sputum", "Neg")) %>%
         isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.5) %>% subset(.,.$contaminant)
 
 
 
 cat("decontam frequency - BAL")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("BAL", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("BAL", "Neg")) %>%
         isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant)
 
 cat("decontam frequency - Nasal")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("Nasal", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("Nasal", "Neg")) %>%
         isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant)
 
 cat("decontam frequency - Sputum")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("Sputum", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("Sputum", "Neg")) %>%
         isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant)
 
 
 
 cat("decontam combined - BAL")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("BAL", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("BAL", "Neg")) %>%
         isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant)
 
 cat("decontam combined - Nasal")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("Nasal", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("Nasal", "Neg")) %>%
         isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant)
 
 cat("decontam combined - Sputum")
-subset_samples(phyloseq_rel_nz, sample_type %in% c("Sputum", "Neg. ext.")) %>%
+subset_samples(phyloseq_rel_nz, sample_type %in% c("Sputum", "Neg")) %>%
         isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant)
 
 ```

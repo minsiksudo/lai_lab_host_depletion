@@ -326,7 +326,7 @@ sample_data %>% data.frame %>% mutate(total_read = phyloseq$phyloseq_count %>% o
 
 **Some samples did not pass library prep QC, but showed reasonable final reads**
 
-```{r warning=F, QC1.5}
+```{r warning=F, QC1.55}
 #how were the samples failed in library prep?
 sample_data %>% data.frame %>%
         mutate(total_read = phyloseq$phyloseq_count %>%
@@ -1436,7 +1436,7 @@ ordinate(subset_samples(phyloseq_control_rel, sample_type != "Neg."), method = "
 
 **Differential abundance analysis should be conducted.**
 
-```{r, warning=FALSE, QC3.1}
+```{r, warning=FALSE}
 #Manipulating phyloseq - only top 10 
 phyloseq_control_rel%>%
         subset_samples(sample_type != "Neg.") %>%
@@ -1700,7 +1700,7 @@ bray_perm_pos %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 
 **Controls chanced after treatment**
 
-```{r warning=F, "perm taxa 7"}
+```{r warning=F, "perm taxa 8"}
 
 bray_perm_neg %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -1725,7 +1725,7 @@ bray_perm_neg %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 
 **lyPMA affected Nasal samples.**
 
-```{r warning=F, "perm taxa 5"}
+```{r warning=F, "perm taxa 9"}
 
 bray_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -1749,7 +1749,7 @@ bray_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names')
 **QIAamp affected BAL samples**
 
 
-```{r warning=F, "perm taxa 6"}
+```{r warning=F, "perm taxa 10"}
 
 bray_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -1773,7 +1773,7 @@ bray_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 
 **Sputum was affected by Molysis and QIAamp.**
 
-```{r warning=F, "perm taxa 7"}
+```{r warning=F, "perm taxa 11"}
 
 bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',

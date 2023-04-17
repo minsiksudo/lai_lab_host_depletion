@@ -371,3 +371,28 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq_re
 
 f_maaslin_interaction <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
 
+
+write.csv(maaslin_all, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_all.csv")
+write.csv(maaslin_interaction, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_interaction.csv")
+write.csv(fit_data_ns, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_ns.csv")
+write.csv(fit_data_bal, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_bal.csv")
+write.csv(fit_data_spt, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_spt.csv")
+write.csv(fit_data_ns_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_ns_neg.csv")
+write.csv(fit_data_bal_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_bal_neg.csv")
+write.csv(fit_data_spt_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_spt_neg.csv")
+write.csv(fit_data_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_neg.csv")
+write.csv(fit_data_pos, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_pos.csv")
+write.csv(maaslin_family, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_family.csv")
+
+write.csv(f_maaslin_all, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_maaslin_all.csv")
+write.csv(f_maaslin_interaction, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_maaslin_interaction.csv")
+write.csv(f_fit_data_bal, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_fit_data_bal.csv")
+write.csv(f_fit_data_spt, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_fit_data_spt.csv")
+write.csv(f_fit_data_ns, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_fit_data_ns.csv")
+
+write.csv(f_fit_data_bal_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_fit_data_bal_neg.csv")
+write.csv(f_fit_data_spt_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_fit_data_spt_neg.csv")
+write.csv(f_fit_data_ns_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_fit_data_ns_neg.csv")
+
+write.csv(f_fit_data_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_fit_data_neg.csv")
+write.csv(f_fit_data_pos, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_fit_data_pos.csv")

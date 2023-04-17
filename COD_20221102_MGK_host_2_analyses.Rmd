@@ -1383,13 +1383,12 @@ ordinate(phyloseq_rel_nz,  method = "PCoA", distance = "jaccard") %>%
         labs(tag = "E")
 
 ```
+
 ### Stratified Bray beta diversity (Mock)
 
 **Some treatment made samples distant to the theoretical composition**
 
 ```{r}
-
-phyloseq_control_rel %>% sample_data
 ordinate(subset_samples(phyloseq_control_rel, sample_type != "Neg."), method = "PCoA", distance = "bray") %>%
         plot_ordination(phyloseq_control_rel, ., col = "treatment") +
         #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) +
@@ -1915,6 +1914,7 @@ capture.output(maaslin_all2 = Maaslin2(input_data = otu_table(phyloseq_rel_nz) %
                 plot_heatmap = F,
                 plot_scatter = F))
 maaslin_all <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
 ```
 
 
@@ -1932,6 +1932,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                        plot_scatter = F)
 )
 fit_data_pos <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
+
 
 ```
 
@@ -2041,13 +2042,27 @@ make_sig_table <- function(data) {
   sig_data$min <- apply(sig_data, 1, FUN = min)
   sig_data <- sig_data[order(sig_data$min),] %>% select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:20,]
   sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
-  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>% column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-"))
+  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>%
+          column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-")) %>%
+          rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
   sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame %>% 
           rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
   return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
 }
 
-fit_data_neg <- make_sig_table(fit_data_neg)
+make_sig_table_neg <- function(data) {
+  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
+  sig_data$min <- apply(sig_data, 1, FUN = min)
+  sig_data <- sig_data[order(sig_data$min),] %>% select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:16,]
+  sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
+  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>%
+          column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-"))  %>% 
+          rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
+  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame %>% 
+          rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
+  return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
+}
+fit_data_neg <- make_sig_table_neg(fit_data_neg)
 fit_data_pos <- make_sig_table(fit_data_pos)
 fit_data_bal <- make_sig_table(fit_data_bal)
 fit_data_ns <- make_sig_table(fit_data_ns)
@@ -2057,13 +2072,13 @@ fit_data_spt <- make_sig_table(fit_data_spt)
 
 neg_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Neg."),
                                        taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Neg.")) %in% fit_data_neg$data$feature)
-fit_data_neg$rel <- cbind(bal_sig %>% otu_table %>% t, bal_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>% 
+fit_data_neg$rel <- cbind(neg_sig %>% otu_table %>% t, neg_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>% 
         .[row.names(fit_data_neg$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
 
 pos_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Mock"),
                                        taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Mock")) %in% fit_data_pos$data$feature)
-fit_data_pos$rel <- cbind(bal_sig %>% otu_table %>% t, bal_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>% 
+fit_data_pos$rel <- cbind(pos_sig %>% otu_table %>% t, pos_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>% data.frame(check.names = F) %>% 
         .[row.names(fit_data_pos$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
 
@@ -2115,7 +2130,7 @@ Table of associations had significant (q \< 0.1) result
 cat("all association")
 maaslin_all %>% subset(., .$qval < 0.1) %>% arrange(., .$feature) %>% .$metadata %>% table
 
-cat("Positive associatino (increased taxa)")
+cat("Positive association (increased taxa)")
 maaslin_all %>% subset(., .$qval < 0.1) %>% subset(., .$coef > 0) %>% arrange(., .$feature) %>% .$metadata %>% table
 
 ```
@@ -2129,9 +2144,16 @@ MaAslin - can't test global significance of a covariate with multi-level.
 **No taxa changed after treatment**
 
 ```{r warning=FALSE, message=FALSE}
-ggballoonplot(fit_data_neg$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
+
+ggballoonplot(merge(fit_data_neg$rel %>%
+                            gather(treatment, value, Control:QIAamp, factor_key=TRUE),
+                    fit_data_neg$data_italic %>%
+                            rownames_to_column("feature") %>%
+                            gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
+                    by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
+              fill = "value", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
-        scale_fill_viridis() +
+        scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
         ylab("Species") +
         labs(tag = "D") +
@@ -2155,9 +2177,15 @@ ggballoonplot(fit_data_neg$rel %>% gather(treatment, value, Control:QIAamp, fact
 **Taxa decreased after treatment**
 
 ```{r warning=FALSE, message=FALSE}
-ggballoonplot(fit_data_pos$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
+ggballoonplot(merge(fit_data_pos$rel %>%
+                            gather(treatment, value, Control:QIAamp, factor_key=TRUE),
+                    fit_data_pos$data_italic %>%
+                            rownames_to_column("feature") %>%
+                            gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
+                    by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
+              fill = "value", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
-        scale_fill_viridis() +
+        scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
         ylab("Species") +
         labs(tag = "D") +
@@ -2183,9 +2211,15 @@ Mean relative abundances of top 20 taxa had low *q*-values.
 **No taxa changed after treatment**
 
 ```{r warning=FALSE, message=FALSE}
-ggballoonplot(fit_data_bal$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
+ggballoonplot(merge(fit_data_bal$rel %>%
+                            gather(treatment, value, Control:QIAamp, factor_key=TRUE),
+                    fit_data_bal$data_italic %>%
+                            rownames_to_column("feature") %>%
+                            gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
+                    by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
+              fill = "value", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
-        scale_fill_viridis() +
+        scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
         ylab("Species") +
         labs(tag = "D") +
@@ -2211,9 +2245,15 @@ Mean relative abundances of top 20 taxa had low *q*-values.
 **Some taxa changed after treatment, but nothing was unique**
 
 ```{r warning=FALSE, message=FALSE}
-ggballoonplot(fit_data_ns$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
+ggballoonplot(merge(fit_data_ns$rel %>%
+                            gather(treatment, value, Control:QIAamp, factor_key=TRUE),
+                    fit_data_ns$data_italic %>%
+                            rownames_to_column("feature") %>%
+                            gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
+                    by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
+              fill = "value", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
-        scale_fill_viridis() +
+        scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
         ylab("Species") +
         labs(tag = "B") +
@@ -2236,9 +2276,15 @@ Mean relative abundances of top 20 taxa had low *q*-values.
 
 ```{r warning=FALSE, message=FALSE}
 
-ggballoonplot(fit_data_spt$rel %>% gather(treatment, value, Control:QIAamp, factor_key=TRUE), fill = "value", y = "feature", x= "treatment") +
+ggballoonplot(merge(fit_data_spt$rel %>%
+                            gather(treatment, value, Control:QIAamp, factor_key=TRUE),
+                    fit_data_spt$data_italic %>%
+                            rownames_to_column("feature") %>%
+                            gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
+                    by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
+              fill = "value", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
-        scale_fill_viridis() +
+        scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
         ylab("Species") +
         labs(tag = "C") +

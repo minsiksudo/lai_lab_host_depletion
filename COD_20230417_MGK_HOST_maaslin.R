@@ -24,6 +24,7 @@ sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq
 
 phyloseq_rel_nz <- subset_samples(phyloseq$phyloseq_rel, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock", "Neg."))
 sample_data(phyloseq_rel_nz)$log10.Final_reads <- log10(sample_data(phyloseq_rel_nz)$Final_reads)
+sample_data(phyloseq_rel_nz)$sampletype_treatment <- paste(sample_data(phyloseq_rel_nz)$sample_type, sample_data(phyloseq_rel_nz)$treatment, sep = ":")
 
 
 
@@ -186,25 +187,6 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq_re
 
 maaslin_interaction <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
 
-#Running MaAslin for all sample without decontam
-#for taxa differentially abundant by host depletion method, look to see which ones overlap with potential contaminant taxa
-phyloseq_rel_nz_family <- tax_glom(phyloseq_rel_nz, "Family")
-taxa_names(phyloseq_rel_nz_family) <- tax_table(phyloseq_rel_nz_family) %>% data.frame %>% .$Family %>% gsub("f__", "", .)
-# Maaslin - # # y ~ log(final reads) + sample_type + treatment  -----------
-
-#all samples
-capture.output(maaslin_all = Maaslin2(input_data = otu_table(phyloseq_rel_nz_family) %>% t %>% data.frame(), 
-                                      input_metadata = phyloseq_rel_nz_family %>% sample_data %>% data.frame(check.names = F), 
-                                      output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
-                                      fixed_effects = c("sample_type", "log10.Final_reads","treatment"), 
-                                      transform = "LOG", #default
-                                      normalization = "TSS", # for RPKM, normalization is bit hard
-                                      random_effects = c("subject_id"), 
-                                      reference = c("sample_type,BAL", "treatment,Control"), 
-                                      plot_heatmap = F,
-                                      plot_scatter = F))
-
-maaslin_family <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
 
 sample_data <- sample_data(phyloseq$phyloseq_path_rpkm) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))
 phyloseq_rel_nz <- subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum"))
@@ -220,7 +202,7 @@ capture.output(maaslin_all2 = Maaslin2(input_data = otu_table(phyloseq_rel_nz) %
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = NA,
+                                       normalization = "NONE",
                                        random_effects = c("subject_id"), 
                                        reference = c("sample_type,BAL"), 
                                        plot_heatmap = F,
@@ -235,7 +217,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = NA,
+                                       normalization = "NONE",
                                        plot_heatmap = F,
                                        plot_scatter = F)
 )
@@ -264,7 +246,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = NA,
+                                       normalization = "NONE",
                                        random_effects = c("subject_id"), 
                                        plot_heatmap = F,
                                        plot_scatter = F)
@@ -279,7 +261,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = NA, # for RPKM, normalization is bit hard
+                                        normalization = "NONE", # for RPKM, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -296,7 +278,7 @@ capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = NA,
+                                        normalization = "NONE",
                                         random_effects = c("subject_id"),
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -313,7 +295,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = NA,
+                                       normalization = "NONE",
                                        random_effects = c("subject_id"), 
                                        plot_heatmap = F,
                                        plot_scatter = F)
@@ -328,7 +310,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = NA, # for RPKM, normalization is bit hard
+                                        normalization = "NONE", # for RPKM, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -345,7 +327,7 @@ capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = NA,
+                                        normalization = "NONE",
                                         random_effects = c("subject_id"),
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -363,7 +345,7 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq_re
                                               output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                               fixed_effects = c("sample_type", "log10.Final_reads", "treatment", "sampletype_treatment"), 
                                               transform = "LOG", #default
-                                              normalization = NA, 
+                                              normalization = "NONE", 
                                               random_effects = c("subject_id"), 
                                               reference = c("sample_type,BAL", "treatment,Control", "sampletype_treatment,BAL*Control"), 
                                               plot_heatmap = F,
@@ -382,7 +364,6 @@ write.csv(fit_data_bal_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Proj
 write.csv(fit_data_spt_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_spt_neg.csv")
 write.csv(fit_data_neg, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_neg.csv")
 write.csv(fit_data_pos, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/fit_data_pos.csv")
-write.csv(maaslin_family, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_family.csv")
 
 write.csv(f_maaslin_all, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_maaslin_all.csv")
 write.csv(f_maaslin_interaction, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/f_maaslin_interaction.csv")

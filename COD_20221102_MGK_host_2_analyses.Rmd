@@ -2045,29 +2045,28 @@ make_sig_table <- function(data) {
   sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>%
           column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-")) %>%
           rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
-  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame %>% 
-          rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
+  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame
   return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
 }
 
 make_sig_table_neg <- function(data) {
-  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
+  sig_data <- spread(fit_data_neg[order(fit_data_neg$qval), c("feature", "metadata", "qval")], metadata, qval)
   sig_data$min <- apply(sig_data, 1, FUN = min)
   sig_data <- sig_data[order(sig_data$min),] %>% select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:16,]
   sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
   sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>%
           column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-"))  %>% 
           rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
-  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame %>% 
-          rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
+  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame
   return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
 }
+
+
 fit_data_neg <- make_sig_table_neg(fit_data_neg)
 fit_data_pos <- make_sig_table(fit_data_pos)
 fit_data_bal <- make_sig_table(fit_data_bal)
 fit_data_ns <- make_sig_table(fit_data_ns)
 fit_data_spt <- make_sig_table(fit_data_spt)
-
 
 
 neg_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Neg."),

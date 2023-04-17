@@ -189,7 +189,7 @@ maaslin_interaction <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/
 
 
 sample_data <- sample_data(phyloseq$phyloseq_path_rpkm) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))
-phyloseq_rel_nz <- subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum"))
+phyloseq_rel_nz <- subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock", "Neg."))
 sample_data(phyloseq_rel_nz)$log10.Final_reads <- log10(sample_data(phyloseq_rel_nz)$Final_reads)
 sample_data(phyloseq_rel_nz)$sampletype_treatment <- paste(sample_data(phyloseq_rel_nz)$sample_type, sample_data(phyloseq_rel_nz)$treatment, sep = ":")
 
@@ -211,6 +211,7 @@ f_maaslin_all <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsi
 
 #Mock
 # # y ~ log(final reads) + sample_type + treatment 
+
 
 capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq_rel_nz, sample_type == "Mock")) %>% t %>% data.frame(),
                                        input_metadata = sample_data(subset_samples(phyloseq_rel_nz, sample_type == "Mock")) %>% data.frame(), 

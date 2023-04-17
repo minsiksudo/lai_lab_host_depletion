@@ -2151,7 +2151,7 @@ ggballoonplot(merge(fit_data_neg$rel %>%
                             rownames_to_column("feature") %>%
                             gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
                     by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
-              fill = "value", y = "feature", x= "treatment") +
+              size = "value", fill = "qval", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
         scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
@@ -2183,7 +2183,7 @@ ggballoonplot(merge(fit_data_pos$rel %>%
                             rownames_to_column("feature") %>%
                             gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
                     by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
-              fill = "value", y = "feature", x= "treatment") +
+              size = "value", fill = "qval", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
         scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
@@ -2217,7 +2217,7 @@ ggballoonplot(merge(fit_data_bal$rel %>%
                             rownames_to_column("feature") %>%
                             gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
                     by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
-              fill = "value", y = "feature", x= "treatment") +
+              size = "value", fill = "qval", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
         scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
@@ -2251,7 +2251,7 @@ ggballoonplot(merge(fit_data_ns$rel %>%
                             rownames_to_column("feature") %>%
                             gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
                     by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
-              fill = "value", y = "feature", x= "treatment") +
+              size = "value", fill = "qval", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
         scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +
@@ -2282,7 +2282,7 @@ ggballoonplot(merge(fit_data_spt$rel %>%
                             rownames_to_column("feature") %>%
                             gather(treatment, qval, lyPMA:QIAamp, factor_key=TRUE),
                     by.x = c('feature', 'treatment'), by.y = c('feature', 'treatment'), all = T),
-              fill = "value", y = "feature", x= "treatment") +
+              size = "value", fill = "qval", y = "feature", x= "treatment") +
         theme_classic(base_family = "serif") +
         scale_fill_gradient(low = "#e5f5f9", high = "#2ca25f") +
         xlab("Experimental group") +

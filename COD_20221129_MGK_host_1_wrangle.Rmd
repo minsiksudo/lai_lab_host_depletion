@@ -360,6 +360,12 @@ phy$phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
 phy$phyloseq_path_rpkm <-phyloseq_path_rpkm
 
 
+tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
+                                       AMR::mo_gramstain(taxa_names(phy$phyloseq_count))) %>%
+        tax_table()
+tax_table(phy$phyloseq_rel)$Gram <- cbind(tax_table(phy$phyloseq_rel),
+                                       AMR::mo_gramstain(taxa_names(phy$phyloseq_rel))) %>%
+        tax_table()
 ```
 
 
@@ -371,6 +377,7 @@ phy$phyloseq_path_rpkm <-phyloseq_path_rpkm
 
 write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
 write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
+
 
 ```
 

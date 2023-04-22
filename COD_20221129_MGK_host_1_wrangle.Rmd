@@ -297,6 +297,7 @@ phyloseq <- merge_phyloseq(otu_table(phyloseq), tax_table(phyloseq), sample_data
 ```{r, warning=F, `Factorize predictors`}
 # Factorize predicters ----------------------------------------------------
 # + creating lables for figures
+
 sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %>% 
         mutate(treatment = tolower(treatment), 
                treatment = factor(treatment,
@@ -363,9 +364,17 @@ phy$phyloseq_path_rpkm <-phyloseq_path_rpkm
 tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
                                        AMR::mo_gramstain(taxa_names(phy$phyloseq_count))) %>%
         tax_table()
-tax_table(phy$phyloseq_rel)$Gram <- cbind(tax_table(phy$phyloseq_rel),
+colnames(tax_table(phy$phyloseq_count))[8] <- "Gram"
+
+tax_table(phy$phyloseq_rel) <- cbind(tax_table(phy$phyloseq_rel),
                                        AMR::mo_gramstain(taxa_names(phy$phyloseq_rel))) %>%
         tax_table()
+colnames(tax_table(phy$phyloseq_rel))[8] <- "Gram"
+AMR::mo_gramstain(taxa_names(phy$phyloseq_count))
+
+sample_data(phy$phyloseq_rel)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
+sample_data(phy$phyloseq_count)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
+sample_data(phy$phyloseq_path_rpkm)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
 ```
 
 
@@ -375,7 +384,7 @@ tax_table(phy$phyloseq_rel)$Gram <- cbind(tax_table(phy$phyloseq_rel),
 ```{r, warning=F, `Saving phyloseq object`}
 # Saving object -----------------------------------------------------------
 
-write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
+#write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
 write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
 
 

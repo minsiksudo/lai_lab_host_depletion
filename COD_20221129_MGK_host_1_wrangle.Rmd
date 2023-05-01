@@ -362,7 +362,6 @@ path_tax2 <- read.csv("20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ0
 row.names(path_tax2) <- path_tax2$pathway
 
 #Merging Readstat + metadata
-phyloseq_path_rpkm1
 phyloseq_path_rpkm1 <- #merge_phyloseq(
         merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %>% as.matrix()))#,
         #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
@@ -370,15 +369,14 @@ phyloseq_path_rpkm1 <- #merge_phyloseq(
 phyloseq_path_rpkm2 <- #merge_phyloseq(
         merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))#,
         #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
-sample_data(phyloseq) %>% sample_names()
-otu_table(path_rpk2, taxa_are_rows = T) %>% sample_names()
 phyloseq_path_rpkm <- merge_phyloseq(phyloseq_path_rpkm1, phyloseq_path_rpkm2)
 
 ```
 
 ```{r warning=FALSE, `Loading functional - RPKM`}
-    
+
 phy <- list()
+sample_data <- sample_data(phyloseq)
 sample_names(phyloseq) <- sample_data$baylor_other_id
 sample_names(phyloseq_path_rpkm) <- sample_data$baylor_other_id
 phy$phyloseq_count <- phyloseq
@@ -408,7 +406,6 @@ sample_data(phy$phyloseq_path_rpkm)$gram_neg <- phy$phyloseq_rel %>% subset_taxa
 
 ```{r, warning=F, `Saving phyloseq object`}
 # Saving object -----------------------------------------------------------
-
 #write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
 write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
 

@@ -59,7 +59,6 @@ phyloseq$phyloseq_rel_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_taxa
 phyloseq$phyloseq_count_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_taxa$red_flag_prev_abd != 1)$species, phyloseq$phyloseq_count)
 phyloseq$phyloseq_path_rpkm_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpkm)
 
-
 # Adding variables for MaAsLin --------------------------------------------
 
 sample_data(phyloseq$phyloseq_rel)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_rel)$Final_reads)

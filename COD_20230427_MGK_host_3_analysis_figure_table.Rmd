@@ -878,18 +878,18 @@ v.	M&M - Prevalence filtering
 
 ```{r warning=FALSE, "Red flag"}
 taxa_qc <- data.frame("species" =  otu_table(subset_samples(phyloseq$phyloseq_count,
-                                                            S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum"))) %>%
+                                                            S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>%
                               t() %>% colnames(),
-        "prevalence" = ifelse(subset_samples(phyloseq$phyloseq_count, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-        "mean_rel_abd" = subset_samples(phyloseq$phyloseq_count, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum")) %>%
+        "prevalence" = ifelse(subset_samples(phyloseq$phyloseq_count, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+        "mean_rel_abd" = subset_samples(phyloseq$phyloseq_count, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>%
                 otu_table() %>%
                 t() %>%
                 colMeans(na.rm = T) #mean relativ abundacne 
 )
 
-function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum"))) %>% t() %>% colnames(),
-        "prevalence" = ifelse(subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-        "mean_rpkm" = subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
+function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>% t() %>% colnames(),
+        "prevalence" = ifelse(subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+        "mean_rpkm" = subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
 )
 
 red_flag_taxa <- data.frame(species = taxa_qc$species, red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0))
@@ -1265,25 +1265,14 @@ make_sig_table <- function(data) {
   sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame(check.names = F)
   return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
 }
-
-make_sig_table_bal <- function(data) {
-  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
-  sig_data$min <- apply(sig_data, 1, FUN = min)
-  sig_data <- sig_data[order(sig_data$min),] %>% select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:22,]
-  sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
-  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>%
-          column_to_rownames(var = "feature") %>% species_italic %>% select(-c("-")) %>%
-          rename(lyPMA = lypma,  Benzonase = benzonase, `Host zero` = host_zero, Molysis = molysis, QIAamp = qiaamp)
-  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame(check.names = F)
-  return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
-}
 filt_fit_data_pos <- make_sig_table(filt_fit_data_pos)
-filt_fit_data_bal <- make_sig_table_bal(filt_fit_data_bal)
+filt_fit_data_bal <- make_sig_table(filt_fit_data_bal)
 filt_fit_data_ns <- make_sig_table(filt_fit_data_ns)
 filt_fit_data_spt <- make_sig_table(filt_fit_data_spt)
 
-filt_pos_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Mock"),
-                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Mock")) %in% filt_fit_data_pos$data$feature)
+filt_pos_sig <- subset_taxa(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock"),
+                                       taxa_names(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock")) %in% filt_fit_data_pos$data$feature)
+
 filt_fit_data_pos$rel <- cbind(filt_pos_sig %>% otu_table %>% t, filt_pos_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>%  data.frame(check.names = F) %>% 
         .[row.names(filt_fit_data_pos$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
@@ -1298,13 +1287,13 @@ filt_ns_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Nasal
 filt_fit_data_ns$rel <- cbind(filt_ns_sig %>% otu_table %>% t, filt_ns_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>%  data.frame(check.names = F) %>% 
         .[row.names(filt_fit_data_ns$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
-filt_bal_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "BAL"),
-                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "BAL")) %in% filt_fit_data_bal$data$feature)
+filt_bal_sig <- subset_taxa(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "BAL"),
+                                       taxa_names(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "BAL")) %in% filt_fit_data_bal$data$feature)
 
 filt_fit_data_bal$rel <- cbind(filt_bal_sig %>% otu_table %>% t, filt_bal_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>%  data.frame(check.names = F) %>%
         .[row.names(filt_fit_data_bal$data_italic),] %>%
         mutate_all(~na_if(., 0)) %>% rownames_to_column("feature") %>% subset(., !grepl("NA", .$feature))
-filt_fit_data_bal$rel
+
 ```
 
 
@@ -1332,7 +1321,6 @@ ggplot(filt_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
 ```
 
 ```{r}
-
 
 f5a <- merge(filt_fit_data_pos$rel %>%
               gather(treatment,
@@ -1577,7 +1565,6 @@ f5d <- merge(filt_fit_data_spt$rel %>%
                                   "molysis" = "Molysis",
                                   "qiaamp" = "QIAamp")
                          )
-
 ggarrange(f5a, f5b, f5c, f5d, align = "hv", common.legend = T)
 ```
 

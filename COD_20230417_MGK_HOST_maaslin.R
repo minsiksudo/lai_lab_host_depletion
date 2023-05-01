@@ -33,7 +33,28 @@ sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq
 
 
 # Filtering samples failed sequencing -------------------------------------
-phyloseq$phyloseq_rel <- subset_samples(phyloseq$phyloseq_rel, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock"))
+taxa_qc <- data.frame("species" =  otu_table(subset_samples(phyloseq$phyloseq_count,
+                                                            S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum"))) %>%
+                              t() %>% colnames(),
+                      "prevalence" = ifelse(subset_samples(phyloseq$phyloseq_count, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+                      "mean_rel_abd" = subset_samples(phyloseq$phyloseq_count, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum")) %>%
+                              otu_table() %>%
+                              t() %>%
+                              colMeans(na.rm = T) #mean relativ abundacne 
+)
+
+function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum"))) %>% t() %>% colnames(),
+                          "prevalence" = ifelse(subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+                          "mean_rpkm" = subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
+)
+
+red_flag_taxa <- data.frame(species = taxa_qc$species, red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0))
+
+red_flag_function <- data.frame(function. = function_qc$function., red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpkm) %>% t %>% rownames() %>% length * 0.05 & function_qc$mean_rpkm < quantile(function_qc$mean_rpkm, 0.75), 1, 0))
+
+phyloseq$phyloseq_rel_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_taxa$red_flag_prev_abd != 1)$species, phyloseq$phyloseq_rel)
+phyloseq$phyloseq_count_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_taxa$red_flag_prev_abd != 1)$species, phyloseq$phyloseq_count)
+phyloseq$phyloseq_path_rpkm_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpkm)
 
 
 # Adding variables for MaAsLin --------------------------------------------

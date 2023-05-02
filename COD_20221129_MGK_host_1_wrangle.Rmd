@@ -377,8 +377,6 @@ phyloseq_path_rpkm <- merge_phyloseq(phyloseq_path_rpkm1, phyloseq_path_rpkm2)
 
 phy <- list()
 sample_data <- sample_data(phyloseq)
-sample_names(phyloseq) <- sample_data$baylor_other_id
-sample_names(phyloseq_path_rpkm) <- sample_data$baylor_other_id
 phy$phyloseq_count <- phyloseq
 phy$phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
 phy$phyloseq_path_rpkm <-phyloseq_path_rpkm
@@ -398,6 +396,7 @@ AMR::mo_gramstain(taxa_names(phy$phyloseq_count))
 sample_data(phy$phyloseq_rel)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
 sample_data(phy$phyloseq_count)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
 sample_data(phy$phyloseq_path_rpkm)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
+
 ```
 
 

@@ -230,7 +230,7 @@ capture.output(maaslin_all2 = Maaslin2(input_data = otu_table(phyloseq$phyloseq_
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = "NONE",
+                                       normalization = "TSS",
                                        random_effects = c("subject_id"), 
                                        reference = c("sample_type,BAL"), 
                                        plot_heatmap = F,
@@ -246,7 +246,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = "NONE",
+                                       normalization = "TSS",
                                        plot_heatmap = F,
                                        plot_scatter = F)
 )
@@ -261,7 +261,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = "NONE",
+                                       normalization = "TSS",
                                        random_effects = c("subject_id"), 
                                        plot_heatmap = F,
                                        plot_scatter = F)
@@ -276,7 +276,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "NONE", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for RPKM, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -293,7 +293,7 @@ capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "NONE",
+                                        normalization = "TSS",
                                         random_effects = c("subject_id"),
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -310,7 +310,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = "NONE",
+                                       normalization = "TSS",
                                        random_effects = c("subject_id"), 
                                        plot_heatmap = F,
                                        plot_scatter = F)
@@ -325,7 +325,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "NONE", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for RPKM, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -342,7 +342,7 @@ capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "NONE",
+                                        normalization = "TSS",
                                         random_effects = c("subject_id"),
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -360,7 +360,7 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$ph
                                               output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                               fixed_effects = c("sample_type", "log10.Final_reads", "treatment", "sampletype_treatment"), 
                                               transform = "LOG", #default
-                                              normalization = "NONE", 
+                                              normalization = "TSS", 
                                               random_effects = c("subject_id"), 
                                               reference = c("sample_type,BAL", "treatment,Control", "sampletype_treatment,BAL*Control"), 
                                               plot_heatmap = F,
@@ -569,7 +569,7 @@ capture.output(maaslin_all2 = Maaslin2(input_data = otu_table(phyloseq$phyloseq_
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = "NONE",
+                                       normalization = "TSS",
                                        random_effects = c("subject_id"), 
                                        reference = c("sample_type,BAL"), 
                                        plot_heatmap = F,
@@ -585,7 +585,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = "NONE",
+                                       normalization = "TSS",
                                        plot_heatmap = F,
                                        plot_scatter = F)
 )
@@ -599,7 +599,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = "NONE",
+                                       normalization = "TSS",
                                        random_effects = c("subject_id"), 
                                        plot_heatmap = F,
                                        plot_scatter = F)
@@ -614,7 +614,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "NONE", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for RPKM, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -631,7 +631,7 @@ capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "NONE",
+                                        normalization = "TSS",
                                         random_effects = c("subject_id"),
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -648,7 +648,7 @@ capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phy
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
-                                       normalization = "NONE",
+                                       normalization = "TSS",
                                        random_effects = c("subject_id"), 
                                        plot_heatmap = F,
                                        plot_scatter = F)
@@ -663,7 +663,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "NONE", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for RPKM, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -680,7 +680,7 @@ capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "NONE",
+                                        normalization = "TSS",
                                         random_effects = c("subject_id"),
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -698,7 +698,7 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$ph
                                               output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                               fixed_effects = c("sample_type", "log10.Final_reads", "treatment", "sampletype_treatment"), 
                                               transform = "LOG", #default
-                                              normalization = "NONE", 
+                                              normalization = "TSS", 
                                               random_effects = c("subject_id"), 
                                               reference = c("sample_type,BAL", "treatment,Control", "sampletype_treatment,BAL*Control"), 
                                               plot_heatmap = F,

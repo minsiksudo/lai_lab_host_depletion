@@ -35,7 +35,7 @@ str_libraries <- c(
 
 path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2")
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "AMR")
         
 YAML_header <-
 '---

@@ -401,7 +401,17 @@ sample_data(phy$phyloseq_path_rpkm)$gram_neg <- phy$phyloseq_rel %>% subset_taxa
 
 ```
 
+***4. Adding tree file***
+```{r}
+tree <- read_tree("/Users/minsikkim/Downloads/mpa_v31_CHOCOPhlAn_201901_species_tree.nwk.txt")
+tree$tip.label %>% str_split_fixed(., "[|]*__", 10) %>% .[,8] %>% duplicated %>% sum
+tree$tip.label <- tree$tip.label %>% str_split_fixed(., "[|]*__", 10) %>% .[,8] %>% ifelse(!duplicated(.), ., paste(., "1", sep = ""))
+tree$tip.label <- tree$tip.label %>% ifelse(!duplicated(.), ., paste(., "1", sep = ""))
+tree$tip.label <- tree$tip.label %>% ifelse(!duplicated(.), ., paste(., "1", sep = ""))
 
+phy$tree_phyloseq_count <- merge_phyloseq(phy$phyloseq_count, phy_tree(tree))
+phy$tree_phyloseq_rel <- merge_phyloseq(phy$phyloseq_rel, phy_tree(tree))
+```
 
 ***4. Saving RDS***
 
@@ -409,7 +419,6 @@ sample_data(phy$phyloseq_path_rpkm)$gram_neg <- phy$phyloseq_rel %>% subset_taxa
 # Saving object -----------------------------------------------------------
 #write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
 write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
-
 
 ```
 

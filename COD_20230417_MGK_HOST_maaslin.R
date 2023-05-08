@@ -29,13 +29,14 @@ sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phylo
 sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
 sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpkm))
 
-
 # Filtering samples failed sequencing -------------------------------------
 
+phyloseq$phyloseq_count <- subset_samples(phyloseq$phyloseq_count, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock"))
 phyloseq$phyloseq_rel <- subset_samples(phyloseq$phyloseq_rel, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock"))
 
 
-#Prevalence filtering
+# Prevalence filtering  ---------------------------------------------------
+
 taxa_qc <- data.frame("species" =  otu_table(subset_samples(phyloseq$phyloseq_count,
                                                             S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>%
                               t() %>% colnames(),
@@ -51,13 +52,28 @@ function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq$phylos
                           "mean_rpkm" = subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
 )
 
-red_flag_taxa <- data.frame(species = taxa_qc$species, red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0))
+
+# Decontam ----------------------------------------------------------------
+
+
+
+
+
+# Making a list of filters ------------------------------------------------
+
+
+red_flag_taxa <- data.frame(species = taxa_qc$species,
+                            red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq_unfiltered$phyloseq_rel) %>%
+                                                               t %>% rownames() %>%
+                                                               length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1,0)) %>%
+        mutate(red_flag_decontam_prev = species %in% (contaminant %>%
+                                                              subset(., .$method == "prevalence" & .$sample_type != "all") %>%
+                                                              .$contaminant %>% unique()))
+
 
 red_flag_function <- data.frame(function. = function_qc$function., red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpkm) %>% t %>% rownames() %>% length * 0.05 & function_qc$mean_rpkm < quantile(function_qc$mean_rpkm, 0.75), 1, 0))
 
-phyloseq$phyloseq_rel_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_taxa$red_flag_prev_abd != 1)$species, phyloseq$phyloseq_rel)
-phyloseq$phyloseq_count_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_taxa$red_flag_prev_abd != 1)$species, phyloseq$phyloseq_count)
-phyloseq$phyloseq_path_rpkm_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpkm)
+
 
 # Adding variables for MaAsLin --------------------------------------------
 
@@ -66,6 +82,13 @@ sample_data(phyloseq$phyloseq_rel)$sampletype_treatment <- paste(sample_data(phy
 sample_data(phyloseq$phyloseq_path_rpkm)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_path_rpkm)$Final_reads)
 sample_data(phyloseq$phyloseq_path_rpkm)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpkm)$sample_type, sample_data(phyloseq$phyloseq_path_rpkm)$treatment, sep = ":")
 
+# Making new phyloseq object ----------------------------------------------
+
+phyloseq$phyloseq_count_filtered <- prune_taxa(subset(red_flag_taxa,
+                                                     red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
+                                              phyloseq$phyloseq_count)
+phyloseq$phyloseq_path_rpkm_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpkm)
+phyloseq$phyloseq_rel_filtered <- transform_sample_counts(phyloseq$phyloseq_count_filtered, function (x) {x/sum(x)})
 
 
 #  MaAsLin --------------------------------------------------------
@@ -397,25 +420,6 @@ write.csv(f_fit_data_pos, "/Users/minsikkim/Dropbox (Partners HealthCare)/Projec
 # Filtered MaAsLin --------------------------------------------------------
 
 
-
-
-
-taxa_qc <- data.frame("species" =  otu_table(phyloseq$phyloseq_rel) %>% t() %>% colnames(),
-                      "prevalence" = ifelse(phyloseq$phyloseq_count %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-                      "mean_rel_abd" = phyloseq$phyloseq_rel %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
-)
-function_qc <- data.frame("function" =  otu_table(phyloseq$phyloseq_path_rpkm) %>% t() %>% colnames(),
-                      "prevalence" = ifelse(phyloseq$phyloseq_path_rpkm %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-                      "mean_rpkm" = phyloseq$phyloseq_path_rpkm %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
-)
-function_qc
-
-red_flag_taxa <- data.frame(species = taxa_qc$species, red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0))
-red_flag_function <- data.frame("function" = function_qc$"function", red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpkm) %>% t %>% rownames() %>% length * 0.05 & function_qc$mean_rpkm < quantile(function_qc$mean_rpkm, 0.75), 1, 0))
-
-
-phyloseq$phyloseq_rel_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_taxa$red_flag_prev_abd == 0)$species, phyloseq$phyloseq_rel)
-phyloseq$phyloseq_path_rpkm_filtered <- prune_taxa(subset(red_flag_function, red_flag_function$red_flag_prev_abd == 0)$"function", phyloseq$phyloseq_path_rpkm)
 
 # Maaslin - # # y ~ log(final reads) + sample_type + treatment  -----------
 

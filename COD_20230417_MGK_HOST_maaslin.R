@@ -29,6 +29,102 @@ sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phylo
 sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
 sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpkm))
 
+
+
+# Decontam ----------------------------------------------------------------
+sample_data(phyloseq$phyloseq_rel)$is.neg <- grepl("Neg", sample_data(phyloseq$phyloseq_rel)$sample_type)
+
+contaminant <- data.frame() 
+
+cat("decontam prevalence - all")
+contaminant1 <- 
+        data.frame("prevalence", "all", fix.empty.names = F, 
+                   phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
+                           isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names()
+        )
+
+cat("decontam prevalence - BAL")
+contaminant2 <- 
+        data.frame("prevalence", "BAL", fix.empty.names = F, 
+                   subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
+                           isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
+
+
+cat("decontam prevalence - Nasal")
+contaminant3 <- 
+        data.frame("prevalence", "Nasal swab", fix.empty.names = F, 
+                   subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal", "Neg.")) %>%
+                           isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
+
+cat("prevalence", "decontam prevalence - Sputum")
+contaminant4 <- 
+        data.frame("prevalence", "Sputum", fix.empty.names = F,
+                   subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum", "Neg.")) %>%
+                           isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
+
+
+
+
+cat("decontam frequency - All")
+contaminant5 <- 
+        data.frame("frequency", "all", fix.empty.names = F,
+                   phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
+                           isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+cat("decontam frequency - BAL")
+#contaminant6 <- 
+#data.frame("frequency", "BAL", fix.empty.names = F,
+subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL")) %>%
+        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
+
+cat("decontam frequency - Nasal")
+#contaminant7 <- 
+#data.frame("frequency", "Nasal swab", fix.empty.names = F,
+subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal")) %>%
+        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
+
+cat("decontam frequency - Sputum")
+contaminant8 <- 
+        data.frame("frequency", "Sputum", fix.empty.names = F,
+                   subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum")) %>%
+                           isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+
+
+cat("decontam combined - All")
+contaminant9 <- 
+        data.frame("combined", "all", fix.empty.names = F,
+                   
+                   phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
+                           isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+cat("decontam combined - BAL")
+contaminant10 <- 
+        data.frame("combined", "BAL", fix.empty.names = F,
+                   subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
+                           isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+cat("decontam combined - Nasal")
+#contaminant11 <- 
+#data.frame("combined", "Nasal swab", fix.empty.names = F,
+subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal", "Neg.")) %>%
+        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
+
+cat("decontam combined - Sputum")
+contaminant12 <- 
+        data.frame("combined", "Sputum", fix.empty.names = F,
+                   subset_samples(phyloseq$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum", "Neg.")) %>%
+                           isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+
+contaminant <- rbind(contaminant1, contaminant2, contaminant3, contaminant4, contaminant5, contaminant8, contaminant9, contaminant10, contaminant12)
+names(contaminant) <- c("method", "sample_type", "contaminant")
+
+
+
+
+
+
 # Filtering samples failed sequencing -------------------------------------
 
 phyloseq$phyloseq_count <- subset_samples(phyloseq$phyloseq_count, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock"))
@@ -53,17 +149,10 @@ function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq$phylos
 )
 
 
-# Decontam ----------------------------------------------------------------
-
-
-
-
-
 # Making a list of filters ------------------------------------------------
 
-
 red_flag_taxa <- data.frame(species = taxa_qc$species,
-                            red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq_unfiltered$phyloseq_rel) %>%
+                            red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>%
                                                                t %>% rownames() %>%
                                                                length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1,0)) %>%
         mutate(red_flag_decontam_prev = species %in% (contaminant %>%
@@ -74,13 +163,15 @@ red_flag_taxa <- data.frame(species = taxa_qc$species,
 red_flag_function <- data.frame(function. = function_qc$function., red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpkm) %>% t %>% rownames() %>% length * 0.05 & function_qc$mean_rpkm < quantile(function_qc$mean_rpkm, 0.75), 1, 0))
 
 
-
 # Adding variables for MaAsLin --------------------------------------------
 
 sample_data(phyloseq$phyloseq_rel)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_rel)$Final_reads)
 sample_data(phyloseq$phyloseq_rel)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_rel)$sample_type, sample_data(phyloseq$phyloseq_rel)$treatment, sep = ":")
+sample_data(phyloseq$phyloseq_count)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_count)$Final_reads)
+sample_data(phyloseq$phyloseq_count)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_count)$Final_reads)
 sample_data(phyloseq$phyloseq_path_rpkm)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_path_rpkm)$Final_reads)
 sample_data(phyloseq$phyloseq_path_rpkm)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpkm)$sample_type, sample_data(phyloseq$phyloseq_path_rpkm)$treatment, sep = ":")
+
 
 # Making new phyloseq object ----------------------------------------------
 
@@ -89,6 +180,7 @@ phyloseq$phyloseq_count_filtered <- prune_taxa(subset(red_flag_taxa,
                                               phyloseq$phyloseq_count)
 phyloseq$phyloseq_path_rpkm_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpkm)
 phyloseq$phyloseq_rel_filtered <- transform_sample_counts(phyloseq$phyloseq_count_filtered, function (x) {x/sum(x)})
+
 
 
 #  MaAsLin --------------------------------------------------------

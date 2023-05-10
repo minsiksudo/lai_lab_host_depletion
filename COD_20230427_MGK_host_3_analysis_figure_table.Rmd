@@ -386,8 +386,8 @@ figure2
 
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -428,8 +428,8 @@ figS1
 
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS1.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 90, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -530,6 +530,9 @@ tableS1 <- glmer(lib_failed ~ sample_type + treatment + sample_type * treatment 
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "serif")
 
 tableS1
+
+save_kable(tableS1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS1.html", self_contained = T)
+
 ```
                                     
 ### Library failure (BAL)
@@ -758,8 +761,8 @@ figS2
 
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -814,8 +817,8 @@ figS3
 
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS3.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 90, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -914,8 +917,8 @@ figS4 <- tax_table(phyloseq_control_rel) %>%
 figS4
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS4.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 90, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -974,7 +977,7 @@ a <- tax_table(subset_samples(phyloseq_control_rel, sample_type == "Mock")) %>%
         plot_bar(., fill="species20") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
-        theme(legend.text = element_markdown()) +
+        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
         facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1) +
@@ -1001,7 +1004,7 @@ b <- phyloseq_control_rel %>%
         plot_bar(., fill="Gram") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
-        theme(legend.text = element_markdown()) +
+        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
         guides(fill=guide_legend(title="Gram-stain")) +
         facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1) +
@@ -1012,8 +1015,8 @@ figS5 <- ggarrange(a, b, ncol = 1)
 figS5
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS5.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -1055,6 +1058,9 @@ tableS3 <- lmer(sqrt(gram_neg) ~ sample_type + treatment + sample_type * treatme
 
 tableS3
 
+save_kable(tableS3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS3.html", self_contained = T)
+
+
 ```
 
 ### decontam
@@ -1077,7 +1083,7 @@ contaminant <- data.frame()
 cat("decontam prevalence - all")
 contaminant1 <- 
 data.frame("prevalence", "all", fix.empty.names = F, 
-phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
+phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0 & sample_type != "Mock") %>%
         isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names()
 )
 
@@ -1086,7 +1092,6 @@ contaminant2 <-
 data.frame("prevalence", "BAL", fix.empty.names = F, 
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
         isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
-
 
 cat("decontam prevalence - Nasal")
 contaminant3 <- 
@@ -1158,13 +1163,20 @@ subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), 
 contaminant <- rbind(contaminant1, contaminant2, contaminant3, contaminant4, contaminant5, contaminant8, contaminant9, contaminant10, contaminant12)
 names(contaminant) <- c("method", "sample_type", "contaminant")
 contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique()
-
+cat("Prevalence decontam table")
+contaminant %>% subset(., .$method == "prevalence") %>% .$sample_type %>% table
+cat("Frequency decontam table")
+contaminant %>% subset(., .$method == "frequency") %>% .$sample_type %>% table
+cat("Combined decontam table")
+contaminant %>% subset(., .$method == "combined") %>% .$sample_type %>% table
 ```
 
 
 
 
 ### Decontam summary table
+
+**Table S4.** Summary table of potential contaminants with all sample types and stratified sample types in all methods (prevalence, frequence, and combined)
 
 ```{r}
 
@@ -1296,7 +1308,7 @@ alpha_diversity <- function(data) {
         alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
         sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
 }
-phyloseq_unfiltered <- phyloseq
+
 sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
 sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
 sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpkm))  
@@ -1407,6 +1419,16 @@ p1 <- plot(ba, water_order, color = "sample_type")
 p2 <- plot(observed_phyloseq, water_order, color = "sample_type") 
 grid.arrange(p2, p1, nrow = 2)
 
+ba_species <- breakaway(water)
+
+p1 <- plot(ba, water, color = "sample_type")
+p2 <- plot(sample_richness(water), water, color = "sample_type") 
+grid.arrange(p2, p1, nrow = 2)
+
+
+frequencytablelist <- build_frequency_count_tables(otu_table(water))
+frequencytablelist[1]
+frequencytablelist[12]
 # Here we're comparing our results with the previous plot we generated using
 # `phyloseq`'s observed richness estimator. What looks different? The most obvious
 # is that there are error bars around our estimates of observed order-level richness!
@@ -1566,8 +1588,8 @@ fig3 <- ggarrange(f3a, f3b2, ncol = 1, common.legend = T, align = "hv") +
 fig3
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -1715,7 +1737,20 @@ tableS5
 save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS5.html", self_contained = T)
 
 
-
+#Mean species richness change
+sample_data %>% data.frame() %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")) %>% 
+        select(c("sample_type", "subject_id", "treatment", "S.obs")) %>%
+        spread(., treatment, S.obs) %>%
+        group_by(sample_type) %>%
+        summarise(lyPMA = mean(lyPMA - Untreated, na.rm = T),
+                  Benzonase = mean(Benzonase - Untreated, na.rm = T),
+                  `Host zero` = mean(`Host zero` - Untreated, na.rm = T),
+                  Molysis = mean(Molysis - Untreated, na.rm = T),
+                  QIAamp = mean(QIAamp - Untreated, na.rm = T)) %>%
+        t() %>% 
+        kbl(format = "html",caption = "Changes of species richenss by sample type and traetment (subject pairwise)") %>%
+        kable_styling(full_width = 0, html_font = "serif")
+        
 ```
 
 ### Species richness - stratified
@@ -2071,22 +2106,23 @@ figS6 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata
         geom_point(size = 2) +
         xlab("MaAslin coefficient") +
         ylab("-log<sub>10</sub>(*q*-value)") +
+        ylim(c(-1, 35)) +
         geom_hline(yintercept = 1, col = "gray") +
         geom_vline(xintercept = 0, col = "gray") +
         annotate(family = "serif",
                  geom='richtext',
                  x=0, y=80,
                  label = "<i>q</i>-value = 0.1, fold-change = 0") +
-        theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
+        theme(legend.position = "top", axis.title.y = ggtext::element_markdown(), legend.text = element_markdown()) +
         scale_color_manual(values = c("#4daf4a",  "#984ea3", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628"),
                            breaks = c("log10.Final_reads", "sample_type", "lypma", "benzonase", "host_zero",  "molysis", "qiaamp"), 
-                           labels = c("log10(Final reads)", "Sample type", "lyPMA", "Benzonase", "Host zero",  "Molysis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        guides(col = guide_legend(title = "Covariates", title.position = "top", nrow = 2))
+                           labels = c("log<sub>10</sub>(Final reads)", "Sample type", "lyPMA", "Benzonase", "Host zero",  "Molysis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        guides(col = guide_legend(title = "Covariates", title.position = "top", nrow = 1))
 
 figS6
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS6.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 90, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -2352,8 +2388,8 @@ fig4 <- ggarrange(f5a, f5b, f5c, f5d, align = "hv", common.legend = T)
 fig4
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -2522,8 +2558,8 @@ figS7 <- ggarrange(f4a, f4b2, ncol = 1, common.legend = T, align = "hv") +
 figS7
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS7.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -2551,7 +2587,7 @@ dev.off()
 
 **Effect of some treatment was neutralized by interaction term. Therefore, the association was sample_type specific.**
 
-**Table S8**
+**Table S8**. Effect size, standard error (SE) and p-value of a statistical test for function richness with an interaction term using linear mixed effect model (Species richness ~ sample type * treatment + log10 (final reads) + (1|subject_id) ).
 
 ```{r}
 sample_data <- sample_data(phyloseq$phyloseq_count)
@@ -2656,7 +2692,7 @@ d.	Table of stratified beta diversity, Mock, BAL, Nasal, Sputum
                                 1.	Or, PERM(bray dist. ~ log10(Final reads) + sample type + treatment + sample_type * treatment, strata = subject_id)
 
 
-**Table S9**. Volcano plot of functional differential abundanace analysis
+**Table S9**. Degree of freedom, effect size (residual, R^2) and p-value of permutational ANOVA for functional Bray-Curtis distances with an interaction term and strata term (BC-distance of functions ~ sample type * treatment + log10(final reads), strata = subject id).
 
 ```{r}
 
@@ -2956,8 +2992,8 @@ figS8 <- ggplot(f_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) 
 
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS8.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 90, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -2969,9 +3005,13 @@ figS8
 
 dev.off()
 
+figS8
+
 
 
 ```
+
+**Figure S9**. Mean relative abundance of top 20 significant function identified by differential abundance analysis using MaAsLin. Analyses were stratified by sample type. (A) Mock community, (B) bronchoalveolor lavage, (C) nasal swabs, and (D) sputum. Statistical significances were noted at the level of q-value < 0.1
 
 ```{r}
 
@@ -3226,8 +3266,8 @@ figS9 <- ggarrange(f5a, f5b, f5c, f5d, align = "hv", common.legend = T)
 figS9
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS9.png",   # The directory you want to save the file in
-    width = 183, # The width of the plot in inches
-    height = 220, # The height of the plot in inches
+    width = 180, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -3254,29 +3294,7 @@ dev.off()
 
 ```{r}
 
-table4 <- matrix(nrow=3,ncol=5) %>% data.frame() %>% rename(lyPMA = X1, Benzonase = X2, `Host zero` = X3, Molysis = X4, QIAamp = X5) %>%
-        rownames_to_column("x") %>% mutate(x = c("BAL", "Nasal", "Sputum"),
-                                           lyPMA = c("No increase in final reads",
-                                                     "No increase in final reads",
-                                                     "No increase in final reads"),
-                                           Benzonase = c("No decrease in host %",
-                                                         "No decrease in host %",
-                                                         "No decrease in host %"),
-                                           `Host zero` = c(NA,
-                                                           NA,
-                                                           NA),
-                                           Molysis = c("No decrease in host %",
-                                                       "High cahnge of failure in library pep",
-                                                       NA),
-                                           QIAamp = c("No decrease in host %",
-                                                      NA,
-                                                      "No decrease in host %")) %>% column_to_rownames("x") %>%
-        kbl(format = "html", caption = "Table of issues of each treatment method") %>%
-        kable_styling(full_width = 0, html_font = "serif")
 
-table4
-
-save_kable(table4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table4.html", self_contained = T)
 
 ```
 

@@ -1162,6 +1162,7 @@ subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), 
 
 contaminant <- rbind(contaminant1, contaminant2, contaminant3, contaminant4, contaminant5, contaminant8, contaminant9, contaminant10, contaminant12)
 names(contaminant) <- c("method", "sample_type", "contaminant")
+cat("Prevalence decontam unique taxa - from stratified")
 contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique()
 cat("Prevalence decontam table")
 contaminant %>% subset(., .$method == "prevalence") %>% .$sample_type %>% table

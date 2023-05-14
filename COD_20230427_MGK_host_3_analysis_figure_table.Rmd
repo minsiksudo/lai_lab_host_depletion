@@ -424,6 +424,9 @@ figS1 <- sample_data %>% data.frame %>% mutate(total_read = phyloseq$phyloseq_co
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6)
 
+
+
+
 figS1
 
 
@@ -482,11 +485,11 @@ table1 <- sample_data %>% data.frame() %>%
         dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL")) %>% 
         group_by (sample_type, treatment) %>%
         summarise(N = n(),
-              `Total DNA <br>[ng/µL]` = paste(format(round(median(picogreen_ng_ul),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(picogreen_ng_ul, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(picogreen_ng_ul, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `library prep failure<br>[N (%)]` = paste(sum(lib_failed), " (", sum(lib_failed) / n() * 100, " %)", sep = ""),
-              `Clean reads<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Reads_after_trim/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Reads_after_trim/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Reads_after_trim/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `Host reads ratio` = paste(format(round(median(sequencing_host_prop),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(sequencing_host_prop, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `Final reads<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+              `Total DNA <br>ng/µL` = paste(format(round(median(picogreen_ng_ul),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(picogreen_ng_ul, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(picogreen_ng_ul, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
+              `Library or sequencing failure<br>N (%)` = paste(sum(lib_failed), "<br>(", sum(lib_failed) / n() * 100, " %)", sep = ""),
+              `Clean reads<br>reads x 10<sup>7</sup>` = paste(format(round(median(Reads_after_trim/10000000),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(Reads_after_trim/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Reads_after_trim/10000000, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
+              `Host reads ratio` = paste(format(round(median(sequencing_host_prop),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(sequencing_host_prop, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
+              `Final reads<br>reads x 10<sup>7</sup>` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
         ) %>% data.frame(check.names = F) %>% 
         arrange(sample_type, treatment) %>%
         rename(`Sample type` = sample_type, Treatment = treatment) %>%
@@ -522,12 +525,24 @@ tableS1 <- glmer(lib_failed ~ sample_type + treatment + sample_type * treatment 
         summary %>% .$coefficients %>% data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`t value`) > 2 ~ "*", .default = " ")) %>% 
         rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>% 
-        mutate(across(is.numeric, round, digits=2)) %>% 
         column_to_rownames(var = "x") %>% 
         rename("<i>t</i>-value" = "t value",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2),
+                                ")", 
+                                sep = ""),
+               "<i>t</i>-value" = round(`<i>t</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>t</i>-value", " ")) %>% 
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "serif")
+
+
+
+        
+
 
 tableS1
 
@@ -607,15 +622,32 @@ tableS2 <- lmer(sequencing_host_prop ~ sample_type + treatment + sample_type * t
              data.frame %>%
              dplyr::filter(sample_type %in% c("BAL", "Nasal", "Sputum"))) %>%
         summary %>% .$coefficients %>% data.frame(check.names = F) %>%
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>%
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>%
+        
         rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%         
-        mutate(across(is.numeric, round, digits=2)) %>% 
+        column_to_rownames(var = "x") %>%  
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        select(c("Effect size", "SE", "<i>p</i>-value")) %>%
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "serif")
+
+
+
+        
+
+
+        
 
 tableS2
 
@@ -624,7 +656,7 @@ save_kable(tableS2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 
 ```
 
-### Host ratio (BAL)
+### Host ratio (stratified)
 
 lmer( Host DNA ratio ~ treatment + (1\|subject_id) )
 
@@ -806,7 +838,7 @@ figS3 <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "
                                   data = sample_data %>%
                                           data.frame %>% 
                                           subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")))
-                                  %>% summary %>% .$r.squared %>% round(., 2), sep = "")) +
+                                  %>% summary %>% .$r.squared %>% round(., 2) %>% format(nsmall = 2), sep = "")) +
         geom_smooth(method=lm , color="red", se=T, level = 0.95) +
         guides(fill = guide_legend(nrow = 1))
  sample_data %>%
@@ -1046,14 +1078,23 @@ dev.off()
 tableS3 <- lmer(sqrt(gram_neg) ~ sample_type + treatment + sample_type * treatment + (1|subject_id),
      data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum"))) %>%
         summary %>% .$coefficients %>% data.frame(check.names = F) %>%
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>%
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>% 
-        mutate(across(is.numeric, round, digits=2)) %>% 
+        column_to_rownames(var = "x") %>%  
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        select(c("Effect size", "SE", "<i>p</i>-value", " ")) %>% 
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "serif")
 
 tableS3
@@ -1164,6 +1205,9 @@ contaminant <- rbind(contaminant1, contaminant2, contaminant3, contaminant4, con
 names(contaminant) <- c("method", "sample_type", "contaminant")
 cat("Prevalence decontam unique taxa - from stratified")
 contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique()
+
+(contaminant %>% subset(., .$method == "prevalence" & .$sample_type == "all") %>% .$contaminant) %in% (contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique())
+
 cat("Prevalence decontam table")
 contaminant %>% subset(., .$method == "prevalence") %>% .$sample_type %>% table
 cat("Frequency decontam table")
@@ -1184,63 +1228,15 @@ contaminant %>% subset(., .$method == "combined") %>% .$sample_type %>% table
 
 tableS4_1 <- matrix(nrow=3,ncol=4) %>% data.frame() %>% rename(" " = X1, "BAL" = X2, "Nasal swab" = X3, "Sputum" = X4) %>%
         rownames_to_column("x") %>% mutate(x = c("Prevalence method", "Frequency method", "Combined"),
-                                           " " = c(1, 1, 2),
-                                           `BAL` = c(6, 0, 1),
-                                           `Nasal swab` = c(4, 0, 0),
-                                           `Sputum` = c(4, 2, 2)
+                                           " " = c(16, 3, 6),
+                                           `BAL` = c(14, 0, 1),
+                                           `Nasal swab` = c(12, 0, 0),
+                                           `Sputum` = c(12, 3, 2)
                                            ) %>% column_to_rownames("x") %>%
         kbl(format = "html") %>%
         add_header_above(c(" " = 1, "Non-stratified" = 1, "Stratified" = 3)) %>% 
         kable_styling(full_width = 0, html_font = "serif") 
 tableS4_1
-
- 
-tableS4_2 <- matrix(nrow=3,ncol=4) %>% data.frame() %>% rename(" " = X1, "BAL" = X2, "Nasal swab" = X3, "Sputum" = X4) %>%
-        rownames_to_column("x") %>% mutate(x = c("Prevalence method", "Frequency method", "Combined"),
-                                           " " = c("<i>Cutibacterium acnes</i>",
-                                                   "<i>Listeria floridensis</i>",
-                                                   "<i>Cutibacterium acnes</i><br><i>Listeria floridensis</i>"),
-                                           `BAL` = c("<i>Cutibacterium acnes<br>
-                                           Thermoleophilum album<br>
-                                           Paludisphaera borealis<br>
-                                           Escherichia coli<br>
-                                           Bacillus intestinalis<br>
-                                           Listeria monocytogenes</i>",
-                                           "-",
-                                           "<i>Cutibacterium acnes</i>"),
-                                           `Nasal swab` = c("<i>Enterococcus faecalis<br>
-                                           Lactobacillus fermentum<br>
-                                           Bacillus intestinalis<br>
-                                           Listeria monocytogenes</i>",
-                                           "-", "-"),
-                                           `Sputum` = c("<i>Cutibacterium acnes<br>
-                                           Lactobacillus fermentum<br>
-                                           Bacillus intestinalis<br>
-                                           Listeria monocytogenes</i>",
-                                           "<i>Corynebacterium pseudodiphtheriticum<br>
-                                           Candida albicans<i>",
-                                           "<i>Cutibacterium acnes<br>
-                                           Candida albicans</i>")
-                                           ) %>% column_to_rownames("x") %>%
-        kbl(format = "html", escape = 0) %>%
-        add_header_above(c(" " = 1, "Non-stratified" = 1, "Stratified" = 3)) %>% 
-        kable_styling(full_width = 0, html_font = "serif") 
-tableS4_2
-
-tableS4_3 <- matrix(nrow=3,ncol=6) %>% data.frame() %>% rename(" " = X1, "lyPMA" = X2, "Benzonase" = X3, "Host zero" = X4, "Molysis" = X5, "QIAamp" = X6) %>%
-        rownames_to_column("x") %>% mutate(x = c("Prevalence method", "Frequency method", "Combined"),
-                                           " " = c(5, 2, 2),
-                                           `lyPMA` = c(1, 1, 1),
-                                           `Benzonase` = c(1, 3, 2),
-                                           `Host zero` = c(1, 5, 1),
-                                           `Molysis` = c(0, 4, 0),
-                                           `QIAamp` = c(1, 3, 1)
-                                           ) %>% column_to_rownames("x") %>%
-        kbl(format = "html") %>%
-        add_header_above(c(" " = 1, "Non-stratified" = 1, "Stratified" = 5)) %>% 
-        kable_styling(full_width = 0, html_font = "serif") 
-
-tableS4_3
 
 save_kable(tableS4_1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS4.html", self_contained = T)
 ```
@@ -1279,6 +1275,11 @@ red_flag_taxa <- data.frame(species = taxa_qc$species,
 
 red_flag_function <- data.frame(function. = function_qc$function., red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpkm) %>% t %>% rownames() %>% length * 0.05 & function_qc$mean_rpkm < quantile(function_qc$mean_rpkm, 0.75), 1, 0))
 
+#phyloseq of table 1
+phyloseq$phyloseq_count_prev <- prune_taxa(subset(red_flag_taxa,
+                                           red_flag_taxa$red_flag_prev_abd != 1)$species,
+                                    phyloseq$phyloseq_count)
+#phyloseq for analysis
 phyloseq$phyloseq_rel <- prune_taxa(subset(red_flag_taxa,
                                            red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
                                     phyloseq$phyloseq_rel)
@@ -1295,6 +1296,10 @@ phyloseq$tree_phyloseq_rel <- prune_taxa(subset(red_flag_taxa,
                                            red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
                                     phyloseq$tree_phyloseq_rel)
 
+
+
+
+
 #Calculation of alpha diversity indices for filtered samples
 
 alpha_diversity <- function(data) {
@@ -1309,7 +1314,7 @@ alpha_diversity <- function(data) {
         alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
         sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
 }
-
+sample_data(phyloseq$phyloseq_count_prev) <- sample_data(alpha_diversity(phyloseq$phyloseq_count_prev))
 sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
 sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
 sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpkm))  
@@ -1399,6 +1404,7 @@ data.frame("observed_richness" = (observed_phyloseq %>% summary)$estimate,
            "Treatment" = water_order %>% sample_data %>% get_variable("treatment")) %>%
   ggplot(aes(x = depth, y = observed_richness, color = `Sample.type`, shape = `Treatment`)) +
   geom_point()
+
 # So what do we see? We see that some of our Freshwater (creek) samples which have
 # the highest observed richness also have the highest sequencing depth and that our
 # Sediment (estuary) samples which have the lowest observed richness also have the
@@ -1442,6 +1448,69 @@ frequencytablelist[12]
 
 ```
 ## {-}
+
+
+**Table 1 (revised)**. Sample number of each experimental group, total DNA quantified by PicoGreen, library prep QC result, low quality removed read counts, ratio of host mapped reads and final microbial reads.
+
+```{r, warning=F, error=FALSE, results='asis', `QC2 Table - cnt.`}
+
+sample_data(phyloseq$phyloseq_count_prev)$sequencing_fail <- sample_data(phyloseq$phyloseq_count_prev)$S.obs == 0
+sample_data(phyloseq$phyloseq_count_prev)$Final_reads <- ifelse(sample_data(phyloseq$phyloseq_count_prev)$S.obs == 0,
+                                                                NA,
+                                                                sample_data(phyloseq$phyloseq_count_prev)$Final_reads)
+table1 <- sample_data(phyloseq$phyloseq_count_prev) %>% data.frame() %>% 
+        dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL")) %>% 
+        group_by (sample_type, treatment) %>%
+        summarise(N = n(),
+              `Total DNA <br>ng/µL` = paste(format(round(median(picogreen_ng_ul),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(picogreen_ng_ul, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(picogreen_ng_ul, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
+              `Library<br>failure<br>N (%)` = paste(sum(lib_failed), "<br>(", sum(lib_failed) / n() * 100, " %)", sep = ""),
+              `Sequencing<br>failure<br>N (%)` = paste(sum(sequencing_fail), "<br>(", sum(sequencing_fail) / n() * 100, " %)", sep = ""),
+              `Clean reads<br>reads x 10<sup>7</sup>` = paste(format(round(median(Reads_after_trim/10000000),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(Reads_after_trim/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Reads_after_trim/10000000, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
+              `Host reads ratio` = paste(format(round(median(sequencing_host_prop),2),
+                                                nsmall = 2, big.mark = ","),
+                                         "<br>(",
+                                         format(round(quantile(sequencing_host_prop,
+                                                               0.25),
+                                                      2),
+                                                nsmall = 2,
+                                                big.mark = ","), 
+                                         ", ", 
+                                         format(round(quantile(sequencing_host_prop, 0.75),2), 
+                                                nsmall = 2, 
+                                                big.mark = ","), 
+                                         ")", 
+                                         sep = ""),
+             `Final reads<br>reads x 10<sup>7</sup>` = paste(format(round(median(Final_reads/10000000, na.rm = T),2),
+                                                                    nsmall = 2, big.mark = ","),
+                                                             "<br>(", 
+                                                             format(round(quantile(Final_reads/10000000,
+                                                                                            0.25,
+                                                                                            na.rm = T),
+                                                                                   2),
+                                                                             nsmall = 2,
+                                                                             big.mark = ","),
+                                                             ", ",
+                                                             format(round(quantile(Final_reads/10000000, 
+                                                                                   0.75, 
+                                                                                   na.rm = T),
+                                                                          2), 
+                                                                    nsmall = 2, 
+                                                                    big.mark = ","), 
+                                                             ")",
+                                                             sep = "")
+             ) %>% 
+        data.frame(check.names = F) %>% 
+        arrange(sample_type, treatment) %>%
+        rename(`Sample type` = sample_type, Treatment = treatment) %>%
+        mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "serif")
+
+table1 
+
+
+save_kable(table1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table1.html", self_contained = T)
+
+
+```
 
 
 # **3.3. Effects of treatments on taxonomic composition**
@@ -1582,7 +1651,8 @@ f3b2 <- path_bray_dist_long_within_sampleid_from_control %>%
         geom_vline(xintercept = 0, col = "black", linetype="dotted") +
         coord_cartesian(xlim=c(-0.5, 1)) +
         geom_text(aes(x = 0, label = treatment), hjust = 0, nudge_x = -.55, size = 3, color = "black", family = "serif") +
-        geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "serif")
+        geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "serif") +
+        scale_x_continuous(breaks = c(0, 1), labels = c("Lower bias", "Higher bias"))
 
 fig3 <- ggarrange(f3a, f3b2, ncol = 1, common.legend = T, align = "hv") +
         guides(fill = guide_legend(nrow = 1))
@@ -1590,12 +1660,14 @@ fig3
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
-    height = 170, # The height of the plot in inches
+    height = 220, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
 
 fig3
+
+
 # alpha diversity plots
 #ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
 #          ncol = 1) # alpha diversity plots
@@ -1715,26 +1787,59 @@ fig3uni
 
 **Table S5.** Effect size, standard error (SE) and p-value of a statistical test for species richness with an interaction term using linear mixed effect model (Species richness ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id) ).
 
+**Distribution of centralized final reads**
+
 ```{r}
 sample_data <- sample_data(phyloseq$phyloseq_count)
+sample_data$log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("BAL") & sample_data$treatment %in% c("Untreated")) %>% .$Final_reads) + 1))
 
-tableS5 <- lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum"))) %>% 
+sample_data$bal_log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("BAL") & sample_data$treatment %in% c("Untreated"))%>% .$Final_reads) + 1))
+
+sample_data$ns_log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("Nasal") & sample_data$treatment %in% c("Untreated"))%>% .$Final_reads) + 1))
+
+sample_data$spt_log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("Sputum") & sample_data$treatment %in% c("Untreated"))%>% .$Final_reads) + 1))
+
+
+subset(sample_data, sample_data$sample_type %in% c("BAL", "Nasal", "Sputum")) %>% .$log_centered_final_reads %>% hist (main = "Hist. of centered log10 final reads of BAL, Nasal, Sputum")
+
+subset(sample_data, sample_data$sample_type %in% c("BAL")) %>% .$log_centered_final_reads %>% hist (main = "Hist. of centered log10 final reads of BAL")
+
+subset(sample_data, sample_data$sample_type %in% c("Nasal")) %>% .$log_centered_final_reads %>% hist (main = "Hist. of centered log10 final reads of Nasal")
+
+subset(sample_data, sample_data$sample_type %in% c("Sputum")) %>% .$log_centered_final_reads %>% hist (main = "Hist. of centered log10 final reads of Sputum")
+
+```
+
+```{r}
+
+
+tableS5 <- lmer(S.obs ~ sample_type * treatment + log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum"))) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
+                               
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        mutate(across(is.numeric, round, digits=2)) %>% 
+        #mutate(across(is.numeric, round, digits=2)) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        select(c("Effect size", "SE", "<i>p</i>-value", " ")) %>% 
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "serif")
 
 tableS5
-
 save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS5.html", self_contained = T)
 
 
@@ -1759,7 +1864,8 @@ sample_data %>% data.frame() %>% subset(., .$sample_type %in% c("BAL", "Nasal", 
 **Table 2**. Effect size, standard error (SE) and p-value of a statistical test for species richness using linear mixed effect model stratified by sample type (Species richness ~ treatment + log10 (Final_reads) + (1|subject_id) ).
 
 ```{r}
-sr_lmer_bal <- lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) %>% 
+
+sr_lmer_bal <- lmer(S.obs ~ treatment + bal_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -1768,15 +1874,21 @@ sr_lmer_bal <- lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), da
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("10", "<sub>10</sub>", x)) %>% mutate(x = gsub("_", " ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        mutate(across(is.numeric, round, digits=2)) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        select(c("Effect size", "SE", "<i>p</i>-value", " "))
-
-sr_lmer_ns <- lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) %>% 
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        
+sr_lmer_ns <- lmer(S.obs ~ treatment + ns_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -1785,15 +1897,22 @@ sr_lmer_ns <- lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), dat
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("10", "<sub>10</sub>", x)) %>% mutate(x = gsub("_", " ", x)) %>%
+        mutate(x = gsub("ns_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-mutate(across(is.numeric, round, digits=2)) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        select(c("Effect size", "SE", "<i>p</i>-value", " "))
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = ), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = ),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = ),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
 
-sr_lmer_spt <- lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) %>% 
+
+sr_lmer_spt <- lmer(S.obs ~ treatment + spt_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>%
@@ -1802,24 +1921,31 @@ sr_lmer_spt <- lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), da
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("10", "<sub>10</sub>", x)) %>% mutate(x = gsub("_", " ", x)) %>%
+        mutate(x = gsub("spt_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        mutate(across(is.numeric, round, digits=2)) %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        select(c("Effect size", "SE", "<i>p</i>-value", " ")) 
-
-
+                rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        
 
 table2  <- cbind(sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
     kbl(format = "html", escape = 0) %>%
-        add_header_above(c(" " = 1, "BAL" = 4, "Nasal swab" = 4,"Sputum"= 4)) %>% 
+        add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "serif")
 
 table2
 
 save_kable(table2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table2.html", self_contained = T)
+
+
 
 
 ```
@@ -1867,19 +1993,21 @@ tableS6 <- bray_perm_inter %>% data.frame(check.names = F) %>% rownames_to_colum
                                      row.names == "sample_type:treatment" ~ 'Sample type * Treatment',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
-        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.0001 ~ "***",
-                                            abs(`Pr(>F)`) < 0.001 ~ "**",
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
                                             abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         mutate(across(is.numeric, round, digits=3)) %>% 
         rename("<i>p</i>-value" = "Pr(>F)",
                "R<sup>2</sup>" = "R2",
                "Degree of freedom" = "Df") %>% 
+        mutate(`<i>p</i>-value` = format(`<i>p</i>-value`, nsmall = 3)) %>%
         select(c("Degree of freedom", "R<sup>2</sup>", "<i>p</i>-value", " ")) %>% 
         kbl(format = "html", escape = 0) %>%
         kable_styling(full_width = 0, html_font = "serif")
 
 tableS6
+
 
 save_kable(tableS6, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS6.html", self_contained = T)
 
@@ -1903,8 +2031,8 @@ a <- bray_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.n
                                      row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
-                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.0001 ~ "***",
-                                            abs(`Pr(>F)`) < 0.001 ~ "**",
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
                                             abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         mutate(across(is.numeric, round, digits=3)) %>% 
@@ -1923,8 +2051,8 @@ b <- bray_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.na
                                      row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
-                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.0001 ~ "***",
-                                            abs(`Pr(>F)`) < 0.001 ~ "**",
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
                                             abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         mutate(across(is.numeric, round, digits=3)) %>% 
@@ -1943,8 +2071,8 @@ c <- bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.n
                                      row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
-                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.0001 ~ "***",
-                                            abs(`Pr(>F)`) < 0.001 ~ "**",
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
                                             abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         mutate(across(is.numeric, round, digits=3)) %>% 
@@ -1982,7 +2110,7 @@ path_bray_dist_long_within_sampleid_from_control$sample_type <- factor(path_bray
                                                                                 "BAL",
                                                                                 "Nasal",
                                                                                 "Sputum"))
-tableS7 <- lmer(dist ~ treatment * sample_type + (1|sample_id_1), data = path_bray_dist_long_within_sampleid_from_control %>% subset(., .$sample_type != "Neg.")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+tableS7 <- lmer(dist ~ sample_type * treatment + (1|sample_id_1), data = path_bray_dist_long_within_sampleid_from_control %>% subset(., .$sample_type != "Neg.")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = gsub("treatment|sample_type", "", row.names)) %>% 
         mutate(row.names = gsub("[:]", " * ", row.names)) %>% 
         mutate(row.names = gsub("host_zero", "Host zero", row.names)) %>% 
@@ -1992,14 +2120,25 @@ tableS7 <- lmer(dist ~ treatment * sample_type + (1|sample_id_1), data = path_br
         mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
         mutate(across(is.numeric, round, digits=3)) %>% 
         column_to_rownames("row.names") %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        select(c("Effect size", "SE", "<i>p</i>-value", " ")) %>% 
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
         kbl(format = "html", escape = 0) %>%
         kable_styling(full_width = 0, html_font = "serif")
+        
+
 
 
 tableS7
@@ -2591,21 +2730,32 @@ dev.off()
 **Table S8**. Effect size, standard error (SE) and p-value of a statistical test for function richness with an interaction term using linear mixed effect model (Species richness ~ sample type * treatment + log10 (final reads) + (1|subject_id) ).
 
 ```{r}
-sample_data <- sample_data(phyloseq$phyloseq_count)
 
-tableS8 <- lmer(S.obs ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum"))) %>% 
+sample_data <- sample_data(phyloseq$phyloseq_path_rpkm)
+sample_data$log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("BAL") & sample_data$treatment %in% c("Untreated")) %>% .$Final_reads) + 1))
+
+
+tableS8 <- lmer(S.obs ~ sample_type * treatment + log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum"))) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        column_to_rownames(var = "x") %>% 
-        mutate(across(is.numeric, round, digits=2)) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
+        column_to_rownames(var = "x") %>%  
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        select(c("Effect size", "SE", "<i>p</i>-value", " ")) %>% 
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "serif")
 
 
@@ -2634,7 +2784,7 @@ sr_lmer_bal <- lmer(S.obs ~ treatment + log10 (Final_reads) + (1|subject_id), da
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         mutate(x = gsub("10", "<sub>10</sub>", x)) %>% mutate(x = gsub("_", " ", x)) %>%
         column_to_rownames(var = "x") %>% 
-        mutate(across(is.numeric, round, digits=2)) %>% 
+        mutate(across(is.numeric, round, digits=2))%>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
                SE = "Std. Error",
                "Effect size" = "Estimate") %>%
@@ -2735,11 +2885,12 @@ tableS9 <- bray_perm_inter %>% data.frame(check.names = F) %>% rownames_to_colum
                                      row.names == "sample_type:treatment" ~ 'Sample type * Treatment',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
-        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.0001 ~ "***",
-                                            abs(`Pr(>F)`) < 0.001 ~ "**",
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
                                             abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        mutate(across(is.numeric, round, digits=3)) %>% 
+        mutate(across(is.numeric, round, digits=3),
+               `Pr(>F)` = format(`Pr(>F)`, nsmall = 3)) %>% 
         rename("<i>p</i>-value" = "Pr(>F)",
                "R<sup>2</sup>" = "R2",
                "Degree of freedom" = "Df") %>% 
@@ -2767,8 +2918,8 @@ a <- bray_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.n
                                      row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
-                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.0001 ~ "***",
-                                            abs(`Pr(>F)`) < 0.001 ~ "**",
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
                                             abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         mutate(across(is.numeric, round, digits=3)) %>% 
@@ -2787,8 +2938,8 @@ b <- bray_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.na
                                      row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
-                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.0001 ~ "***",
-                                            abs(`Pr(>F)`) < 0.001 ~ "**",
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
                                             abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         mutate(across(is.numeric, round, digits=3)) %>% 
@@ -2807,8 +2958,8 @@ c <- bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.n
                                      row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
                                      row.names == "Residual" ~ 'Residual',
                                      row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
-                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.0001 ~ "***",
-                                            abs(`Pr(>F)`) < 0.001 ~ "**",
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
                                             abs(`Pr(>F)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         mutate(across(is.numeric, round, digits=3)) %>% 

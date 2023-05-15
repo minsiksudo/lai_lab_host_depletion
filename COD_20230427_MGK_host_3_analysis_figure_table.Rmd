@@ -402,6 +402,21 @@ dev.off()
 
 ```
 
+###Figure 1 numbers
+
+```{r}
+
+sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% summarise(med = median(DNA_host_nondil + DNA_bac_nondil), lo = quantile(DNA_host_nondil + DNA_bac_nondil, 0.25), high = quantile(DNA_host_nondil + DNA_bac_nondil, 0.75))
+
+sample_data %>% subset(., .$S.obs != 0) %>%
+        group_by(sample_type, treated) %>% summarise(med = median(DNA_host_nondil), lo = quantile(DNA_host_nondil, 0.25), high = quantile(DNA_host_nondil, 0.75))
+
+sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% summarise(med = median(host_proportion), lo = quantile(host_proportion, 0.25), high = quantile(host_proportion, 0.75))
+
+sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% summarise(med = median(DNA_bac_nondil), lo = quantile(DNA_bac_nondil, 0.25), high = quantile(DNA_bac_nondil, 0.75))
+
+```
+
                 
 ### Total reads by sample type
 
@@ -696,6 +711,66 @@ lmer_b <- lmer(sequencing_host_prop ~ treatment + (1|subject_id),
 
 
 lmer_c <- lmer(sequencing_host_prop ~ treatment + (1|subject_id),
+     data = sample_data %>%
+             data.frame %>%
+             dplyr::filter(sample_type %in% c("Sputum"))) %>%
+        summary %>% .$coefficients %>% data.frame(check.names = F) %>%
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
+        column_to_rownames(var = "x") %>% 
+        mutate(across(is.numeric, round, digits=2)) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error",
+               "Effect size" = "Estimate") %>%
+        select(c("Effect size", "SE", "<i>p</i>-value", " "))
+        
+cbind(lmer_a, lmer_b, lmer_c) %>%
+    kbl(format = "html", escape = 0) %>%
+        add_header_above(c(" " = 1, "BAL" = 4, "Nasal swab" = 4,"Sputum"= 4)) %>% 
+        kable_styling(full_width = 0, html_font = "serif")
+
+```
+
+### Final reads (stratified)
+
+lmer( Host DNA ratio ~ treatment + (1\|subject_id) )
+
+**Host zero and Molysis changed host ratio**
+
+```{r warning=F, 'LMER host % BAL'}
+
+lmer_a <- lmer(Final_reads/1000000 ~ treatment + (1|subject_id),
+     data = sample_data %>%
+             data.frame %>%
+             dplyr::filter(sample_type %in% c("BAL") & S.obs != 0)) %>%
+        summary %>% .$coefficients %>% data.frame(check.names = F) %>%
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
+        column_to_rownames(var = "x") %>% 
+        mutate(across(is.numeric, round, digits=2)) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error",
+               "Effect size" = "Estimate") %>%
+        select(c("Effect size", "SE", "<i>p</i>-value", " "))
+
+
+
+lmer_b <- lmer(Final_reads/1000000 ~ treatment + (1|subject_id),
+     data = sample_data %>%
+             data.frame %>%
+             dplyr::filter(sample_type %in% c("Nasal"))) %>%
+        summary %>% .$coefficients %>% data.frame(check.names = F) %>%
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.05 ~ "*", .default = " ")) %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
+        column_to_rownames(var = "x") %>% 
+        mutate(across(is.numeric, round, digits=2)) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error",
+               "Effect size" = "Estimate") %>%
+        select(c("Effect size", "SE", "<i>p</i>-value", " "))
+
+
+lmer_c <- lmer(Final_reads/1000000 ~ treatment + (1|subject_id),
      data = sample_data %>%
              data.frame %>%
              dplyr::filter(sample_type %in% c("Sputum"))) %>%

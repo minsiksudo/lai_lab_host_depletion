@@ -362,26 +362,26 @@ path_tax2 <- read.csv("20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ0
 row.names(path_tax2) <- path_tax2$pathway
 
 #Merging Readstat + metadata
-phyloseq_path_rpkm1 <- #merge_phyloseq(
+phyloseq_path_rpk1 <- #merge_phyloseq(
         merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %>% as.matrix()))#,
         #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
 
-phyloseq_path_rpkm2 <- #merge_phyloseq(
+phyloseq_path_rpk2 <- #merge_phyloseq(
         merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))#,
         #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %>% as.matrix()))
-phyloseq_path_rpkm <- merge_phyloseq(phyloseq_path_rpkm1, phyloseq_path_rpkm2)
+phyloseq_path_rpk <- merge_phyloseq(phyloseq_path_rpk1, phyloseq_path_rpk2)
 
 ```
 
-```{r warning=FALSE, `Loading functional - RPKM`}
+```{r warning=FALSE, `Loading functional - RPK`}
 
 phy <- list()
 sample_data <- sample_data(phyloseq)
 sample_names(phyloseq) <- sample_data(phyloseq)$baylor_other_id
-sample_names(phyloseq_path_rpkm) <- sample_data(phyloseq_path_rpkm)$baylor_other_id
+sample_names(phyloseq_path_rpk) <- sample_data(phyloseq_path_rpk)$baylor_other_id
 phy$phyloseq_count <- phyloseq
 phy$phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
-phy$phyloseq_path_rpkm <-phyloseq_path_rpkm
+phy$phyloseq_path_rpk <-phyloseq_path_rpk
 
 
 tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
@@ -397,31 +397,33 @@ AMR::mo_gramstain(taxa_names(phy$phyloseq_count))
 
 sample_data(phy$phyloseq_rel)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
 sample_data(phy$phyloseq_count)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
-sample_data(phy$phyloseq_path_rpkm)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
+sample_data(phy$phyloseq_path_rpk)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
 
 ```
 
-***4. Adding tree file***
+***4. Removing unnecessary metadata***
+
 ```{r}
-tree <- read_tree("/Users/minsikkim/Downloads/mpa_v31_CHOCOPhlAn_201901_species_tree.nwk.txt")
-tree$tip.label %>% str_split_fixed(., "[|]*__", 10) %>% .[,8] %>% duplicated %>% sum
-tree$tip.label <- tree$tip.label %>% str_split_fixed(., "[|]*__", 10) %>% .[,8] %>% ifelse(!duplicated(.), ., paste(., "1", sep = ""))
-tree$tip.label <- tree$tip.label %>% ifelse(!duplicated(.), ., paste(., "1", sep = ""))
-tree$tip.label <- tree$tip.label %>% ifelse(!duplicated(.), ., paste(., "1", sep = ""))
+sample_data(phy$phyloseq_rel) <- sample_data(phy$phyloseq_rel) %>% 
+        data.frame() %>% 
+        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
+sample_data(phy$phyloseq_count) <- sample_data(phy$phyloseq_count) %>% 
+        data.frame() %>% 
+        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
+sample_data(phy$phyloseq_path_rpk)<- sample_data(phy$phyloseq_path_rpk) %>% 
+        data.frame() %>% 
+        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
 
-phy$tree_phyloseq_count <- merge_phyloseq(phy$phyloseq_count, phy_tree(tree))
-phy$tree_phyloseq_rel <- merge_phyloseq(phy$phyloseq_rel, phy_tree(tree))
 ```
 
-***4. Saving RDS***
+***5. Saving RDS***
 
 ```{r, warning=F, `Saving phyloseq object`}
 # Saving object -----------------------------------------------------------
 #write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
-write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
+write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 ```
-
 
 
 ```{r warning=FALSE }

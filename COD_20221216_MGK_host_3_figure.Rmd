@@ -304,6 +304,8 @@ dev.off()
 #output for markdown
 ggarrange(f2a, f2b, f2c, f2d, common.legend = T , align = "hv")
 
+
+
 ```
 
 

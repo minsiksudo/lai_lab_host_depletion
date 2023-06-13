@@ -187,7 +187,10 @@ setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/
 #Prior calculatoin was based on zymo's specification. (20 ng / uL, which is wrong). This need to be modified
 
 sample_result<- sample_result %>% 
-        mutate(DNA_bac_ng_uL = DNA_host_well/2, DNA_host_ng_uL = DNA_bac_well/2,
+        mutate(DNA_bac_ng_uL = DNA_host_well/2, 
+               DNA_host_ng_uL = DNA_bac_well/2,
+               DNA_bac_gene_copies_uL = DNA_bac_ng_uL * 198349.73, 
+               DNA_bac_16S_copies_uL = DNA_bac_gene_copies_uL * 7, 
                DNA_host_nondil = DNA_host_ng_uL * 10, DNA_bac_nondil = DNA_bac_ng_uL * 10, #qPCR was conducted for 10-fold diluted samples.
                host_proportion = (DNA_host_nondil/(DNA_host_nondil + DNA_bac_nondil)))
 
@@ -386,18 +389,35 @@ phy$phyloseq_path_rpk <-phyloseq_path_rpk
 
 tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
                                        AMR::mo_gramstain(taxa_names(phy$phyloseq_count))) %>%
-        tax_table()
-colnames(tax_table(phy$phyloseq_count))[8] <- "Gram"
+        tax_table() %>% 
+        data.frame %>% 
+        rename("gram_stain" = "V8") %>% 
+        mutate(gram_stain = case_when(is.na(gram_stain) ~ "fungi",
+                                      .default = gram_stain)) %>%
+        as.matrix()
+
 
 tax_table(phy$phyloseq_rel) <- cbind(tax_table(phy$phyloseq_rel),
                                        AMR::mo_gramstain(taxa_names(phy$phyloseq_rel))) %>%
-        tax_table()
-colnames(tax_table(phy$phyloseq_rel))[8] <- "Gram"
-AMR::mo_gramstain(taxa_names(phy$phyloseq_count))
+        tax_table() %>% 
+        data.frame %>% 
+        rename("gram_stain" = "V8") %>% 
+        mutate(gram_stain = case_when(is.na(gram_stain) ~ "fungi",
+                                      .default = gram_stain)) %>%
+        as.matrix()
 
-sample_data(phy$phyloseq_rel)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
-sample_data(phy$phyloseq_count)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
-sample_data(phy$phyloseq_path_rpk)$gram_neg <- phy$phyloseq_rel %>% subset_taxa(Gram == "Gram-negative") %>% otu_table() %>% colSums(na.rm = F)
+sample_data(phy$phyloseq_rel)$gram_neg_prop <- phy$phyloseq_rel %>% 
+        subset_taxa(gram_stain == "Gram-negative") %>% 
+        otu_table() %>% 
+        colSums(na.rm = F)
+sample_data(phy$phyloseq_count)$gram_neg_prop <- phy$phyloseq_rel %>% 
+        subset_taxa(gram_stain == "Gram-negative") %>% 
+        otu_table() %>% 
+        colSums(na.rm = F)
+sample_data(phy$phyloseq_path_rpk)$gram_neg_prop <- phy$phyloseq_rel %>% 
+        subset_taxa(gram_stain == "Gram-negative") %>% 
+        otu_table() %>% 
+        colSums(na.rm = F)
 
 ```
 
@@ -422,6 +442,7 @@ sample_data(phy$phyloseq_path_rpk)<- sample_data(phy$phyloseq_path_rpk) %>%
 # Saving object -----------------------------------------------------------
 #write.csv(sample_result, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv")
 write_rds(phy, "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+
 
 ```
 

@@ -212,7 +212,7 @@ sample_data %>%
                 geom_histogram(bins = 97) +
                 guides(fill=guide_legend(title="Treatment", nrow = 1)) +
                 facet_grid(sample_type~feature, scales = "free") +
-                ggtitle("log10 transfromed histrogram") +
+                ggtitle("Raw value histrogram") +
                 theme_classic() +
                 theme(legend.position = "top") 
 
@@ -226,22 +226,24 @@ sample_data %>%
 
 ```{r warning=F, QC1.2}
 ## figures -----log10
+
+
 sample_data %>% 
         subset(., !is.na(.$subject_id)) %>%
         data.frame() %>%
-        mutate(host_seq_percent = 100 * sequencing_host_prop, 
-               .after = sequencing_host_prop,) %>% 
-        gather(feature, value, Raw_reads:host_seq_percent) %>%
+        gather(feature, value, Raw_reads:sequencing_host_prop) %>%
         group_by(feature, sample_type) %>% 
-        subset(., .$feature %in% c("Raw_reads", "Host_mapped", "Final_reads", "host_seq_percent")) %>%
-        mutate(feature = factor(feature, levels = c("Raw_reads", "Host_mapped", "Final_reads", "host_seq_percent"), labels = c("Raw reads", "Host mapped", "Final reads", "Host %"))) %>%
+        subset(., .$feature %in% c("Raw_reads", "Host_mapped", "Final_reads", "sequencing_host_prop")) %>%
+        mutate(feature = factor(feature, levels = c("Raw_reads", "Host_mapped", "Final_reads", "sequencing_host_prop"), labels = c("Raw reads", "Host mapped", "Final reads", "Host ratio"))) %>%
         ggplot(aes(x = log10(value), fill = treatment)) +
                 geom_histogram(bins = 97) +
-                facet_grid(sample_type~feature, scales = "free") +
-                ggtitle("log10 transformed") +
                 guides(fill=guide_legend(title="Treatment", nrow = 1)) +
+                facet_grid(sample_type~feature, scales = "free") +
+                ggtitle("log10 transfromed histrogram") +
                 theme_classic() +
-                theme(legend.position = "top")
+                theme(legend.position = "top") 
+
+
 
 ```
 
@@ -251,13 +253,14 @@ sample_data %>%
 
 ```{r warning=F, QC1.2.22}
 ## figures -----log10
+
 sample_data %>% 
         subset(., !is.na(.$subject_id)) %>%
         data.frame() %>%
-        mutate(host_seq_percent = sequencing_host_prop, 
+        dplyr::mutate(host_seq_percent = sequencing_host_prop, 
                log_seq_percent = log10(host_seq_percent), 
                sqrt_seq_percent = sqrt(host_seq_percent), 
-               .after = sequencing_host_prop,) %>% 
+               .after = sequencing_host_prop) %>% 
         gather(feature, value, Raw_reads:sqrt_seq_percent) %>%
         group_by(feature, sample_type) %>% 
         subset(., .$feature %in% c("host_seq_percent", "log_seq_percent", "sqrt_seq_percent")) %>%
@@ -429,17 +432,17 @@ type and treatment
 ```{r, warning=F, error=FALSE, results='asis', `QC2 Table`}
 
 #sequencing result by sample type and control (1/0)
-options(dplyr.summarise.inform = FALSE)
+
 
 sample_data %>% data.frame() %>% 
-        group_by(sample_type, treated) %>% 
-        summarise(N = n(),
+        dplyr::group_by(sample_type, treated) %>% 
+        dplyr::summarise(N = n(),
                   `Raw reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Raw_reads/10000000),2),nsmall = 2, big.mark = ","), " [", format(round(quantile(Raw_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Raw_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
                   `Host reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Host_mapped/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Host_mapped/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Host_mapped/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
                   `Host reads proportion<br>(median [IQR])<br>[%]` = paste(format(round(median(sequencing_host_prop * 100),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(sequencing_host_prop * 100, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop * 100, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
                   `Final reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
         ) %>%
-        rename(`Sample type` = sample_type, Treated = treated) %>%
+        dplyr::rename(`Sample type` = sample_type, Treated = treated) %>%
         data.frame(check.names = F) %>% mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "serif")
 ```
 
@@ -449,18 +452,23 @@ sample_data %>% data.frame() %>%
 
 ```{r, warning=F, error=FALSE, results='asis', `QC2 Table - cnt.`}
 
-sample_data %>% data.frame() %>% 
-        #dplyr::filter(sample_type %in% c("Sputum", "nasal_swab", "BAL")) %>% 
+table1 <- sample_data %>% data.frame() %>% 
+        dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL")) %>% 
         group_by (sample_type, treatment) %>%
-        summarise(N = n(),
-              `Raw reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Raw_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Raw_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Raw_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `Host reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Host_mapped/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Host_mapped/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Host_mapped/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `Host reads proportion<br>(median [IQR])<br>[%]` = paste(format(round(median(sequencing_host_prop * 100),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(sequencing_host_prop * 100, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop * 100, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
-              `Final reads<br>(median [IQR])<br>[reads x 10<sup>7</sup>]` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), " [", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), "]", sep = ""),
+        dplyr::summarise(N = n(),
+              `Total DNA <br>ng/µL` = paste(format(round(median(DNA_host_ng_uL + DNA_bac_ng_uL),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(DNA_host_ng_uL + DNA_bac_ng_uL, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(DNA_host_ng_uL + DNA_bac_ng_uL, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
+              `Library or sequencing failure<br>N (%)` = paste(sum(lib_failed), "<br>(", sum(lib_failed) / n() * 100, " %)", sep = ""),
+              `Clean reads<br>reads x 10<sup>7</sup>` = paste(format(round(median(Reads_after_trim/10000000),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(Reads_after_trim/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Reads_after_trim/10000000, 0.75), 1), nsmall = 1, big.mark = ","), ")", sep = ""),
+              `Host reads %` = paste(format(round(median(sequencing_host_prop) * 100, 1), nsmall = 1, big.mark = ","), "<br>(", format(round(quantile(sequencing_host_prop, 0.25) * 100, 1), nsmall = 1, big.mark = ","), ", ", format(round(quantile(sequencing_host_prop, 0.75) * 100, 1), nsmall = 1, big.mark = ","), ")", sep = ""),
+              `Final reads<br>reads x 10<sup>7</sup>` = paste(format(round(median(Final_reads/10000000),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(Final_reads/10000000, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(Final_reads/10000000, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = "")
         ) %>% data.frame(check.names = F) %>% 
         arrange(sample_type, treatment) %>%
-        rename(`Sample type` = sample_type, Treatment = treatment) %>%
+        dplyr::rename(`Sample type` = sample_type, Treatment = treatment) %>%
         mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "serif")
+
+table1 
+
+
 
 ```
 
@@ -520,6 +528,7 @@ zymo_mock <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/
 phyloseq_mock <- rbind(c("mock_theoretical", "Mock theoretical", "-")) %>% data.frame() %>%
         column_to_rownames(var = "X1") %>% rename(sample_type = X2, treatment = X3) %>% #making sample_data of mock community
         merge_phyloseq(sample_data(.), zymo_mock)
+
 
 phyloseq_control_rel <- subset_samples(phyloseq$phyloseq_rel, sample_type == "Mock" | sample_type == "Neg.") #adding data of controls
 sample_data(phyloseq_control_rel)$treatment <- sample_data(phyloseq_control_rel)$treatment %>% as.character()
@@ -622,9 +631,22 @@ phyloseq_control_rel %>%
 **Others decrased gram negatives a lot, but not became zero**
 
 ```{r, warning=FALSE}
+#Making function without borders
+my_plot_bar = function (physeq, x = "Sample", y = "Abundance", fill = NULL, title = NULL, 
+                        facet_grid = NULL) {
+    mdf = psmelt(physeq)
+    p = ggplot(mdf, aes_string(x = x, y = y, fill = fill))
+    p = p + geom_bar(stat = "identity")
+    p = p + theme(axis.text.x = element_text(angle = -90, hjust = 0))
+    if (!is.null(facet_grid)) {
+        p <- p + facet_grid(facet_grid)
+    }
+    if (!is.null(title)) {
+        p <- p + ggtitle(title)
+    }
+    return(p)
+}
 # gram stain data
-
-
 phyloseq_control_rel %>% 
         subset_samples(., sample_type == "Mock") %>% 
         tax_table() %>%
@@ -639,13 +661,13 @@ phyloseq_control_rel %>%
    tax_table(phyloseq_temp) <- tax_table(.) 
    phyloseq_temp
   } %>%
-        plot_bar(., fill="gram_stain") + 
+        my_plot_bar(., fill="gram_stain") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Gram stain in Zymo mock") +
         theme(legend.text = element_markdown()) +
         guides(fill=guide_legend(title="Gram-stain")) +
-        facet_wrap (~ factor(treatment, levels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1)
 
 #there could be opportunistic pathogens...
@@ -714,7 +736,7 @@ tax_table(phyloseq_control_rel_contam) %>%
    tax_table(phyloseq_temp) <- tax_table(.) 
    phyloseq_temp
   } %>%
-        plot_bar(., fill="species20") + 
+        my_plot_bar(., fill="species20") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Contaminants in Zymo mock") +
@@ -738,6 +760,7 @@ tax_table(phyloseq_control_rel_contam) %>%
 ```{r, warning=FALSE}
 #Manipulating phyloseq - only top 10 
 
+
 tax_table(phyloseq_control_rel) %>%
         cbind(species20 = "[Others]") %>%
         {top20species <- head(taxa_sums(phyloseq_control_rel) %>%
@@ -751,25 +774,25 @@ tax_table(phyloseq_control_rel) %>%
    phyloseq_temp
   } %>%
         subset_samples(., sample_type == "Neg.") %>%
-        plot_bar(., fill="species20") + 
+        my_plot_bar(., fill="species20") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Barplot of neg. data") +
         theme(legend.text = element_markdown()) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        facet_wrap (~ factor(treatment, levels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1)
 
 
 phyloseq_control_rel %>%
         subset_samples(., sample_type == "Neg.") %>%
-        plot_bar(., fill="gram_stain") + 
+        my_plot_bar(., fill="gram_stain") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Gram-stain of negative data") +
         theme(legend.text = element_markdown()) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        facet_wrap (~ factor(treatment, levels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1)
 
 
@@ -804,13 +827,13 @@ tax_table(phyloseq$phyloseq_rel) %>%
    phyloseq_temp
   } %>%
         subset_samples(., sample_type == "Nasal") %>%
-        plot_bar(., fill="gram_stain") + 
+        my_plot_bar(., fill="gram_stain") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Gram stain of nasal samples") +
         theme(legend.text = element_markdown()) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        facet_wrap (~ factor(treatment, levels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1)
 
 
@@ -827,13 +850,13 @@ tax_table(phyloseq$phyloseq_rel) %>%
    phyloseq_temp
   } %>%
         subset_samples(., sample_type == "BAL") %>%
-        plot_bar(., fill="gram_stain") + 
+        my_plot_bar(., fill="gram_stain") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Gram stain of BAL samples") +
         theme(legend.text = element_markdown()) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        facet_wrap (~ factor(treatment, levels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1)
 
 tax_table(phyloseq$phyloseq_rel) %>%
@@ -849,14 +872,16 @@ tax_table(phyloseq$phyloseq_rel) %>%
    phyloseq_temp
   } %>%
         subset_samples(., sample_type == "Sputum") %>%
-        plot_bar(., fill="gram_stain") + 
+        my_plot_bar(., fill="gram_stain") + 
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Gram stain of sputum samples") +
         theme(legend.text = element_markdown()) +
-        guides(fill=guide_legend(title="Top 10 species")) +
-        facet_wrap (~ factor(treatment, levels = c("Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+        scale_fill_brewer(type = "qual", palette = 6) +
+        guides(fill=guide_legend(title="Gram-stain")) +
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1)
+
 
 ```
 
@@ -1954,16 +1979,11 @@ path_bray_dist_long_within_sampleid_from_control <- subset(bray_dist_long, bray_
 path_bray_dist_long_within_sampleid_from_control <- subset(path_bray_dist_long_within_sampleid_from_control,
                                                            path_bray_dist_long_within_sampleid_from_control$method_1 != path_bray_dist_long_within_sampleid_from_control$method_2) # remove irrelevant association
 
-path_bray_dist_long_within_sampleid_from_control <- subset(path_bray_dist_long_within_sampleid_from_control,
-                                                           path_bray_dist_long_within_sampleid_from_control$method_1 != path_bray_dist_long_within_sampleid_from_control$method_2) # remove irrelevant association
-
 path_bray_dist_long_within_sampleid_from_control <- subset(path_bray_dist_long_within_sampleid_from_control, (path_bray_dist_long_within_sampleid_from_control$method_1 == "control") + (path_bray_dist_long_within_sampleid_from_control$method_2 == "control") != 0)
 
 path_bray_dist_long_within_sampleid_from_control$treatment <- path_bray_dist_long_within_sampleid_from_control$method_1
 
 path_bray_dist_long_within_sampleid_from_control$treatment <- ifelse(path_bray_dist_long_within_sampleid_from_control$treatment == "control", path_bray_dist_long_within_sampleid_from_control$method_2, path_bray_dist_long_within_sampleid_from_control$treatment) #Setting key method
-
-
 
 path_bray_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", path_bray_dist_long_within_sampleid_from_control$iso1), "Nasal",
                                                                   ifelse(grepl("CFB", path_bray_dist_long_within_sampleid_from_control$iso1), "Sputum",
@@ -1971,12 +1991,51 @@ path_bray_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS
                                                                                 ifelse(grepl("pos|POS", path_bray_dist_long_within_sampleid_from_control$iso1), "Mock",
                                                                                        ifelse(grepl("neg|N_EXT", path_bray_dist_long_within_sampleid_from_control$iso1), "Neg.",NA)))))
 
+
+#Adding zero distances - from control to control
+path_bray_dist_long_within_sampleid_from_control <- path_bray_dist_long_within_sampleid_from_control %>% 
+        mutate(dist_from = case_when(method_1 == "control" ~ iso1,
+                                     method_2 == "control" ~ iso2))
+
+dummy <- data.frame(iso1 = path_bray_dist_long_within_sampleid_from_control$dist_from %>% unique,
+           iso2 = path_bray_dist_long_within_sampleid_from_control$dist_from %>% unique,
+           dist = 0,
+           treatment = "Untreated",
+           method_1 = "control",
+           method_2 = "control"
+           )
+names <- data.frame(str_split_fixed(dummy$iso1, "_", 3))
+names2 <- data.frame(str_split_fixed(dummy$iso2, "_", 3))
+dummy$sample_id_1 <- paste(names$X1, names$X2, sep = "_")
+#Adding data for iso 2 also should be done
+dummy$sample_id_2 <- paste(names2$X1, names2$X2, sep = "_")
+
+
+#subsetting distances of my interest
+dummy$sample_id_1 <- ifelse(grepl("pos", dummy$sample_id_1, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", dummy$sample_id_1, ignore.case = T),"Neg.",
+                                        dummy$sample_id_1))
+dummy$sample_id_2 <- ifelse(grepl("pos", dummy$sample_id_2, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", dummy$sample_id_2, ignore.case = T),"Neg.",
+                                        dummy$sample_id_2))
+dummy$sample_type <- ifelse(grepl("NS", dummy$iso1), "Nasal",
+                            ifelse(grepl("CFB", dummy$iso1), "Sputum",
+                                   ifelse(grepl("BAL", dummy$iso1), "BAL",
+                                          ifelse(grepl("pos|POS", dummy$iso1), "Mock",
+                                                 ifelse(grepl("neg|N_EXT", dummy$iso1), "Neg.",NA)))))
+dummy <- subset(dummy, !is.na(dummy$sample_type))
+path_bray_dist_long_within_sampleid_from_control <- bind_rows(path_bray_dist_long_within_sampleid_from_control, dummy)
+
+
+#Plotting
+
 path_bray_dist_long_within_sampleid_from_control %>%
-        mutate(across(sample_type, factor, levels=c( "Neg.", "Mock", "BAL", "Nasal","Sputum"))) %>%
+        mutate(across(sample_type, factor, levels=c( "Neg.", "Mock", "BAL", "Nasal","Sputum")),
+               across(treatment, factor, levels=c( "Untreated", "lypma", "bezonase", "host_zero","molysis", "qiaamp"))) %>%
 ggplot(aes(y = dist, fill = treatment)) +
         geom_boxplot() +
         #scale_fill_manual(values = c(viridis(6)[2:6])) +
-        scale_fill_manual(values = c("#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         ylab("Sample pair distances (Bray-Curtis)") +
         theme_classic (base_size = 12, base_family = "serif") + 
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
@@ -1985,7 +2044,7 @@ ggplot(aes(y = dist, fill = treatment)) +
 ```
 
 
-### Beta diversity boxplot (Bray-Curtis)
+### Beta diversity boxplot (Horn-Morisita)
 
 **Distances between samples within each subject. ** Mean distance between control \<-\> treatment for each subject
 
@@ -2032,29 +2091,63 @@ path_horn_dist_long_within_sampleid_from_control <- subset(horn_dist_long, horn_
 path_horn_dist_long_within_sampleid_from_control <- subset(path_horn_dist_long_within_sampleid_from_control,
                                                            path_horn_dist_long_within_sampleid_from_control$method_1 != path_horn_dist_long_within_sampleid_from_control$method_2) # remove irrelevant association
 
-path_horn_dist_long_within_sampleid_from_control <- subset(path_horn_dist_long_within_sampleid_from_control,
-                                                           path_horn_dist_long_within_sampleid_from_control$method_1 != path_horn_dist_long_within_sampleid_from_control$method_2) # remove irrelevant association
-
 path_horn_dist_long_within_sampleid_from_control <- subset(path_horn_dist_long_within_sampleid_from_control, (path_horn_dist_long_within_sampleid_from_control$method_1 == "control") + (path_horn_dist_long_within_sampleid_from_control$method_2 == "control") != 0)
+path_horn_dist_long_within_sampleid_from_control
 
 path_horn_dist_long_within_sampleid_from_control$treatment <- path_horn_dist_long_within_sampleid_from_control$method_1
 
-path_horn_dist_long_within_sampleid_from_control$treatment <- ifelse(path_horn_dist_long_within_sampleid_from_control$treatment == "control", path_horn_dist_long_within_sampleid_from_control$method_2, path_horn_dist_long_within_sampleid_from_control$treatment) #Setting key method
+path_horn_dist_long_within_sampleid_from_control$treatment <- ifelse(path_horn_dist_long_within_sampleid_from_control$treatment == "control", path_horn_dist_long_within_sampleid_from_control$method_2, path_horn_dist_long_within_sampleid_from_control$treatment) 
 
 
-
+#Setting key method
 path_horn_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", path_horn_dist_long_within_sampleid_from_control$iso1), "Nasal",
                                                                   ifelse(grepl("CFB", path_horn_dist_long_within_sampleid_from_control$iso1), "Sputum",
                                                                          ifelse(grepl("BAL", path_horn_dist_long_within_sampleid_from_control$iso1), "BAL",
                                                                                 ifelse(grepl("pos|POS", path_horn_dist_long_within_sampleid_from_control$iso1), "Mock",
                                                                                        ifelse(grepl("neg|N_EXT", path_horn_dist_long_within_sampleid_from_control$iso1), "Neg.",NA)))))
 
+#Making a column for baseline (controls, from where?)
+path_horn_dist_long_within_sampleid_from_control <- path_horn_dist_long_within_sampleid_from_control %>% 
+        mutate(dist_from = case_when(method_1 == "control" ~ iso1,
+                                     method_2 == "control" ~ iso2))
+
+dummy <- data.frame(iso1 = path_horn_dist_long_within_sampleid_from_control$dist_from %>% unique,
+           iso2 = path_horn_dist_long_within_sampleid_from_control$dist_from %>% unique,
+           dist = 0,
+           treatment = "Untreated",
+           method_1 = "control",
+           method_2 = "control"
+           )
+names <- data.frame(str_split_fixed(dummy$iso1, "_", 3))
+names2 <- data.frame(str_split_fixed(dummy$iso2, "_", 3))
+dummy$sample_id_1 <- paste(names$X1, names$X2, sep = "_")
+#Adding data for iso 2 also should be done
+dummy$sample_id_2 <- paste(names2$X1, names2$X2, sep = "_")
+
+
+#subsetting distances of my interest
+dummy$sample_id_1 <- ifelse(grepl("pos", dummy$sample_id_1, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", dummy$sample_id_1, ignore.case = T),"Neg.",
+                                        dummy$sample_id_1))
+dummy$sample_id_2 <- ifelse(grepl("pos", dummy$sample_id_2, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", dummy$sample_id_2, ignore.case = T),"Neg.",
+                                        dummy$sample_id_2))
+dummy$sample_type <- ifelse(grepl("NS", dummy$iso1), "Nasal",
+                            ifelse(grepl("CFB", dummy$iso1), "Sputum",
+                                   ifelse(grepl("BAL", dummy$iso1), "BAL",
+                                          ifelse(grepl("pos|POS", dummy$iso1), "Mock",
+                                                 ifelse(grepl("neg|N_EXT", dummy$iso1), "Neg.",NA)))))
+dummy <- subset(dummy, !is.na(dummy$sample_type))
+path_horn_dist_long_within_sampleid_from_control <- bind_rows(path_horn_dist_long_within_sampleid_from_control, dummy)
+
+
 path_horn_dist_long_within_sampleid_from_control %>%
-        mutate(across(sample_type, factor, levels=c( "Neg.", "Mock", "BAL", "Nasal","Sputum"))) %>%
+        mutate(across(sample_type, factor, levels=c( "Neg.", "Mock", "BAL", "Nasal","Sputum")),
+               across(treatment, factor, levels=c("Untreated", "lypma", "benzonase", "host_zero","molysis", "qiaamp"))) %>%
 ggplot(aes(y = dist, fill = treatment)) +
         geom_boxplot() +
         #scale_fill_manual(values = c(viridis(6)[2:6])) +
-        scale_fill_manual(values = c("#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         ylab("Sample pair distances (Horn-Morisita)") +
         theme_classic (base_size = 12, base_family = "serif") + 
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
@@ -2062,6 +2155,118 @@ ggplot(aes(y = dist, fill = treatment)) +
 
 ```
 
+### LME on B-C distance
+
+Effect size, standard error (SE) and p-value of a statistical test for Bray-Curtis distance from untreated to each treated within subject (BC-distance wihtin subject by treatment~ sample type + treatment + sampetype * treatment + log10 (Final_reads) + (1|subject_id) ).
+
+```{r}
+path_bray_dist_long_within_sampleid_from_control$treatment <- factor(path_bray_dist_long_within_sampleid_from_control$treatment,
+                                                                     levels = c("Untreated",
+                                                                                "lypma",
+                                                                                "benzonase",
+                                                                                "host_zero",
+                                                                                "molysis",
+                                                                                "qiaamp"))
+path_bray_dist_long_within_sampleid_from_control$sample_type <- factor(path_bray_dist_long_within_sampleid_from_control$sample_type,
+                                                                     levels = c("Mock",
+                                                                                "BAL",
+                                                                                "Nasal",
+                                                                                "Sputum"))
+tableS7 <- lmer(dist ~ sample_type * treatment + (1|sample_id_1), data = path_bray_dist_long_within_sampleid_from_control %>% subset(., .$sample_type != "Neg.")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = gsub("treatment|sample_type", "", row.names)) %>% 
+        mutate(row.names = gsub("[:]", " * ", row.names)) %>% 
+        mutate(row.names = gsub("host_zero", "Host zero", row.names)) %>% 
+        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
+        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
+        mutate(row.names = gsub("molysis", "Molysis", row.names)) %>% 
+        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        column_to_rownames("row.names") %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
+        kbl(format = "html", escape = 0) %>%
+        kable_styling(full_width = 0, html_font = "serif")
+        
+
+
+
+tableS7
+
+```
+### LME on H-M distance
+
+Effect size, standard error (SE) and p-value of a statistical test for Bray-Curtis distance from untreated to each treated within subject (BC-distance wihtin subject by treatment~ sample type + treatment + sampetype * treatment + log10 (Final_reads) + (1|subject_id) ).
+
+**Hard to interpret, as it does not have proper baseline (control is not there as control does not have distances)**
+
+```{r}
+
+
+path_horn_dist_long_within_sampleid_from_control$treatment <- factor(path_horn_dist_long_within_sampleid_from_control$treatment,
+                                                                     levels = c("Untreated",
+                                                                                "lypma",
+                                                                                "benzonase",
+                                                                                "host_zero",
+                                                                                "molysis",
+                                                                                "qiaamp"))
+path_horn_dist_long_within_sampleid_from_control$sample_type <- factor(path_horn_dist_long_within_sampleid_from_control$sample_type,
+                                                                     levels = c("BAL",
+                                                                                "Nasal",
+                                                                                "Sputum"))
+
+tableS9 <- lmer(dist ~ sample_type * treatment + (1|sample_id_1), data = path_horn_dist_long_within_sampleid_from_control %>% subset(., .$sample_type != "Neg.")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = gsub("treatment|sample_type", "", row.names)) %>% 
+        mutate(row.names = gsub("[:]", " * ", row.names)) %>% 
+        mutate(row.names = gsub("host_zero", "Host zero", row.names)) %>% 
+        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
+        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
+        mutate(row.names = gsub("molysis", "Molysis", row.names)) %>% 
+        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        column_to_rownames("row.names") %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
+        kbl(format = "html", escape = 0) %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+
+tableS9
+
+```
+### LME on H-M distance (stratified)
+
+
+```{r}
+
+
+
+```
 
 ## PERMANOVA test results - Bray-Curtis {.tabset}
 
@@ -2281,7 +2486,7 @@ subject)
 
 **Strata term was employed rather than fixed effect**
 
-```{r warning=F, "Perm taxa 1"}
+```{r warning=F, "Perm taxa 12"}
 
 
 horn_perm_uni %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
@@ -2323,7 +2528,7 @@ host_zero + molysis + qiaamp, strata = subject
 
 **QIAamp showed highest changes. But, it could be sample type specific.**
 
-```{r warning=F, "perm taxa 3"}
+```{r warning=F, "perm taxa 32"}
 horn_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "lypma" ~ 'lyPMA',
@@ -2355,7 +2560,7 @@ horn_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.nam
 
 **lyPMA affected Nasal samples.**
 
-```{r warning=F, "perm taxa 9"}
+```{r warning=F, "perm taxa 19"}
 
 horn_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -2379,7 +2584,7 @@ horn_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names')
 **QIAamp affected BAL samples**
 
 
-```{r warning=F, "perm taxa 10"}
+```{r warning=F, "perm taxa 110"}
 
 horn_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',

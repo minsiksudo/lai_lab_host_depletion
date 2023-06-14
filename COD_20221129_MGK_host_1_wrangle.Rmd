@@ -424,15 +424,15 @@ sample_data(phy$phyloseq_path_rpk)$gram_neg_prop <- phy$phyloseq_rel %>%
 ***4. Removing unnecessary metadata***
 
 ```{r}
-sample_data(phy$phyloseq_rel) <- sample_data(phy$phyloseq_rel) %>% 
-        data.frame() %>% 
-        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
-sample_data(phy$phyloseq_count) <- sample_data(phy$phyloseq_count) %>% 
-        data.frame() %>% 
-        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
-sample_data(phy$phyloseq_path_rpk)<- sample_data(phy$phyloseq_path_rpk) %>% 
-        data.frame() %>% 
-        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
+#sample_data(phy$phyloseq_rel) <- sample_data(phy$phyloseq_rel) %>% 
+#        data.frame() %>% 
+#        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
+#sample_data(phy$phyloseq_count) <- sample_data(phy$phyloseq_count) %>% 
+#        data.frame() %>% 
+#        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
+#sample_data(phy$phyloseq_path_rpk)<- sample_data(phy$phyloseq_path_rpk) %>% 
+#        data.frame() %>% 
+#        select(-c("barcode", "BoxNumber", "BoxName", "Boxposition", "ambiguous_sample", "qPCR_dilution", "DNA_host_well", "DNA_bac_well", "DNA_host_nondil", "DNA_bac_nondil", "note", "project_id", "order", "depleiton_id", "pellet", "collection_date", "original_sample", "frozen", "cryo_preserve", "position", "treated")) %>% sample_data
 
 ```
 

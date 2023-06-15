@@ -2259,15 +2259,118 @@ tableS9 <- lmer(dist ~ sample_type * treatment + (1|sample_id_1), data = path_ho
 tableS9
 
 ```
-### LME on H-M distance (stratified)
+
+### LME on H-M distance (stratified) - BAL
 
 
 ```{r}
 
 
+hm_dist_lme_bal <- lmer(dist ~ treatment + (1|sample_id_1), data = path_horn_dist_long_within_sampleid_from_control %>% subset(., .$sample_type == "BAL")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = gsub("host_zero", "Host zero", row.names)) %>% 
+        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
+        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
+        mutate(row.names = gsub("molysis", "Molysis", row.names)) %>% 
+        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        column_to_rownames("row.names") %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
+        kbl(format = "html", escape = 0) %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+hm_dist_lme_bal
+
 
 ```
 
+
+### LME on H-M distance (stratified) - Nasal
+
+
+```{r}
+
+
+hm_dist_lme_bal <- lmer(dist ~ treatment + (1|sample_id_1), data = path_horn_dist_long_within_sampleid_from_control %>% subset(., .$sample_type == "Nasal")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = gsub("host_zero", "Host zero", row.names)) %>% 
+        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
+        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
+        mutate(row.names = gsub("molysis", "Molysis", row.names)) %>% 
+        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        column_to_rownames("row.names") %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
+        kbl(format = "html", escape = 0) %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+hm_dist_lme_bal
+
+
+```
+
+### LME on H-M distance (stratified) - BAL
+
+
+```{r}
+
+
+hm_dist_lme_bal <- lmer(dist ~ treatment + (1|sample_id_1), data = path_horn_dist_long_within_sampleid_from_control %>% subset(., .$sample_type == "Sputum")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = gsub("host_zero", "Host zero", row.names)) %>% 
+        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
+        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
+        mutate(row.names = gsub("molysis", "Molysis", row.names)) %>% 
+        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        column_to_rownames("row.names") %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
+        kbl(format = "html", escape = 0) %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+hm_dist_lme_bal
+
+
+```
 ## PERMANOVA test results - Bray-Curtis {.tabset}
 
 ### Subject as fixed effect vs strata term

@@ -38,7 +38,7 @@ str_libraries <- c(
 
 path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car")
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car", "LDM")
         
 YAML_header <-
 '---
@@ -912,15 +912,23 @@ Taxa prevance and abundance were checked.
 #Calculation of sample prevalence, standard deviation, median abundance across all samples for all bugs and making into a table.
 #
 #•	In initial analysis we will not perform prevalence or abundance filtering (though we may consider this for secondary differential abundance analyses to manage p (features) > n (sample size) problem and issues with multiple hypothesis correction)
-taxa_qc <- data.frame("species" =  otu_table(phyloseq$phyloseq_rel) %>% t() %>% colnames(),
-        "prevalence" = ifelse(phyloseq$phyloseq_count %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-        "mean_rel_abd" = phyloseq$phyloseq_rel %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
+
+
+taxa_qc <- data.frame("species" =  otu_table(subset_samples(phyloseq_unfiltered$phyloseq_count,
+                                                            S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>%
+                              t() %>% colnames(),
+        "prevalence" = ifelse(subset_samples(phyloseq_unfiltered$phyloseq_count, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+        "mean_rel_abd" = subset_samples(phyloseq_unfiltered$phyloseq_count, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>%
+                otu_table() %>%
+                t() %>%
+                colMeans(na.rm = T) #mean relativ abundacne 
 )
 
-function_qc <- data.frame("species" =  otu_table(phyloseq$phyloseq_rel) %>% t() %>% colnames(),
-        "prevalence" = ifelse(phyloseq$phyloseq_count %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-        "mean_rel_abd" = phyloseq$phyloseq_rel %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
+function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq_unfiltered$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>% t() %>% colnames(),
+        "prevalence" = ifelse(subset_samples(phyloseq_unfiltered$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+        "mean_rpkm" = subset_samples(phyloseq_unfiltered$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
 )
+
 
 hist(log10(taxa_qc$prevalence), xlab = "log10(Taxa prevalence)", main = "Histogram of prevalence of taxa")
 
@@ -933,18 +941,154 @@ hist(log10(taxa_qc$mean_rel_abd), xlab = "log10(Mean relative abundance)", main 
 
 ```
 
-### Red flag taxa
+
+
+
+### decontam - stratified by sample_type
+
+**Stratified analysis** showed **no contaminants** in **NS** and **BAL**
+
+**Table S4**. Decontam analysis result stratified by sample type
+
+```{r warning=FALSE}
+#Stratified by sample type
+sample_data(phyloseq_unfiltered$phyloseq_rel)$is.neg <- grepl("Neg", sample_data(phyloseq_unfiltered$phyloseq_rel)$sample_type)
+
+contaminant <- data.frame() 
+
+cat("decontam prevalence - all")
+contaminant1 <- 
+data.frame("prevalence", "all", fix.empty.names = F, 
+phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0 & sample_type != "Mock") %>%
+        isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names()
+)
+
+cat("decontam prevalence - BAL")
+contaminant2 <- 
+data.frame("prevalence", "BAL", fix.empty.names = F, 
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
+        isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
+
+cat("decontam prevalence - Nasal")
+contaminant3 <- 
+        data.frame("prevalence", "Nasal swab", fix.empty.names = F, 
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal", "Neg.")) %>%
+        isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
+
+cat("prevalence", "decontam prevalence - Sputum")
+contaminant4 <- 
+data.frame("prevalence", "Sputum", fix.empty.names = F,
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum", "Neg.")) %>%
+        isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
+
+
+
+
+cat("decontam frequency - All")
+contaminant5 <- 
+data.frame("frequency", "all", fix.empty.names = F,
+phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
+        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+cat("decontam frequency - BAL")
+#contaminant6 <- 
+#data.frame("frequency", "BAL", fix.empty.names = F,
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL")) %>%
+        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
+
+cat("decontam frequency - Nasal")
+#contaminant7 <- 
+#data.frame("frequency", "Nasal swab", fix.empty.names = F,
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal")) %>%
+        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
+
+cat("decontam frequency - Sputum")
+contaminant8 <- 
+data.frame("frequency", "Sputum", fix.empty.names = F,
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum")) %>%
+        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+
+
+cat("decontam combined - All")
+contaminant9 <- 
+data.frame("combined", "all", fix.empty.names = F,
+
+phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
+        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+cat("decontam combined - BAL")
+contaminant10 <- 
+data.frame("combined", "BAL", fix.empty.names = F,
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
+        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+cat("decontam combined - Nasal")
+#contaminant11 <- 
+#data.frame("combined", "Nasal swab", fix.empty.names = F,
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal", "Neg.")) %>%
+        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
+
+cat("decontam combined - Sputum")
+contaminant12 <- 
+data.frame("combined", "Sputum", fix.empty.names = F,
+subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum", "Neg.")) %>%
+        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+
+
+contaminant <- rbind(contaminant1, contaminant2, contaminant3, contaminant4, contaminant5, contaminant8, contaminant9, contaminant10, contaminant12)
+names(contaminant) <- c("method", "sample_type", "contaminant")
+cat("Prevalence decontam unique taxa - from stratified")
+contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique()
+
+(contaminant %>% subset(., .$method == "prevalence" & .$sample_type == "all") %>% .$contaminant) %in% (contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique())
+
+cat("Prevalence decontam table")
+contaminant %>% subset(., .$method == "prevalence") %>% .$sample_type %>% table
+cat("Frequency decontam table")
+contaminant %>% subset(., .$method == "frequency") %>% .$sample_type %>% table
+cat("Combined decontam table")
+contaminant %>% subset(., .$method == "combined") %>% .$sample_type %>% table
+```
+
+### Red flags
 
 **Taxa with low prevalences were red-flagged**
 
 ```{r warning=FALSE, "Red flag"}
-red_flag_taxa <- data.frame(species = taxa_qc$species, red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>% t %>% rownames() %>% length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1, 0))
+#=============
 
-red_flag_taxa
 
-phyloseq$phyloseq_rel <- prune_taxa(subset(red_flag_taxa, red_flag_taxa$red_flag_prev_abd != 1)$species, phyloseq$phyloseq_rel)
+red_flag_taxa <- data.frame(species = taxa_qc$species,
+                            red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq_unfiltered$phyloseq_rel) %>%
+                                                               t %>% rownames() %>%
+                                length * 0.05, 1,0)) %>%
+        # & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1,0)) %>%
+        mutate(red_flag_decontam_prev = species %in% (contaminant %>%
+                                    subset(., .$method == "prevalence" & .$sample_type != "all") %>%
+                                    .$contaminant %>% unique()))
 
-phyloseq$phyloseq_count <- prune_taxa(subset(red_flag_taxa, red_flag_taxa$red_flag_prev_abd != 1)$species, phyloseq$phyloseq_count)
+
+red_flag_function <- data.frame(function. = function_qc$function., 
+                                red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpkm) %>% 
+                                t %>% 
+                                rownames() %>% 
+                                length * 0.05, 1, 0))# & function_qc$mean_rpkm < quantile(function_qc$mean_rpkm, 0.75), 1, 0))
+#Making unfiltered phyloseq
+phyloseq_unfiltered <- phyloseq
+#phyloseq of table 1
+phyloseq$phyloseq_count_prev <- prune_taxa(subset(red_flag_taxa,
+                                           red_flag_taxa$red_flag_decontam_prev != 1)$species,
+                                    phyloseq$phyloseq_count)
+#phyloseq for analysis
+phyloseq$phyloseq_rel <- prune_taxa(subset(red_flag_taxa,
+                                           red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
+                                    phyloseq$phyloseq_rel)
+phyloseq$phyloseq_count <- prune_taxa(subset(red_flag_taxa,
+                                           red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
+                                    phyloseq$phyloseq_count)
+phyloseq$phyloseq_path_rpk <- prune_taxa(subset(red_flag_function, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpk)
+
 
 ```
 
@@ -2371,6 +2515,7 @@ hm_dist_lme_bal
 
 
 ```
+
 ## PERMANOVA test results - Bray-Curtis {.tabset}
 
 ### Subject as fixed effect vs strata term
@@ -2729,12 +2874,225 @@ horn_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
         kable_styling(full_width = 0, html_font = "serif")
 
 ```
-
-
 ##  {.unnumbered}
 
+## Rarefaction analsyis {.tabset}
 
-**Results:**
+**As a sanity check, rarefaction based analysis was conducted using LDM**
+
+```{r}
+
+args=(commandArgs(TRUE))
+
+
+if(length(args)==0){
+    print("No arguments supplied")
+    
+    dist_type <- 5      # 5: "jaccard"; 4: "unwt-unifrac"
+    data_full <- 1      # 1: full sample; 0: a subsample of 50 subjects
+    i_seed <- seed         # seed for generating different subsamples
+    
+} else{
+    for(i in 1:length(args)){
+        eval(parse(text=args[[i]]))
+    }
+}
+
+if (dist_type==5) {
+    dist_method = "jaccard"
+} else if (dist_type==4) {
+    dist_method = "unwt-unifrac"
+} 
+
+
+###############################################
+# read in data
+###############################################
+
+# read in otu table, taxonomy info
+#dat <- read_biom("rawData/otu_table.biom")
+#otu_table <- as.data.frame(as.matrix(biom_data(dat)))
+#taxonomy <- observation_metadata(dat)
+#crohn.tree <- read.tree("rawData/insertion_tree.relabelled.tre")
+
+otu_table_col <- as.data.frame(t(otu_table(phyloseq$phyloseq_count))) #make samples rows, OTUs columns
+
+# read in metadata
+metadata <- sample_data(phyloseq$phyloseq_count) %>% data.frame()
+
+# create dichotomous variable for diagnosis
+#metadata <- cbind(metadata,ifelse(metadata$diagnosis=="CD" | metadata$diagnosis=="IC" | metadata$diagnosis=="UC", 1, 0))
+#colnames(metadata)[61] <- "disease" 
+
+# sort metadata to match otu table
+meta.sorted <- metadata[order(match(metadata$baylor_other_id, rownames(otu_table_col))),]
+
+# remove duplicates at the end
+#meta.site.dup <- subset(meta.sorted, collection=="RISK")
+#meta.sub.dup <- subset(meta.site.dup, type_sample=="biopsy" & biopsy_location=="Rectum")
+
+# want subset with only biopsy samples, no follow-up measurements, no missing values in key covariates
+#no.follow <- meta.sorted[!duplicated(meta.sorted$anonymized_name),]
+#meta.site <- subset(no.follow, collection=="RISK")
+#meta.sub <- subset(meta.site, type_sample=="biopsy" & biopsy_location=="Rectum")
+
+# match otu table with cleaned meta data
+otu.sub <- subset(otu_table_col, rownames(otu_table_col) %in% metadata$baylor_other_id)
+
+
+###Prevalence filtration & decontam was not processed as phyloseq was alread filtered
+# filter otu table 
+
+#pa.table <- 1*(otu.sub > 0) #Presence absence table
+#otu.sub.f <- otu.sub[, -which(colSums(pa.table)<5)]  #Prevalence filtering
+#dim(otu.sub)
+#dim(otu.sub.f)    # 16 taxa were removed
+
+# remove obs with < 5000 reads
+otu.full <- otu.sub[rowSums(otu.sub)>5000,] #samples with too low reads were removed
+#Subsetting samples with effective reads
+#meta.sub <- subset(meta.sorted, meta.sorted$S.obs != 0)
+dim(otu.full) #3 samples were thrown out
+min(rowSums(otu.full))
+meta.full <- subset(meta.sorted, meta.sorted$baylor_other_id %in% rownames(otu.full))
+
+#Making data of t-tests - Not usfull for my analysis
+#p.t.full = t.test(rowSums(otu.full) ~ meta.full$treatment, var.equal=FALSE)$p.value 
+#p.wilcox.full = wilcox.test(rowSums(otu.full) ~ meta.full$treatment)$p.value
+
+# --------------------------
+# a subsample of 50 subjects
+# --------------------------
+
+set.seed(seed)
+otu.sam60 <- otu.full[sort(sample(nrow(otu.full), 50)), ]  
+meta.sam60 <- subset(meta.sub,meta.sub$sample_name %in% rownames(otu.sam60))
+
+
+########################
+# prepare data for anal
+########################
+
+if (data_full==1) {
+    otu.tab = otu.full
+    meta.data = meta.full
+} else {
+    otu.tab = otu.sam60
+    meta.data = meta.sam60
+}
+dim(otu.tab)
+dim(meta.data)
+
+
+########################
+# permanova-F
+########################
+
+if (data_full==1) {
+    formula = otu.tab | (subject_id + sample_type + log10(Final_reads)) ~ treatment
+} else {
+    formula = otu.tab | sample_type + treatment + log10(Final_reads) ~ disease
+}
+
+res.F <- permanovaFL(formula = formula,
+                                data=meta.data, dist.method = dist_method,
+                                #tree=crohn.tree, 
+                                scale.otu.table=FALSE, n.rarefy=100, n.rej.stop=100, seed=123)
+p_permanovaF <- res.F$p.permanov
+
+
+# -----------------------------
+# dist for permanova-D2 (1-100)
+# -----------------------------
+
+n_rarefy = 100
+label = colnames(otu.full)
+
+n_sam_new = nrow(otu.tab)
+dist_sq_all = array(0, dim=c(n_sam_new, n_sam_new, n_rarefy))
+
+set.seed(seed)
+
+for (r in 1:n_rarefy) {
+    #otu_table_rarefy = Rarefy(otu.tab)$otu.tab.rff
+    #otu_table_rarefy1 = (otu_table_rarefy>0)*1
+    colnames(otu_table_rarefy1) = label
+    colnames(otu_table_rarefy) = label
+    if (dist_type == 5 ) {
+        dist <- vegdist(x=otu_table_rarefy1, method=dist_method)
+    } else if (dist_type == 4) {
+        dist <- GUniFrac(otu_table_rarefy1, crohn.tree, alpha=c(1))$unifrac[,,"d_UW"]
+    }
+    dist <- as.matrix(dist)
+    
+    if (r==1) {
+        dist_sq_all[,,1] = dist^2
+    } else {
+        dist_sq_all[,,r] = dist_sq_all[,,r-1] + dist^2
+    }
+}
+
+# --------------------------
+# dist for permanova-D2-A
+# --------------------------
+    
+if (dist_type == 5 ) {
+    res <- jaccard.mean( otu.tab)
+    dist_sq_inf_o1 = res$jac.mean.sq.o1
+    dist_sq_inf_o2 = res$jac.mean.sq.o2
+} else if (dist_type == 4) {
+    res <- unifrac.mean(otu.tab, crohn.tree)
+    dist_sq_inf_o1 = res$unifrac.mean.sq.o1
+    dist_sq_inf_o2 = res$unifrac.mean.sq.o2
+}
+
+
+#########################
+# permanova-D2, D2-A
+#########################
+
+if (data_full==1) {
+    formula = dist_sq_r | (subject_id + sample_type + log10(Final_reads)) ~ treatment
+} else {
+    formula = dist_sq_r | sex ~ disease
+}
+
+p_permanovaD2 = NULL
+p_permanovaD2A2 = NULL
+p_permanovaD2A1 = NULL
+
+for (r in c(1:10, 50, 100, 100^2, 100^3)) { # "100^2" corresponds to D2-A2, "100^3" corresponds to D2-A1
+    cat("number of rarefaction:", r, "\n")
+
+    if (r == 100^2) {
+        dist_sq_r = dist_sq_inf_o2
+    } else if (r == 100^3) {
+        dist_sq_r = dist_sq_inf_o1
+    } else {
+        dist_sq_r = dist_sq_all[,,r]/r
+    }
+    res_permanovaD2 = permanovaFL(formula = formula, 
+                                  tree=tree, data = meta.data, n.perm.max=5000, 
+                                  square.dist=FALSE, n.rarefy=0, n.rej.stop=100, seed=123)
+    
+    if (r == 100^2) {
+        p_permanovaD2A2 = res_permanovaD2$p.permanova
+    } else if (r == 100^3) {
+        p_permanovaD2A1 = res_permanovaD2$p.permanova
+    } else {
+        p_permanovaD2 = c(p_permanovaD2, res_permanovaD2$p.permanova)
+    }
+}
+
+tab = c(p_permanovaF, p_permanovaD2, p_permanovaD2A2, p_permanovaD2A1, i_seed)
+write.table(t(tab), file = paste("results/datafull", data_full, "_dist", dist_type, ".txt", sep=""), 
+            quote=FALSE, append=TRUE, row.names=FALSE, col.names=FALSE)
+
+```
+
+
+
+# Results
 
 4.1. Effect of each treatment on beta-diveristy was sample type
 specific.
@@ -2745,7 +3103,7 @@ specific.
 high change may be meaning higher (better) detection efficiencies.
 Therefore further analysis is required.
 
-# Intermediate results
+# Results summary
 
 ```{r}
 

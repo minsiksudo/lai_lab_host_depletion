@@ -2974,10 +2974,13 @@ otu.sub <- subset(otu_table_col, rownames(otu_table_col) %in% metadata$baylor_ot
 ###Prevalence filtration & decontam was not processed as phyloseq was alread filtered
 # filter otu table 
 
-#pa.table <- 1*(otu.sub > 0) #Presence absence table
+pa.table <- 1*(otu.sub > 0) #Presence absence table
 #otu.sub.f <- otu.sub[, -which(colSums(pa.table)<5)]  #Prevalence filtering
 #dim(otu.sub)
 #dim(otu.sub.f)    # 16 taxa were removed
+
+# remove obs with < 5000 reads
+
 
 # remove obs with < 5000 reads
 otu.full <- otu.sub[rowSums(otu.sub)>5000,] #samples with too low reads were removed
@@ -2987,11 +2990,11 @@ dim(otu.sub)
 dim(otu.full) #14 samples were thrown out
 min(rowSums(otu.full))
 
-meta.full <- subset(meta.sorted, meta.sorted$baylor_other_id %in% rownames(otu.full))
-
-#Making data of t-tests - Not usfull for my analysis
-#p.t.full = t.test(rowSums(otu.full) ~ meta.full$treatment, var.equal=FALSE)$p.value 
-#p.wilcox.full = wilcox.test(rowSums(otu.full) ~ meta.full$treatment)$p.value
+meta.full <- subset(meta.sub, meta.sub$baylor_other_id %in% rownames(otu.full))
+#Making data of t-tests - Not usefull for my analysis
+#Anyway ran for differences between control vs treatment
+p.t.full = t.test(rowSums(otu.full) ~ meta.full$control, var.equal=FALSE)$p.value
+p.wilcox.full = wilcox.test(rowSums(otu.full) ~ meta.full$control)$p.value
 
 # --------------------------
 # a subsample of 50 subjects
@@ -3025,7 +3028,7 @@ dim(meta.data)
 if (data_full==1) {
     formula = otu.tab ~ sample_type + treatment + subject_id
 } else {
-    formula = otu.tab | sex ~ disease
+    formula = otu.tab ~ sample_type + treatment
 }
 
 res.F <- permanovaFL(formula = formula,
@@ -3035,7 +3038,7 @@ res.F <- permanovaFL(formula = formula,
         #Permutation within requires the same sie of clusters - as some of samples have failed sequencing this option is not valid.
 # subject_id was added as a fixed term
 
-p_permanovaF <- res.F$p.permanov
+p_permanovaF <- res.F$p.permanova
 
 
 # -----------------------------
@@ -3048,7 +3051,7 @@ label = colnames(otu.full)
 n_sam_new = nrow(otu.tab)
 dist_sq_all = array(0, dim=c(n_sam_new, n_sam_new, n_rarefy))
 
-set.seed(123)
+set.seed(seed)
 
 for (r in 1:n_rarefy) {
     otu_table_rarefy = Rarefy(otu.tab)$otu.tab.rff
@@ -3074,7 +3077,7 @@ for (r in 1:n_rarefy) {
 # --------------------------
     
 if (dist_type == 5 ) {
-    res <- jaccard.mean( otu.tab)
+    res <- jaccard.mean(otu.tab)
     dist_sq_inf_o1 = res$jac.mean.sq.o1
     dist_sq_inf_o2 = res$jac.mean.sq.o2
 } else if (dist_type == 4) {
@@ -3082,6 +3085,7 @@ if (dist_type == 5 ) {
     dist_sq_inf_o1 = res$unifrac.mean.sq.o1
     dist_sq_inf_o2 = res$unifrac.mean.sq.o2
 }
+
 
 
 #########################
@@ -3111,8 +3115,8 @@ for (r in c(1:10, 50, 100, 100^2, 100^3)) { # "100^2" corresponds to D2-A2, "100
         dist_sq_r = dist_sq_all[,,r]/r
     }
     res_permanovaD2 = permanovaFL(formula = formula, 
-                                  tree=tree, data = meta.data, n.perm.max=5000, 
-                                  square.dist=FALSE, n.rarefy=0, n.rej.stop=100, seed=123)
+                                  data = meta.data, n.perm.max=5000, 
+                                  square.dist=FALSE, n.rarefy=0, n.rej.stop=100, seed=seed)
     
     if (r == 100^2) {
         p_permanovaD2A2 = res_permanovaD2$p.permanova

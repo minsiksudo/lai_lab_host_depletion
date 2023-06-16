@@ -907,6 +907,33 @@ Taxa prevance and abundance were checked.
 **No prevalence or abundance filtering (each experimental group is 5% of total sample)**
 
 
+Before anlayzing, alpha diversity indices were calculated for all
+phyloseq objects
+
+```{r warning=FALSE, `Analysis 0`}
+
+alpha_diversity <- function(data) {
+        otu_table <- otu_table(data) %>% .[colSums(.) !=0]
+        S.obs <- rowSums(t(otu_table) != 0)
+        sample_data <- sample_data(data)
+        data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
+        data_shannon <- vegan::diversity(t(otu_table), index = "shannon") # calculate Shannon index using vegan package
+        data_hill <- exp(data_shannon)                           # calculate Hills index
+        
+        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, aggregate = TRUE) # dominance (Berger-Parker index), etc.
+        data_invsimpson <- vegan::diversity(t(otu_table), index = "invsimpson")                          # calculate Shannon index using vegan package
+        alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
+        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
+}
+
+phyloseq_unfiltered <- phyloseq
+
+sample_data(phyloseq_unfiltered$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_count))
+sample_data(phyloseq_unfiltered$phyloseq_count) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_count)) 
+sample_data(phyloseq_unfiltered$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_path_rpk))
+
+```
+
 
 ```{r, warning=F, QC4}
 #Calculation of sample prevalence, standard deviation, median abundance across all samples for all bugs and making into a table.
@@ -924,9 +951,9 @@ taxa_qc <- data.frame("species" =  otu_table(subset_samples(phyloseq_unfiltered$
                 colMeans(na.rm = T) #mean relativ abundacne 
 )
 
-function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq_unfiltered$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>% t() %>% colnames(),
-        "prevalence" = ifelse(subset_samples(phyloseq_unfiltered$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-        "mean_rpkm" = subset_samples(phyloseq_unfiltered$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
+function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq_unfiltered$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>% t() %>% colnames(),
+        "prevalence" = ifelse(subset_samples(phyloseq_unfiltered$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+        "mean_rpk" = subset_samples(phyloseq_unfiltered$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
 )
 
 
@@ -1070,10 +1097,10 @@ red_flag_taxa <- data.frame(species = taxa_qc$species,
 
 
 red_flag_function <- data.frame(function. = function_qc$function., 
-                                red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpkm) %>% 
+                                red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpk) %>% 
                                 t %>% 
                                 rownames() %>% 
-                                length * 0.05, 1, 0))# & function_qc$mean_rpkm < quantile(function_qc$mean_rpkm, 0.75), 1, 0))
+                                length * 0.05, 1, 0))# & function_qc$mean_rpk < quantile(function_qc$mean_rpk, 0.75), 1, 0))
 #Making unfiltered phyloseq
 phyloseq_unfiltered <- phyloseq
 #phyloseq of table 1
@@ -1092,25 +1119,9 @@ phyloseq$phyloseq_path_rpk <- prune_taxa(subset(red_flag_function, red_flag_func
 
 ```
 
-##  {.unnumbered}
-
-***QC 3 results:***
-
-***3.1. In initial analysis we will not perform prevalence or abundance
-filtering (though we may consider this for secondary
-differentialabundance analyses to manage p (features) \> n (sample size)
-problem and issues with multiple hypothesis correction)***
-
-***3.2. Red flags were made for taxa not satisfying the criteria (prev
-\< 0.05 & mean rel \< 0.75Q)***
-
-***3.3. Although we don't consider the prevalence of abundance at this
-time, we can consider their red-flags after running the DA analysis***
-
-# Analysis
 
 Before anlayzing, alpha diversity indices were calculated for all
-phyloseq objects
+filtred phyloseq objects
 
 ```{r warning=FALSE, `Analysis 0`}
 
@@ -1133,6 +1144,24 @@ sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phy
 sample_data(phyloseq$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpk))
 
 ```
+
+
+##  {.unnumbered}
+
+***QC 3 results:***
+
+***3.1. In initial analysis we will not perform prevalence or abundance
+filtering (though we may consider this for secondary
+differentialabundance analyses to manage p (features) \> n (sample size)
+problem and issues with multiple hypothesis correction)***
+
+***3.2. Red flags were made for taxa not satisfying the criteria (prev
+\< 0.05 & mean rel \< 0.75Q)***
+
+***3.3. Although we don't consider the prevalence of abundance at this
+time, we can consider their red-flags after running the DA analysis***
+
+# Analysis
 
 # A1. Host DNA, bacterial DNA by smaple type and treatment
 
@@ -2888,7 +2917,7 @@ args=(commandArgs(TRUE))
 if(length(args)==0){
     print("No arguments supplied")
     
-    dist_type <- 5      # 5: "jaccard"; 4: "unwt-unifrac"
+    dist_type <- 5      # 1:"horn"; 5: "jaccard"; 4: "unwt-unifrac"
     data_full <- 1      # 1: full sample; 0: a subsample of 50 subjects
     i_seed <- seed         # seed for generating different subsamples
     
@@ -2902,7 +2931,9 @@ if (dist_type==5) {
     dist_method = "jaccard"
 } else if (dist_type==4) {
     dist_method = "unwt-unifrac"
-} 
+} else if (dist_type==1) {
+    dist_method = "horn"
+}  
 
 
 ###############################################
@@ -2951,9 +2982,11 @@ otu.sub <- subset(otu_table_col, rownames(otu_table_col) %in% metadata$baylor_ot
 # remove obs with < 5000 reads
 otu.full <- otu.sub[rowSums(otu.sub)>5000,] #samples with too low reads were removed
 #Subsetting samples with effective reads
-#meta.sub <- subset(meta.sorted, meta.sorted$S.obs != 0)
-dim(otu.full) #3 samples were thrown out
+meta.sub <- subset(meta.sorted, meta.sorted$baylor_other_id %in% rownames(otu.full))
+dim(otu.sub)
+dim(otu.full) #14 samples were thrown out
 min(rowSums(otu.full))
+
 meta.full <- subset(meta.sorted, meta.sorted$baylor_other_id %in% rownames(otu.full))
 
 #Making data of t-tests - Not usfull for my analysis
@@ -2968,6 +3001,7 @@ set.seed(seed)
 otu.sam60 <- otu.full[sort(sample(nrow(otu.full), 50)), ]  
 meta.sam60 <- subset(meta.sub,meta.sub$sample_name %in% rownames(otu.sam60))
 
+#1st. We will check all the samples, non-rarefied
 
 ########################
 # prepare data for anal
@@ -2982,22 +3016,25 @@ if (data_full==1) {
 }
 dim(otu.tab)
 dim(meta.data)
-
-
 ########################
 # permanova-F
 ########################
 
+
+
 if (data_full==1) {
-    formula = otu.tab | (subject_id + sample_type + log10(Final_reads)) ~ treatment
+    formula = otu.tab ~ sample_type + treatment + subject_id
 } else {
-    formula = otu.tab | sample_type + treatment + log10(Final_reads) ~ disease
+    formula = otu.tab | sex ~ disease
 }
 
 res.F <- permanovaFL(formula = formula,
-                                data=meta.data, dist.method = dist_method,
-                                #tree=crohn.tree, 
-                                scale.otu.table=FALSE, n.rarefy=100, n.rej.stop=100, seed=123)
+                     data=meta.sub,dist.method = dist_method,
+                     scale.otu.table = FALSE, n.rarefy=100, n.rej.stop=100, seed=seed)
+                     #, perm.between.type = "none", perm.within.type = "free", cluster.id = "subject_id")
+        #Permutation within requires the same sie of clusters - as some of samples have failed sequencing this option is not valid.
+# subject_id was added as a fixed term
+
 p_permanovaF <- res.F$p.permanov
 
 
@@ -3011,11 +3048,11 @@ label = colnames(otu.full)
 n_sam_new = nrow(otu.tab)
 dist_sq_all = array(0, dim=c(n_sam_new, n_sam_new, n_rarefy))
 
-set.seed(seed)
+set.seed(123)
 
 for (r in 1:n_rarefy) {
-    #otu_table_rarefy = Rarefy(otu.tab)$otu.tab.rff
-    #otu_table_rarefy1 = (otu_table_rarefy>0)*1
+    otu_table_rarefy = Rarefy(otu.tab)$otu.tab.rff
+    otu_table_rarefy1 = (otu_table_rarefy>0)*1
     colnames(otu_table_rarefy1) = label
     colnames(otu_table_rarefy) = label
     if (dist_type == 5 ) {
@@ -3052,7 +3089,9 @@ if (dist_type == 5 ) {
 #########################
 
 if (data_full==1) {
-    formula = dist_sq_r | (subject_id + sample_type + log10(Final_reads)) ~ treatment
+        
+        formula = dist_sq_r ~ sample_type + treatment + subject_id
+
 } else {
     formula = dist_sq_r | sex ~ disease
 }
@@ -3087,6 +3126,9 @@ for (r in c(1:10, 50, 100, 100^2, 100^3)) { # "100^2" corresponds to D2-A2, "100
 tab = c(p_permanovaF, p_permanovaD2, p_permanovaD2A2, p_permanovaD2A1, i_seed)
 write.table(t(tab), file = paste("results/datafull", data_full, "_dist", dist_type, ".txt", sep=""), 
             quote=FALSE, append=TRUE, row.names=FALSE, col.names=FALSE)
+
+
+
 
 ```
 

@@ -178,7 +178,6 @@ A9. DA for *function*
 
 ```{r warning=F, message=FALSE, "Data loading"}
 #Parallel computing option
-plan(multicore)
 
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
@@ -1085,6 +1084,8 @@ contaminant %>% subset(., .$method == "combined") %>% .$sample_type %>% table
 
 **Taxa with low prevalences were red-flagged**
 
+**Prevalence/abundance filtering was employed**
+
 ```{r warning=FALSE, "Red flag"}
 #=============
 
@@ -1092,8 +1093,8 @@ contaminant %>% subset(., .$method == "combined") %>% .$sample_type %>% table
 red_flag_taxa <- data.frame(species = taxa_qc$species,
                             red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq_unfiltered$phyloseq_rel) %>%
                                                                t %>% rownames() %>%
-                                length * 0.05, 1,0)) %>%
-        # & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1,0)) %>%
+                                length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1,0)) %>%
+        
         mutate(red_flag_decontam_prev = species %in% (contaminant %>%
                                     subset(., .$method == "prevalence" & .$sample_type != "all") %>%
                                     .$contaminant %>% unique()))
@@ -1103,7 +1104,7 @@ red_flag_function <- data.frame(function. = function_qc$function.,
                                 red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpk) %>% 
                                 t %>% 
                                 rownames() %>% 
-                                length * 0.05, 1, 0))# & function_qc$mean_rpk < quantile(function_qc$mean_rpk, 0.75), 1, 0))
+                                length * 0.05 & function_qc$mean_rpk < quantile(function_qc$mean_rpk, 0.75), 1, 0))
 #Making unfiltered phyloseq
 phyloseq_unfiltered <- phyloseq
 #phyloseq of table 1
@@ -1126,7 +1127,7 @@ phyloseq$phyloseq_path_rpk <- prune_taxa(subset(red_flag_function, red_flag_func
 Before anlayzing, alpha diversity indices were calculated for all
 filtred phyloseq objects
 
-```{r warning=FALSE, `Analysis 0`}
+```{r warning=FALSE}
 
 alpha_diversity <- function(data) {
         otu_table <- otu_table(data) %>% .[colSums(.) !=0]
@@ -2279,7 +2280,7 @@ path_horn_dist_long_within_sampleid_from_control$treatment <- ifelse(path_horn_d
 path_horn_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", path_horn_dist_long_within_sampleid_from_control$iso1), "Nasal",
                                                                   ifelse(grepl("CFB", path_horn_dist_long_within_sampleid_from_control$iso1), "Sputum",
                                                                          ifelse(grepl("BAL", path_horn_dist_long_within_sampleid_from_control$iso1), "BAL",
-                                                                                ifelse(grepl("pos|POS", path_horn_dist_long_within_sampleid_from_control$iso1), "Mock",
+                                                                                ifelse(grepl("pos", path_horn_dist_long_within_sampleid_from_control$iso1, ignore.case = T), "Mock",
                                                                                        ifelse(grepl("neg|N_EXT", path_horn_dist_long_within_sampleid_from_control$iso1), "Neg.",NA)))))
 
 #Making a column for baseline (controls, from where?)
@@ -2311,14 +2312,14 @@ dummy$sample_id_2 <- ifelse(grepl("pos", dummy$sample_id_2, ignore.case = T),"Mo
 dummy$sample_type <- ifelse(grepl("NS", dummy$iso1), "Nasal",
                             ifelse(grepl("CFB", dummy$iso1), "Sputum",
                                    ifelse(grepl("BAL", dummy$iso1), "BAL",
-                                          ifelse(grepl("pos|POS", dummy$iso1), "Mock",
+                                          ifelse(grepl("pos|POS", dummy$iso1, ignore.case = T), "Mock",
                                                  ifelse(grepl("neg|N_EXT", dummy$iso1), "Neg.",NA)))))
 dummy <- subset(dummy, !is.na(dummy$sample_type))
 path_horn_dist_long_within_sampleid_from_control <- bind_rows(path_horn_dist_long_within_sampleid_from_control, dummy)
 
 
 path_horn_dist_long_within_sampleid_from_control %>%
-        mutate(across(sample_type, factor, levels=c( "Neg.", "Mock", "BAL", "Nasal","Sputum")),
+        mutate(across(sample_type, factor, levels=c("Mock", "BAL", "Nasal","Sputum")),
                across(treatment, factor, levels=c("Untreated", "lypma", "benzonase", "host_zero","molysis", "qiaamp"))) %>%
 ggplot(aes(y = dist, fill = treatment)) +
         geom_boxplot() +
@@ -2330,58 +2331,6 @@ ggplot(aes(y = dist, fill = treatment)) +
         facet_wrap(~sample_type, ncol = 5)
 
 ```
-
-### LME on B-C distance
-
-Effect size, standard error (SE) and p-value of a statistical test for Bray-Curtis distance from untreated to each treated within subject (BC-distance wihtin subject by treatment~ sample type + treatment + sampetype * treatment + log10 (Final_reads) + (1|subject_id) ).
-
-```{r}
-path_bray_dist_long_within_sampleid_from_control$treatment <- factor(path_bray_dist_long_within_sampleid_from_control$treatment,
-                                                                     levels = c("Untreated",
-                                                                                "lypma",
-                                                                                "benzonase",
-                                                                                "host_zero",
-                                                                                "molysis",
-                                                                                "qiaamp"))
-path_bray_dist_long_within_sampleid_from_control$sample_type <- factor(path_bray_dist_long_within_sampleid_from_control$sample_type,
-                                                                     levels = c("Mock",
-                                                                                "BAL",
-                                                                                "Nasal",
-                                                                                "Sputum"))
-tableS7 <- lmer(dist ~ sample_type * treatment + (1|sample_id_1), data = path_bray_dist_long_within_sampleid_from_control %>% subset(., .$sample_type != "Neg.")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
-        mutate(row.names = gsub("treatment|sample_type", "", row.names)) %>% 
-        mutate(row.names = gsub("[:]", " * ", row.names)) %>% 
-        mutate(row.names = gsub("host_zero", "Host zero", row.names)) %>% 
-        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
-        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
-        mutate(row.names = gsub("molysis", "Molysis", row.names)) %>% 
-        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
-        mutate(across(is.numeric, round, digits=3)) %>% 
-        column_to_rownames("row.names") %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ")", 
-                                sep = ""),
-               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
-        kbl(format = "html", escape = 0) %>%
-        kable_styling(full_width = 0, html_font = "serif")
-        
-
-
-
-tableS7
-
-```
 ### LME on H-M distance
 
 Effect size, standard error (SE) and p-value of a statistical test for Bray-Curtis distance from untreated to each treated within subject (BC-distance wihtin subject by treatment~ sample type + treatment + sampetype * treatment + log10 (Final_reads) + (1|subject_id) ).
@@ -2389,7 +2338,6 @@ Effect size, standard error (SE) and p-value of a statistical test for Bray-Curt
 **Hard to interpret, as it does not have proper baseline (control is not there as control does not have distances)**
 
 ```{r}
-
 
 path_horn_dist_long_within_sampleid_from_control$treatment <- factor(path_horn_dist_long_within_sampleid_from_control$treatment,
                                                                      levels = c("Untreated",
@@ -2399,7 +2347,8 @@ path_horn_dist_long_within_sampleid_from_control$treatment <- factor(path_horn_d
                                                                                 "molysis",
                                                                                 "qiaamp"))
 path_horn_dist_long_within_sampleid_from_control$sample_type <- factor(path_horn_dist_long_within_sampleid_from_control$sample_type,
-                                                                     levels = c("BAL",
+                                                                     levels = c("Mock",
+                                                                                "BAL",
                                                                                 "Nasal",
                                                                                 "Sputum"))
 
@@ -2433,6 +2382,42 @@ tableS9 <- lmer(dist ~ sample_type * treatment + (1|sample_id_1), data = path_ho
 
 
 tableS9
+
+```
+
+### LME on H-M distance (stratified) - BAL
+
+
+```{r}
+
+hm_dist_lme_mock <- lm(dist ~ treatment, data = path_horn_dist_long_within_sampleid_from_control %>% subset(., .$sample_type == "Mock")) %>% summary %>% .$ coefficients %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = gsub("host_zero", "Host zero", row.names)) %>% 
+        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
+        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
+        mutate(row.names = gsub("molysis", "Molysis", row.names)) %>% 
+        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        column_to_rownames("row.names") %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>% 
+        kbl(format = "html", escape = 0) %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+hm_dist_lme_mock
+
 
 ```
 
@@ -2563,8 +2548,7 @@ subject)
 
 **Strata term was employed rather than fixed effect**
 
-```{r warning=F, "Perm taxa 1"}
-
+```{r warning=F}
 
 bray_perm_uni %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
@@ -2605,7 +2589,7 @@ host_zero + molysis + qiaamp, strata = subject
 
 **QIAamp showed highest changes. But, it could be sample type specific.**
 
-```{r warning=F, "perm taxa 3"}
+```{r warning=F}
 bray_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "lypma" ~ 'lyPMA',
@@ -2632,7 +2616,7 @@ dist \~ sample_type \* treatment + log10(Final_reads), strata = subject
 **It was sample type specific. We need stratified analysis**
 
 
-```{r warning=F, "perm taxa 4"}
+```{r warning=F}
 bray_perm_inter %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "treatment" ~ 'Treatment',
@@ -2655,8 +2639,7 @@ bray_perm_inter %>% data.frame(check.names = F) %>% rownames_to_column("row.name
 
 **Controls chanced after treatment; by a lot. Differential abundance analysis should be conducted**
 
-```{r warning=F, "perm taxa 7"}
-
+```{r warning=F}
 bray_perm_pos %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
                                      row.names == "benzonase" ~ 'Benzonase',
@@ -2683,7 +2666,7 @@ bray_perm_pos %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 
 **lyPMA affected Nasal samples.**
 
-```{r warning=F, "perm taxa 9"}
+```{r warning=F}
 
 bray_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -2707,8 +2690,7 @@ bray_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names')
 **QIAamp affected BAL samples**
 
 
-```{r warning=F, "perm taxa 10"}
-
+```{r warning=F}
 bray_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
                                      row.names == "benzonase" ~ 'Benzonase',
@@ -2731,7 +2713,7 @@ bray_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 
 **Sputum was affected by Molysis and QIAamp.**
 
-```{r warning=F, "perm taxa 11"}
+```{r warning=F}
 
 bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
@@ -2766,7 +2748,7 @@ subject)
 
 **Strata term was employed rather than fixed effect**
 
-```{r warning=F, "Perm taxa 12"}
+```{r warning=F}
 
 
 horn_perm_uni %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
@@ -2808,7 +2790,7 @@ host_zero + molysis + qiaamp, strata = subject
 
 **QIAamp showed highest changes. But, it could be sample type specific.**
 
-```{r warning=F, "perm taxa 32"}
+```{r warning=F}
 horn_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "lypma" ~ 'lyPMA',
@@ -2840,8 +2822,7 @@ horn_perm_strata %>% data.frame(check.names = F) %>% rownames_to_column('row.nam
 
 **lyPMA affected Nasal samples.**
 
-```{r warning=F, "perm taxa 19"}
-
+```{r warning=F}
 horn_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
                                      row.names == "benzonase" ~ 'Benzonase',
@@ -2864,8 +2845,7 @@ horn_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names')
 **QIAamp affected BAL samples**
 
 
-```{r warning=F, "perm taxa 110"}
-
+```{r warning=F}
 horn_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
                                      row.names == "benzonase" ~ 'Benzonase',
@@ -2888,8 +2868,7 @@ horn_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 
 **Sputum was affected by Molysis and QIAamp.**
 
-```{r warning=F, "perm taxa 11"}
-
+```{r warning=F}
 horn_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
                                      row.names == "benzonase" ~ 'Benzonase',
@@ -2914,7 +2893,7 @@ horn_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names'
 
 **As a sanity check, rarefaction based analysis was conducted using LDM**
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 args=(commandArgs(TRUE))
 
@@ -3011,8 +2990,8 @@ if (data_full==1) {
     otu.tab = otu.full
     meta.data = meta.full
 } else {
-    otu.tab = otu.sam60
-    meta.data = meta.sam60
+    otu.tab = otu.sam10
+    meta.data = meta.sam10
 }
 dim(otu.tab)
 dim(meta.data)
@@ -3145,7 +3124,7 @@ res_permanovaD2$R.squared
 
 **As a sanity check, rarefaction based analysis was conducted using LDM**
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 args=(commandArgs(TRUE))
 
@@ -3240,8 +3219,8 @@ p.wilcox.full = wilcox.test(rowSums(otu.full) ~ meta.full$control)$p.value
 # --------------------------
 
 set.seed(seed)
-otu.sam60 <- otu.full[sort(sample(nrow(otu.full), 50)), ]  
-meta.sam60 <- subset(meta.sub,meta.sub$sample_name %in% rownames(otu.sam60))
+otu.sam10 <- otu.full[sort(sample(nrow(otu.full), 10)), ]  
+meta.sam10 <- subset(meta.sub,meta.sub$sample_name %in% rownames(otu.sam10))
 
 #1st. We will check all the samples, non-rarefied
 
@@ -3253,8 +3232,8 @@ if (data_full==1) {
     otu.tab = otu.full
     meta.data = meta.full
 } else {
-    otu.tab = otu.sam60
-    meta.data = meta.sam60
+    otu.tab = otu.sam10
+    meta.data = meta.sam10
 }
 dim(otu.tab)
 dim(meta.data)
@@ -3387,7 +3366,7 @@ res_permanovaD2$R.squared
 
 **As a sanity check, rarefaction based analysis was conducted using LDM**
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 args=(commandArgs(TRUE))
 
@@ -3482,8 +3461,8 @@ p.wilcox.full = wilcox.test(rowSums(otu.full) ~ meta.full$control)$p.value
 # --------------------------
 
 set.seed(seed)
-otu.sam60 <- otu.full[sort(sample(nrow(otu.full), 50)), ]  
-meta.sam60 <- subset(meta.sub,meta.sub$sample_name %in% rownames(otu.sam60))
+otu.sam10 <- otu.full[sort(sample(nrow(otu.full), 10)), ]  
+meta.sam10 <- subset(meta.sub,meta.sub$sample_name %in% rownames(otu.sam10))
 
 #1st. We will check all the samples, non-rarefied
 
@@ -3495,8 +3474,8 @@ if (data_full==1) {
     otu.tab = otu.full
     meta.data = meta.full
 } else {
-    otu.tab = otu.sam60
-    meta.data = meta.sam60
+    otu.tab = otu.sam10
+    meta.data = meta.sam10
 }
 dim(otu.tab)
 dim(meta.data)

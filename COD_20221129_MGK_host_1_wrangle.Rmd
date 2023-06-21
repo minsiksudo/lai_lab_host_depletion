@@ -392,7 +392,7 @@ tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
         tax_table() %>% 
         data.frame %>% 
         rename("gram_stain" = "V8") %>% 
-        mutate(gram_stain = case_when(is.na(gram_stain) ~ "fungi",
+        mutate(gram_stain = case_when(is.na(gram_stain) ~ "Fungi",
                                       .default = gram_stain)) %>%
         as.matrix()
 
@@ -402,7 +402,7 @@ tax_table(phy$phyloseq_rel) <- cbind(tax_table(phy$phyloseq_rel),
         tax_table() %>% 
         data.frame %>% 
         rename("gram_stain" = "V8") %>% 
-        mutate(gram_stain = case_when(is.na(gram_stain) ~ "fungi",
+        mutate(gram_stain = case_when(is.na(gram_stain) ~ "Fungi",
                                       .default = gram_stain)) %>%
         as.matrix()
 

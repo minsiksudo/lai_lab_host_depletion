@@ -1933,7 +1933,7 @@ dev.off()
                 c.	Inv Simp 
                         i.	Lmer(InvSimp~ sample type + treatment + sample type * treatment + (1|subject_id) (Table S12)
 
-## Alpha diversity changes
+## Alpha diversity changes {.tabset}
 
 ### Calculation for log centered Final reads
 
@@ -3483,9 +3483,10 @@ f5a <- merge(f_fit_data_pos$rel %>%
         labs(tag = "A") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
-              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7))  +
+              axis.text.y = ggtext::element_markdown(size = 7),
+              axis.title.x = element_text(margin = margin(t = 20)))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
                       x = treatment,
@@ -3545,9 +3546,10 @@ f5b <- merge(f_fit_data_bal$rel %>%
         labs(tag = "B") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
-              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7))  +
+              axis.text.y = ggtext::element_markdown(size = 7),
+              axis.title.x = element_text(margin = margin(t = 20)))  +
         
         scale_fill_manual(values = c("grey", "red"), aes(y = feature,
                       x = treatment,
@@ -3607,9 +3609,10 @@ f5c <- merge(f_fit_data_ns$rel %>%
         labs(tag = "C") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
-              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7))  +
+              axis.text.y = ggtext::element_markdown(size = 7),
+              axis.title.x = element_text(margin = margin(t = 20)))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
                       x = treatment,
@@ -3668,9 +3671,10 @@ f5d <- merge(f_fit_data_spt$rel %>%
         labs(tag = "D") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
-              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7))  +
+              axis.text.y = ggtext::element_markdown(size = 7),
+              axis.title.x = element_text(margin = margin(t = 20)))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
                       x = treatment,
@@ -3691,6 +3695,7 @@ f5d <- merge(f_fit_data_spt$rel %>%
                                   "molysis" = "Molysis",
                                   "qiaamp" = "QIAamp")
                          )
+
 figS10 <- ggarrange(f5a, f5b, f5c, f5d, align = "hv", common.legend = T)
 
 figS10

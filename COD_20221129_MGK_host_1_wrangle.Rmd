@@ -390,8 +390,9 @@ tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
         tax_table() %>% 
         data.frame %>% 
         rename("gram_stain" = "V8") %>% 
-        mutate(gram_stain = case_when(is.na(gram_stain) ~ "Fungi",
-                                      Species == "s__Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii" ~ "Fungi",
+        mutate(gram_stain = case_when(Domain == "k__Eukaryota" ~ "Fungi",
+                                      Species == "s__Natronorubrum_sediminis" ~ "Archaea",
+                                      Species == "s__Methanobrevibacter_smithii" ~ "Gram-positive",
                                       .default = gram_stain)) %>%
         as.matrix()
 
@@ -401,8 +402,9 @@ tax_table(phy$phyloseq_rel) <- cbind(tax_table(phy$phyloseq_rel),
         tax_table() %>% 
         data.frame %>% 
         rename("gram_stain" = "V8") %>% 
-        mutate(gram_stain = case_when(is.na(gram_stain) ~ "Fungi",
-                                      Species == "s__Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii" ~ "Fungi",
+        mutate(gram_stain = case_when(Domain == "k__Eukaryota" ~ "Fungi",
+                                      Species == "s__Natronorubrum_sediminis" ~ "Archaea",
+                                      Species == "s__Methanobrevibacter_smithii" ~ "Gram-positive",
                                       .default = gram_stain)) %>%
         as.matrix()
 

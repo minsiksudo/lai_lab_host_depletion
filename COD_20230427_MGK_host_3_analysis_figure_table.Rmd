@@ -106,10 +106,8 @@ FUN.LineZero.Report()
 
 ## LIST OF PRIMARY QUESTIONS AND CORRESPONDING ANALYSES {.tabset}
 
-
-
-
 ### **3.1. Screening of treatment effect**
+
 *i.	Did treatment change host % in qPCR results?*
         1.	Figure of 4 different matrices (Fig 2)
         
@@ -143,22 +141,31 @@ FUN.LineZero.Report()
                 d.	D: Host DNA ratio
                 
 *iii.	Was host DNA proportion of sequencing similar to that of qPCR? (secondary analysis)*
-        1.	metagenomics is gold standard for % host, but most people don't have the money to do deep sequencing. So secondary analysis is to calculate correlation between %host by qPCR vs %host by metagenomics (this can be a supplementary figure but would at least mention correlation in text) (Fig. S3)
+
+```
+1.	metagenomics is gold standard for % host, but most people don't have the money to do deep sequencing. So secondary analysis is to calculate correlation between %host by qPCR vs %host by metagenomics (this can be a supplementary figure but would at least mention correlation in text) (Fig. S3)
+```
         
         
 ### **3.2. Quality control of sequencing data**
+
 *iv.	Were there any contaminants in the sequencing result? (Do these host depletion methods introduce contamination)*
+        
         1.	Negative control – decontam, prevalence method
                 a.	Table of decontam analysis results by sample type (Table S4) 
                 b.	    - decontam on ALL samples prior to prevalence filtration. I would run this prior to prevalence filtration so people don't accuse us of cheating
                 c.	show bugs that show up in negative controls stratified by depletion method after prevalence filtration as a supplemental figure (Figure S4)
+                
 *v.	Were there any bias in Mock community?*
+        
         1.	Stacked bar plot of mock (Figure S5)
                 a.	A  - Species level information
                 b.	B - gram strain
         2.	Statistical test results on gram stain changes (Table S5)
                 a.	Lmer(sqrt(gram-stain) ~ sample type + treatment + sample type * treatment + (1|subject_id) ) 
+                
 *vi.	M&M - Prevalence filtering*
+        
         1.	Prevalence filtration at 5%, except its abundance is over 0.75 quantile.
                 a.	Information in the main text
                 
@@ -167,6 +174,7 @@ FUN.LineZero.Report()
 *viii.	Did diversity matrices change? Do these host depletion methods introduce bias in the sequenced community? Does bias differ by sample type? dataset = prevalence-filtered mock community, bal, nasal, sputum samples. I think you should include log10(reads) so you can say in the text that even adjusting for differences in sequencing depth you still find differences by method.*
 
 *ix.	Does bias differ by sample type? *
+        
         1.	Figure of alpha and beta diversity changes (Figure 3)
                 a.	Alpha - you currently have a box plot stratified by sample type, another approach is to use a forest plot using predictions from your model
                 b.	Beta - can consider a forest plot for this one as well instead of a boxplot. For a forest plot you can annotate the x-axis to indicate which direction is better ie towards 0 you can annotate "less bias" and towards higher number you can annotate "more bias"
@@ -186,6 +194,7 @@ FUN.LineZero.Report()
                 c.	Calculate Horn-Morisita distance between control and host depleted sample type and use that as an outcome in mixed effecs model (Table S9)
 
 *x.	Differential abundance analysis *
+        
         1.	Volcano plot with Mock, BAL, Nasal and Sputum (Figure S7)
                 a.	Maaslin (feature ~ log10(Final reads) + lyPMA + Benzonase + Host zero + Molysis + QIAamp, RE = subject_id)
                         i.	make sure that you are doing this analysis accounting for the compositional nature of this data
@@ -197,6 +206,7 @@ FUN.LineZero.Report()
 ### **3.4. Effect of treatments on functional analysis results**
 
 *vi.	Did depletion methods change diversity, by sample type?*
+        
         1.	How alpha-diversity changed along treatment?
                 a.	Figure of alpha (Species richness) and beta diversity (Fig. S8)
                 b.	Stratified LMER for alpha diversity changes (Table S10)
@@ -206,6 +216,7 @@ FUN.LineZero.Report()
                                 1.	Or, PERM(horn dist. ~ log10(Final reads) + sample type + treatment + sample_type * treatment, strata = subject_id)
                                 
 *vii.	What type of bugs were affected by the treatment?*
+        
         1.	DA analysis result by sample type (Fig. S9)
                 a.	A: Mock
                 b.	B: BAL
@@ -449,6 +460,7 @@ dev.off()
 ### Table of sequencing result
 
 *ii.	How were changes in sequencing results?*        
+        
         2.	Large table of all the information (Table 1)
                 a.	Table (summary table of metagenomics output stratified by sample type - see Table 2 in Birdy's DNA extraction method paper, please use only 1 significance digits for effect size, 2 significance digits for p-value to make the table easier to read).  Dataset: % host by metagenomics for nasal, sputum, BAL. People only care about the results of the actual respiratory samples, you would never host deplete mock community samples
                 
@@ -472,6 +484,7 @@ dev.off()
 ### Statistical tests for sequencing results
 
 *ii.	Statistical tests on how were changes in sequencing results*
+                        
                         ii.	- library prep failure - report both n and %
                                 3.	outcome = fail (==1 if failed library prep, ==0 if not)
                                         a.	model (to justify stratified analysis: fail ~ method + sample_type + method*sample_type + (1|subjid), just report interaction p-value
@@ -569,7 +582,7 @@ sample_data %>%
 
 ## Host ratio (Table S2) {.tabset}
 
-### Host ratio
+### Host ratio (all samples)
 
 **None-stratified. p-value of interaction term was 4.587e-16**
 
@@ -586,6 +599,10 @@ lmer(sequencing_host_prop * 100 ~ sample_type * treatment + (1|subject_id),
         anova() 
         
 ```
+
+### Host ratio (stratified) (Table S2)
+
+
 **Table S2. ** Effect size, standard error (SE) and p-value at a statistical test on host DNA ratio using linear mixed effect model. lmer( Host DNA ratio vs sample_type + treatment + sample_type \* treatment +
 (1\|subject_id) )
 
@@ -684,6 +701,25 @@ save_kable(tables2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 ## {-}
 
 ## Final reads (Table S3) {.tabset}
+
+### Final reads (all samples)
+
+**None-stratified. p-value of interaction term was 3.955e-09**
+
+```{r warning=F}
+
+
+lmer(Final_reads * 100 ~ sample_type * treatment + (1|subject_id), 
+                    data = sample_data %>%
+                            data.frame %>%
+                            mutate(total_read = phyloseq$phyloseq_count %>%
+                            otu_table %>%
+                            colSums()) %>%
+                            subset(., total_read != 0)) %>%
+        anova() 
+        
+```
+
 
 ### Final reads (stratified) (Table S3)
 
@@ -787,6 +823,7 @@ save_kable(tables3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 
 *ii.	How were changes in sequencing results?*        
         3.	Figure of 4 different matrices (Fig. S2)
+        
                 a.	A: Raw reads
                 b.	B: Host mapped reads
                 c.	C: Final reads
@@ -880,11 +917,12 @@ dev.off()
 
 ### qPCR vs sequencing (Fig. S3)
 
-**Figure S3.** Correlation between host DNA proportion measured with qPCR and shotgun metagenomic sequencing.
 
 # *iii.	Was host DNA proportion of sequencing similar to that of qPCR? (secondary analysis)*
+        
         1.	metagenomics is gold standard for % host, but most people don't have the money to do deep sequencing. So secondary analysis is to calculate correlation between %host by qPCR vs %host by metagenomics (this can be a supplementary figure but would at least mention correlation in text)
 
+**Figure S3.** Correlation between host DNA proportion measured with qPCR and shotgun metagenomic sequencing.
 
 ```{r, message=FALSE}
 
@@ -1052,11 +1090,12 @@ dev.off()
 ### Positive controls (Fig. S5)
 
 # *v.	Were there any bias in Mock community? *
+        
         1.	Stacked bar plot of mock (Figure S2)
                 a.	A  - Species level information
                 b.	B - gram strain
                 
-**Fig. S5**. Barplot of positive controls by treatment methods at species level
+**Fig. S5**. Barplot of positive controls by treatment methods at (A) species level and (B) gram-stain information
 
                 
 ```{r, warning=FALSE}
@@ -1136,12 +1175,13 @@ dev.off()
 ```                
 
 
-### Gram-stain stats
+## Gram-stain stats {.tabset}
 
 
-# *v.	Were there any bias in Mock community? *
         2.	Statistical test results on gram stain changes (Table S5)
                 a.	Lmer(sqrt(gram-stain) ~ sample type + treatment + sample type * treatment + (1|subject_id) ) 
+
+### Gram-stain stats (all samples)
                 
 
 **Table S5. ** Effect size, standard error (SE) and p-value at a statistical test on gram-negative proportion using linear mixed effect model. lmer( Gram-negative proportion vs sample_type + treatment + sample_type \* treatment +
@@ -1233,13 +1273,14 @@ tableS5 <- cbind(tableS5_bal, tableS5_ns, tableS5_spt) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3, "Sputum" = 3)) %>% 
         kable_styling(full_width = 0, html_font = "serif") 
 
+tableS5
 
 save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS5.html", self_contained = T)
 
 
 ```
-
 ### {-}
+
 
 ## decontam {.tabset}
 
@@ -1255,26 +1296,26 @@ sample_data(phyloseq_unfiltered$phyloseq_rel)$is.neg <- grepl("Neg", sample_data
 
 contaminant <- data.frame() 
 
-cat("decontam prevalence - all")
+#cat("decontam prevalence - all")
 contaminant1 <- 
 data.frame("prevalence", "all", fix.empty.names = F, 
 phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0 & sample_type != "Mock") %>%
         isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names()
 )
 
-cat("decontam prevalence - BAL")
+#cat("decontam prevalence - BAL")
 contaminant2 <- 
 data.frame("prevalence", "BAL", fix.empty.names = F, 
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
         isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
 
-cat("decontam prevalence - Nasal")
+#cat("decontam prevalence - Nasal")
 contaminant3 <- 
         data.frame("prevalence", "Nasal swab", fix.empty.names = F, 
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal", "Neg.")) %>%
         isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
 
-cat("prevalence", "decontam prevalence - Sputum")
+#cat("prevalence", "decontam prevalence - Sputum")
 contaminant4 <- 
 data.frame("prevalence", "Sputum", fix.empty.names = F,
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum", "Neg.")) %>%
@@ -1283,52 +1324,52 @@ subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), 
 
 
 
-cat("decontam frequency - All")
+#cat("decontam frequency - All")
 contaminant5 <- 
 data.frame("frequency", "all", fix.empty.names = F,
 phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
         isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
 
-cat("decontam frequency - BAL")
+
+
+#cat("decontam frequency - BAL")
 #contaminant6 <- 
 #data.frame("frequency", "BAL", fix.empty.names = F,
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL")) %>%
         isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
 
-cat("decontam frequency - Nasal")
+#cat("decontam frequency - Nasal")
 #contaminant7 <- 
 #data.frame("frequency", "Nasal swab", fix.empty.names = F,
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal")) %>%
         isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
 
-cat("decontam frequency - Sputum")
+#cat("decontam frequency - Sputum")
 contaminant8 <- 
 data.frame("frequency", "Sputum", fix.empty.names = F,
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum")) %>%
         isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
 
-
-
-cat("decontam combined - All")
+#cat("decontam combined - All")
 contaminant9 <- 
 data.frame("combined", "all", fix.empty.names = F,
 
 phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
         isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
 
-cat("decontam combined - BAL")
+#cat("decontam combined - BAL")
 contaminant10 <- 
 data.frame("combined", "BAL", fix.empty.names = F,
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
         isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
 
-cat("decontam combined - Nasal")
+#cat("decontam combined - Nasal")
 #contaminant11 <- 
 #data.frame("combined", "Nasal swab", fix.empty.names = F,
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal", "Neg.")) %>%
         isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
 
-cat("decontam combined - Sputum")
+#cat("decontam combined - Sputum")
 contaminant12 <- 
 data.frame("combined", "Sputum", fix.empty.names = F,
 subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum", "Neg.")) %>%
@@ -1337,20 +1378,18 @@ subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), 
 
 contaminant <- rbind(contaminant1, contaminant2, contaminant3, contaminant4, contaminant5, contaminant8, contaminant9, contaminant10, contaminant12)
 names(contaminant) <- c("method", "sample_type", "contaminant")
-cat("Prevalence decontam unique taxa - from stratified")
+cat("Prevalence decontam unique taxa - from stratified\n\n")
 contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique()
 
-(contaminant %>% subset(., .$method == "prevalence" & .$sample_type == "all") %>% .$contaminant) %in% (contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique())
-
-cat("Prevalence decontam table")
+cat("Prevalence decontam table\n\n")
 contaminant %>% subset(., .$method == "prevalence") %>% .$sample_type %>% table
-cat("Frequency decontam table")
+cat("Frequency decontam table\n\n")
 contaminant %>% subset(., .$method == "frequency") %>% .$sample_type %>% table
-cat("Combined decontam table")
+cat("Combined decontam table\n\n")
 contaminant %>% subset(., .$method == "combined") %>% .$sample_type %>% table
 ```
 
-### Decontam summary table
+### Decontam summary (Table S4)
 
 **Table S4.** Summary table of potential contaminants with all sample types and stratified sample types in all methods (prevalence, frequence, and combined)
 
@@ -1374,7 +1413,10 @@ save_kable(tableS4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 
 ### Prevalecne filtering
 
+**Prevalence & aubndance filtering was conducted**
+
 v.	M&M - Prevalence filtering
+
         1.	Prevalence filtration at 5%, except its abundance is over 0.75 quantile.
                 a.	Information in the main text
 
@@ -1452,6 +1494,8 @@ sample_data <- sample_data(phyloseq$phyloseq_count)
 ```
 
 ### Table 1 (revised)
+
+**Revised Table 1 was constructed after employing decontam**
 
 **Table 1 (revised)**. Sample number of each experimental group, total DNA quantified by PicoGreen, library prep QC result, low quality removed read counts, ratio of host mapped reads and final microbial reads.
 
@@ -1654,7 +1698,7 @@ save_kable(table1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Projec
 ### {-}
 
 
-## Figure 1 numbers 
+## Figure 1 numbers {.tabset}
 
 **These tables were generated to note average med(IQR) of qPCR results
 
@@ -1703,7 +1747,7 @@ sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% s
                 a.	Alpha - you currently have a box plot stratified by sample type, another approach is to use a forest plot using predictions from your model
                 b.	Beta - can consider a forest plot for this one as well instead of a boxplot. For a forest plot you can annotate the x-axis to indicate which direction is better ie towards 0 you can annotate "less bias" and towards higher number you can annotate "more bias"
 
-### Alpha and beta diversity (Figure)
+### Alpha and beta diversity (Figure 3)
 
 
 **Figure 3. ** (A) Species richness by sample type and treatment. (B) Horn-Morisita distances (mean and 95 % confidence interval) between untreated and treated within the sample subject by sample type and treatment.
@@ -1872,6 +1916,7 @@ dev.off()
 
 
  *ix.	Does bias differ by sample type? *
+        
         2.	Alpha diversity-
                 a.	 Run below models to justify stratified analyses (just report the significant method*sample_type interaction term)
                         i.	species_richness ~ method + sample_type + method * sample_type + log10(reads) + (1|subjid)
@@ -1961,7 +2006,7 @@ sample_data %>% data.frame() %>% subset(., .$sample_type %in% c("BAL", "Nasal", 
 
 Effect size, standard error (SE) and p-value of a statistical test for species richness with an interaction term using linear mixed effect model (Species richness ~ sample_type * treatment + log10 (Final_reads) + (1|subject_id) ).
 
-Interaction term was highly significant (p = 2.2e-16)
+**Interaction term was highly significant (p = 2.2e-16)**
 
 ```{r}
 lmer(S.obs ~ treatment * sample_type + log10(Final_reads) + (1|subject_id),
@@ -2449,6 +2494,7 @@ dev.off()
 # *x.	How were changes of individual taxa?*
 
 *x.	How were changes of individual taxa? Differential abundance analysis *
+       
         1.	Volcano plot with Mock, BAL, Nasal and Sputum (Figure S5)
                 a.	Maaslin (feature ~ log10(Final reads) + lyPMA + Benzonase + Host zero + Molysis + QIAamp, RE = subject_id)
                         i.	make sure that you are doing this analysis accounting for the compositional nature of this data
@@ -2857,6 +2903,7 @@ dev.off()
 # *vi.	Did depletion methods change diversity, by sample type?*
 
 *vi.	Did depletion methods change diversity, by sample type?*
+        
         1.	How alpha-diversity changed along treatment?
                 a.	Figure of alpha (Species richness) and beta diversity (Fig. S8)
 
@@ -3158,7 +3205,8 @@ cbind(sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
 ### Function beta - all samples (Table S11)
 
 *vi.	Did depletion methods change diversity, by sample type?*
-d.	Table of stratified beta diversity, Mock, BAL, Nasal, Sputum (Table S11)
+
+        d.	Table of stratified beta diversity, Mock, BAL, Nasal, Sputum (Table S11)
                         i.	PERM(horn dist. ~ log10(Final reads) + lyPMA + Benzonase + Host zero + Molysis + QIAamp, strata = subject_id)
                                 1.	Or, PERM(horn dist. ~ log10(Final reads) + sample type + treatment + sample_type * treatment, strata = subject_id)
 
@@ -3305,6 +3353,7 @@ cbind(a, b, c) %>%
 
 *vii.	What type of fucntion were affected by the treatment?*
         1.	DA analysis result by sample type (Figure S9)
+
                 a.	A: Mock
                 b.	B: BAL
                 c.	C: Nasal

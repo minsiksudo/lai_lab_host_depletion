@@ -300,7 +300,7 @@ sample_data$lib_failed <- sample_data$baylor_other_id %in% lib_fail_list
 
 ***2. Adding more data to the phyloseq - picogreen***
 
-```{r, warning=F, `Adding more data to phyloseq object`}
+```{r, warning=F, `Adding more data to phyloseq object 2`}
 #Adding host DNA proportion of sequencing results
 picogreen <- rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 1, skip = 1),
        read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 2, skip = 1)
@@ -348,9 +348,7 @@ sample_data(phyloseq)$subject_id <- ifelse(sample_data(phyloseq)$subject_id == "
 
 Adding functional data
 
-
-
-```{r warning=FALSE, `Loading phyloseq object`}
+```{r warning=FALSE, `Loading functional phyloseq object`}
                  
 #Loading phyloseq object
 setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed")
@@ -393,6 +391,7 @@ tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
         data.frame %>% 
         rename("gram_stain" = "V8") %>% 
         mutate(gram_stain = case_when(is.na(gram_stain) ~ "Fungi",
+                                      Species == "s__Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii" ~ "Fungi",
                                       .default = gram_stain)) %>%
         as.matrix()
 
@@ -403,6 +402,7 @@ tax_table(phy$phyloseq_rel) <- cbind(tax_table(phy$phyloseq_rel),
         data.frame %>% 
         rename("gram_stain" = "V8") %>% 
         mutate(gram_stain = case_when(is.na(gram_stain) ~ "Fungi",
+                                      Species == "s__Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii" ~ "Fungi",
                                       .default = gram_stain)) %>%
         as.matrix()
 

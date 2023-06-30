@@ -302,6 +302,12 @@ sample_data$lib_failed <- sample_data$baylor_other_id %in% lib_fail_list
 
 ```{r, warning=F, `Adding more data to phyloseq object 2`}
 #Adding host DNA proportion of sequencing results
+#picogreen <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx")
+
+#"/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx"
+
+
+
 picogreen <- rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 1, skip = 1),
        read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 2, skip = 1)
        ) %>% rename(baylor_other_id = "Sample", picogreen_ng_ul = "Concentration (ng/ul)") %>% select(c("baylor_other_id", 
@@ -391,7 +397,7 @@ tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
         data.frame %>% 
         rename("gram_stain" = "V8") %>% 
         mutate(gram_stain = case_when(Domain == "k__Eukaryota" ~ "Fungi",
-                                      Species == "s__Natronorubrum_sediminis" ~ "Archaea",
+                                      Species == "s__Natronorubrum_sediminis" ~ "Gram-negative",
                                       Species == "s__Methanobrevibacter_smithii" ~ "Gram-positive",
                                       .default = gram_stain)) %>%
         as.matrix()
@@ -403,7 +409,7 @@ tax_table(phy$phyloseq_rel) <- cbind(tax_table(phy$phyloseq_rel),
         data.frame %>% 
         rename("gram_stain" = "V8") %>% 
         mutate(gram_stain = case_when(Domain == "k__Eukaryota" ~ "Fungi",
-                                      Species == "s__Natronorubrum_sediminis" ~ "Archaea",
+                                      Species == "s__Natronorubrum_sediminis" ~ "Gram-negative",
                                       Species == "s__Methanobrevibacter_smithii" ~ "Gram-positive",
                                       .default = gram_stain)) %>%
         as.matrix()

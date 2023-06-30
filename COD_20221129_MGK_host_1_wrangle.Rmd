@@ -336,16 +336,22 @@ sample_data <- merge(sample_data %>% rownames_to_column("sequencing_id"), picogr
 #modifiying negatives to zero
         #substitute with zeros for negatives
 sample_data$picogreen_library_ng_ul <- 
-        ifelse(sample_data$picogreen_library_ng_ul < 0,
-               0,
+        ifelse(sample_data$picogreen_library_ng_ul <= 0,
+               123123123,
                sample_data$picogreen_library_ng_ul)
 
         #Putting half of minimum for the samples
 sample_data$picogreen_library_ng_ul <- 
-        ifelse(sample_data$picogreen_library_ng_ul == 0,
+        ifelse(sample_data$picogreen_library_ng_ul == 123123123,
                min(sample_data$picogreen_library_ng_ul)/2,
                sample_data$picogreen_library_ng_ul)
 
+
+sample_data$pg_lib_bac_ng_ul <- 
+        (1-sample_data$sequencing_host_prop) * sample_data$picogreen_library_ng_ul
+
+
+sample_data
 #constructing phylose object
 phyloseq <- merge_phyloseq(otu_table(phyloseq), tax_table(phyloseq), sample_data(sample_data))
 

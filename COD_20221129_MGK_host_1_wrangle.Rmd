@@ -302,21 +302,48 @@ sample_data$lib_failed <- sample_data$baylor_other_id %in% lib_fail_list
 
 ```{r, warning=F, `Adding more data to phyloseq object 2`}
 #Adding host DNA proportion of sequencing results
-picogreen <- 
+picogreen_template_ng_ul <- 
         rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx",
                          sheet = 1,
-                         skip = 2), 
+                         skip = 2) %>% select(c("Sample", "Concentration (ng/ul)")), 
                    read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx",
                               sheet = 1) %>%
-                      select(c("Sample", "Well", "Concentration (ng/ul)"))
+                      select(c("Sample", "Concentration (ng/ul)"))
               ) %>%
         subset(., !is.na(.$Sample)) %>% 
-        rename(sequencing_id = "Sample", picogreen_ng_ul = "Concentration (ng/ul)") %>% 
-        select(c("sequencing_id", "picogreen_ng_ul"))
+        rename(sequencing_id = "Sample", picogreen_template_ng_ul = "Concentration (ng/ul)") %>% 
+        select(c("sequencing_id", "picogreen_template_ng_ul"))
+
+picogreen_library_ng_ul  <- 
+        rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 1, skip = 2) %>%
+                      select(c("Sample", "Concentration (ng/ul)")),
+              read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx",
+                         sheet = 2,
+                         skip = 2) %>% select(c("Sample", "Concentration (ng/ul)")), 
+                   read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx",
+                              sheet = 2) %>%
+                      select(c("Sample", "Concentration (ng/ul)"))
+              ) %>%
+        subset(., !is.na(.$Sample)) %>% 
+        rename(sequencing_id = "Sample", picogreen_library_ng_ul = "Concentration (ng/ul)") %>% 
+        select(c("sequencing_id", "picogreen_library_ng_ul"))
+
+picogreen <- merge(picogreen_template_ng_ul,  picogreen_library_ng_ul, by = "sequencing_id")
 
 sample_data <- merge(sample_data %>% rownames_to_column("sequencing_id"), picogreen, all = T, by = "sequencing_id") %>%
         subset(.,!is.na(.$baylor_id)) %>% remove_rownames() %>% column_to_rownames("sequencing_id")
 
+#modifiying negatives to zero
+        #substitute with zeros for negatives
+sample_data$picogreen_library_ng_ul <- 
+        ifelse(sample_data$picogreen_library_ng_ul < 0,
+               0,
+               sample_data$picogreen_library_ng_ul)
+        #Putting half of minimum for the samples
+sample_data$picogreen_library_ng_ul <- 
+        ifelse(sample_data$picogreen_library_ng_ul == 0,
+               min(sample_data$picogreen_library_ng_ul)/2,
+               sample_data$picogreen_library_ng_ul)
 
 #constructing phylose object
 phyloseq <- merge_phyloseq(otu_table(phyloseq), tax_table(phyloseq), sample_data(sample_data))
@@ -365,6 +392,8 @@ path_rpk <- read.csv("20221102_PQ00331_Host_Depletion/humann3/PathAbundance.rela
 path_tax <- read.csv("20221102_PQ00331_Host_Depletion/humann3/PathAbundance.relab.metagenome.txt", sep = "\t", check.names = F) %>%
         select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
 row.names(path_tax) <- path_tax$pathway
+
+
 
 path_rpk2 <- read.csv("20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
 path_tax2 <- read.csv("20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt", sep = "\t", check.names = F) %>%

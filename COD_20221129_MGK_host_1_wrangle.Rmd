@@ -302,17 +302,20 @@ sample_data$lib_failed <- sample_data$baylor_other_id %in% lib_fail_list
 
 ```{r, warning=F, `Adding more data to phyloseq object 2`}
 #Adding host DNA proportion of sequencing results
-#picogreen <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx")
+picogreen <- 
+        rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx",
+                         sheet = 1,
+                         skip = 2), 
+                   read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx",
+                              sheet = 1) %>%
+                      select(c("Sample", "Well", "Concentration (ng/ul)"))
+              ) %>%
+        subset(., !is.na(.$Sample)) %>% 
+        rename(sequencing_id = "Sample", picogreen_ng_ul = "Concentration (ng/ul)") %>% 
+        select(c("sequencing_id", "picogreen_ng_ul"))
 
-#"/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx"
-
-
-
-picogreen <- rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 1, skip = 1),
-       read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 2, skip = 1)
-       ) %>% rename(baylor_other_id = "Sample", picogreen_ng_ul = "Concentration (ng/ul)") %>% select(c("baylor_other_id", 
-                                                                                                        "picogreen_ng_ul"))
-sample_data <- merge(sample_data %>% rownames_to_column("row.names"), picogreen, all = T, by = "baylor_other_id") %>% subset(.,!is.na(.$row.names)) %>% remove_rownames() %>% column_to_rownames("row.names")
+sample_data <- merge(sample_data %>% rownames_to_column("sequencing_id"), picogreen, all = T, by = "sequencing_id") %>%
+        subset(.,!is.na(.$baylor_id)) %>% remove_rownames() %>% column_to_rownames("sequencing_id")
 
 
 #constructing phylose object

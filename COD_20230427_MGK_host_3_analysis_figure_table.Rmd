@@ -98,7 +98,7 @@ FUN.LineZero.Report()
 
 
 
-### 1. Loading data
+# 1. Loading data
 
 1.1. phyloseq obejct
 
@@ -171,9 +171,11 @@ FUN.LineZero.Report()
                 
 ### **3.3. Effects of treatments on taxonomic composition**
 
-*viii.	Did diversity matrices change? Do these host depletion methods introduce bias in the sequenced community? Does bias differ by sample type? dataset = prevalence-filtered mock community, bal, nasal, sputum samples. I think you should include log10(reads) so you can say in the text that even adjusting for differences in sequencing depth you still find differences by method.*
+*vii.	Did diversity matrices change? *
 
-*ix.	Does bias differ by sample type? *
+*vii. Do these host depletion methods introduce bias in the sequenced community? *
+
+*viii.	Does bias differ by sample type? *
         
         1.	Figure of alpha and beta diversity changes (Figure 3)
                 a.	Alpha - you currently have a box plot stratified by sample type, another approach is to use a forest plot using predictions from your model
@@ -193,7 +195,12 @@ FUN.LineZero.Report()
                         i.	beta_diversity ~ method + log10(reads) + (1|subjid)
                 c.	Calculate Horn-Morisita distance between control and host depleted sample type and use that as an outcome in mixed effecs model (Table S9)
 
-*x.	Differential abundance analysis *
+
+*ix.	Mediation analysis *
+
+
+
+*x.	How werer changes of individual taxa? *
         
         1.	Volcano plot with Mock, BAL, Nasal and Sputum (Figure S7)
                 a.	Maaslin (feature ~ log10(Final reads) + lyPMA + Benzonase + Host zero + Molysis + QIAamp, RE = subject_id)
@@ -205,7 +212,7 @@ FUN.LineZero.Report()
                         
 ### **3.4. Effect of treatments on functional analysis results**
 
-*vi.	Did depletion methods change diversity, by sample type?*
+*xi.	Did depletion methods change diversity, by sample type?*
         
         1.	How alpha-diversity changed along treatment?
                 a.	Figure of alpha (Species richness) and beta diversity (Fig. S8)
@@ -215,7 +222,7 @@ FUN.LineZero.Report()
                         i.	PERM( dist. ~ log10(Final reads) + sample type + lyPMA + Benzonase + Host zero + Molysis + QIAamp, strata = subject_id)
                                 1.	Or, PERM(horn dist. ~ log10(Final reads) + sample type + treatment + sample_type * treatment, strata = subject_id)
                                 
-*vii.	What type of bugs were affected by the treatment?*
+*xii.	What type of bugs were affected by the treatment?*
         
         1.	DA analysis result by sample type (Fig. S9)
                 a.	A: Mock
@@ -265,9 +272,14 @@ FUN.LineZero.Report()
 
 -   controls
 
-##  {-}
+###  {-}
 
-# Aanalysis preparation
+
+
+
+
+## Aanalysis preparation
+
 
 ## Analysis prep {.tabset}
 
@@ -312,6 +324,8 @@ sample_data(phyloseq_unfiltered$phyloseq_path_rpk) <- sample_data(alpha_diversit
 # **3.1. Screening of treatment effect**
 
 # *i.	Did treatment change host % in qPCR results? *
+
+
 
 *i.	Did treatment change host % in qPCR results? *
         1.	Figure of 4 different matrices (Fig 2)
@@ -448,10 +462,14 @@ dev.off()
 
 ```
 
-## {-}
-        
-        
+### {-}
+
+
+
+
+
 # *ii.	How were changes in sequencing results?*        
+
 
 
 
@@ -578,9 +596,12 @@ sample_data %>%
         summarise(N = n())
 ```
 
-## {-}
+### {-}
 
 ## Host ratio (Table S2) {.tabset}
+
+
+
 
 ### Host ratio (all samples)
 
@@ -698,9 +719,11 @@ save_kable(tables2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 
 ```
 
-## {-}
+### {-}
+
 
 ## Final reads (Table S3) {.tabset}
+
 
 ### Final reads (all samples)
 
@@ -817,9 +840,14 @@ tables3
 save_kable(tables3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS3.html", self_contained = T)
 
 ```
+### {-}
+
+
 
 
 ## Figure of sequencing result (Fig. S2-3) {.tabset}
+
+
 
 ### Figure of sequencing result (Fig. S2)
 
@@ -919,7 +947,10 @@ dev.off()
 
 ### {-}
 
+
 # *iii.	Was host DNA proportion of sequencing similar to that of qPCR? (secondary analysis)*
+
+
 
 ## Host ratio qPCR vs sequencing (Figure 3)
         
@@ -1087,7 +1118,13 @@ dev.off()
 
 ```
 
-### decontam - stratified by sample_type
+### {-}
+
+
+## decontam {.tabset}
+
+### decontam - stratified by sample_type 
+
 
 **Stratified analysis** showed **no contaminants** in **NS** and **BAL**
 
@@ -1215,7 +1252,9 @@ save_kable(tableS4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 ### {-}
 
 
+
 # *v.	Were there any bias in Mock community? *
+
 
         1.	Stacked bar plot of mock (Figure S2)
                 a.	A  - Species level information
@@ -1224,7 +1263,7 @@ save_kable(tableS4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
         2.	Statistical test results on gram stain changes (Table S5)
                 a.	Lmer(sqrt(gram-stain) ~ sample type + treatment + sample type * treatment + (1|subject_id) ) 
 
-## Positive controls {.tabset}
+## Controls {.tabset}
 
 ### Positive controls (Fig. S5)
 
@@ -1413,6 +1452,8 @@ save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 
 ## Filtering taxa {.tabset}
 
+
+
 ### Prevalence filtering 
 
 **Prevalence & abundance filtering was conducted**
@@ -1470,6 +1511,11 @@ phyloseq$phyloseq_path_rpk <- prune_taxa(subset(red_flag_taxa, red_flag_function
                                            #red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
                                     #phyloseq$tree_phyloseq_rel)
 ```
+
+### {-}
+
+## Extras {.tabset}
+
 
 ### Alpha diversity calculation
 
@@ -1696,7 +1742,7 @@ save_kable(table1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Projec
 
 ```
 
-# Calculations used for main text
+## Calculations used for main text
 
 ## Figure 1 numbers {.tabset}
 
@@ -1733,23 +1779,16 @@ sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% s
 
 # **3.3. Effects of treatments on taxonomic composition**
 
-## *viii. Did diversity matrices change?*
 
-## *ix.	Does bias differ by sample type? *
 
-        1.	Figure of alpha and beta diversity changes (Figure 3)
-                a.	Alpha - you currently have a box plot stratified by sample type, another approach is to use a forest plot using predictions from your model
-                b.	Beta - can consider a forest plot for this one as well instead of a boxplot. For a forest plot you can annotate the x-axis to indicate which direction is better ie towards 0 you can annotate "less bias" and towards higher number you can annotate "more bias"
+# *vi. Did diversity matrices change? 
+
 
 
 ## Taxa change {.tabset}
 
-*viii.	Did diversity matrices change? Do these host depletion methods introduce bias in the sequenced community? Does bias differ by sample type? dataset = prevalence-filtered mock community, bal, nasal, sputum samples. I think you should include log10(reads) so you can say in the text that even adjusting for differences in sequencing depth you still find differences by method.*
-
-
 ### Alpha and beta diversity (Figure 3)
 
-## *ix.	Does bias differ by sample type? *
 
         1.	Figure of alpha and beta diversity changes (Figure 3)
                 a.	Alpha - you currently have a box plot stratified by sample type, another approach is to use a forest plot using predictions from your model
@@ -1920,9 +1959,14 @@ dev.off()
 
 ```              
 
+### {-}
 
 
-*ix.	Does bias differ by sample type? *
+# *vii.	& viii. Do these host depletion methods introduce bias in the sequenced community? *
+
+
+
++ Does bias differ by sample type?
 
         2.	Alpha diversity-
                 a.	 Run below models to justify stratified analyses (just report the significant method*sample_type interaction term)
@@ -2161,240 +2205,9 @@ save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 ### {-}
 
 
-# Mediation analysis
-
-### Mediation analysis (treatment - binary)
-
-outcome = S.obs
-exposure = treatment (binary)
-mediator = Final_reads
-mediator-outcome confounders = sample_type 
-exposure-mediator confounders = NA
-outcome model = Mixed effects linear regression 
-mediator model = Mixed effects linear regression
-
-Mediation analysis will be conducted only for **samples**.
-Sample type was considered as a mediator-outcome confounder, since it affected both S.obs and Final reads.
-**Here, the model cannot consider there was sample-type X treatment effect**
-Therefore none of the association was significant.
-
-```{r}
-
-# only mediator-outcome confounders
-detach_package <- function(pkg, character.only = FALSE)
-{
-  if(!character.only)
-  {
-    pkg <- deparse(substitute(pkg))
-  }
-  search_item <- paste("package", pkg, sep = ":")
-  while(search_item %in% search())
-  {
-    detach(search_item, unload = TRUE, character.only = TRUE)
-  }
-}
-
-detach_package(lmerTest)
-
-## all treatment groups
-
-sample_data <- sample_data %>% data.frame()
-sample_data_respiratory <- subset(sample_data, sample_data$sample_type == "Sputum" | sample_data$sample_type == "BAL" | sample_data$sample_type == "Nasal")
-
-
-med.fit <- lmer(log10(Final_reads) ~ treatment + (1|subject_id),
-                data = sample_data_respiratory) 
-
-out.fit <- lmer(S.obs ~ treatment * log10(Final_reads) + sample_type + (1|subject_id), 
-                data = sample_data_respiratory)
-
-med.out <- mediate(model.m = med.fit,
-                   model.y = out.fit,
-                     treat = "treatment",
-                     mediator = "log10(Final_reads)",
-                     sims = 1000)
-
-out.sum <- summary(med.out)
-
-final.out.all <- data.frame(indirect.est=out.sum$d.avg, 
-                          indirect.P.val=out.sum$d.avg.p,
-                          direct.est=out.sum$z.avg, 
-                          direct.P.val=out.sum$z.avg.p, 
-                          total.est=out.sum$tau.coef, 
-                          total.P.val=out.sum$tau.p,
-                          pm.est=out.sum$n.avg, 
-                          pm.P.val=out.sum$n.avg.p) %>% 
-    mutate_all(~round(., 3))
-
-final.out.all
-
-```
-
-
-### Mediation analysis (treatment-stratified)
-
-outcome = S.obs
-exposure = treatment (stratified)
-mediator = Final_reads
-mediator-outcome confounders = sample_type
-exposure-mediator confounders = NA
-outcome model = Mixed effects linear regression 
-mediator model = Mixed effects linear regression
-
-**Mediation analysis was conducted stratified treatment.**
-
-
-```{r}
-
-## lypma
-
-
-med.fit <- lmer(log10(Final_reads) ~ lypma + (1|subject_id),
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$lypma == 1))
-
-out.fit <- lmer(S.obs ~ lypma * log10(Final_reads) + sample_type + (1|subject_id), 
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$lypma == 1))
-
-med.out <- mediate(model.m = med.fit,
-                   model.y = out.fit,
-                     treat = "lypma",
-                     mediator = "log10(Final_reads)",
-                     sims = 1000)
-
-out.sum <- summary(med.out)
-
-final.out.lypma <- data.frame(indirect.est=out.sum$d.avg, 
-                          indirect.P.val=out.sum$d.avg.p,
-                          direct.est=out.sum$z.avg, 
-                          direct.P.val=out.sum$z.avg.p, 
-                          total.est=out.sum$tau.coef, 
-                          total.P.val=out.sum$tau.p,
-                          pm.est=out.sum$n.avg, 
-                          pm.P.val=out.sum$n.avg.p) %>% 
-    mutate_all(~round(., 3))
-
-## benzonase
-
-
-med.fit <- lmer(log10(Final_reads) ~ benzonase + (1|subject_id),
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$benzonase == 1))
-
-out.fit <- lmer(S.obs ~ benzonase * log10(Final_reads) +  sample_type + (1|subject_id), 
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$benzonase == 1))
-
-med.out <- mediate(model.m = med.fit,
-                   model.y = out.fit,
-                     treat = "benzonase",
-                     mediator = "log10(Final_reads)",
-                     sims = 1000)
-
-out.sum <- summary(med.out)
-
-final.out.benzonase <- data.frame(indirect.est=out.sum$d.avg, 
-                          indirect.P.val=out.sum$d.avg.p,
-                          direct.est=out.sum$z.avg, 
-                          direct.P.val=out.sum$z.avg.p, 
-                          total.est=out.sum$tau.coef, 
-                          total.P.val=out.sum$tau.p,
-                          pm.est=out.sum$n.avg, 
-                          pm.P.val=out.sum$n.avg.p) %>% 
-    mutate_all(~round(., 3))
-
-## host zero
-
-
-med.fit <- lmer(log10(Final_reads) ~ host_zero + (1|subject_id),
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$host_zero == 1))
-
-out.fit <- lmer(S.obs ~ host_zero * log10(Final_reads) +  sample_type + (1|subject_id), 
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$host_zero == 1))
-
-med.out <- mediate(model.m = med.fit,
-                   model.y = out.fit,
-                     treat = "host_zero",
-                     mediator = "log10(Final_reads)",
-                     sims = 1000)
-
-out.sum <- summary(med.out)
-
-final.out.host_zero <- data.frame(indirect.est=out.sum$d.avg, 
-                          indirect.P.val=out.sum$d.avg.p,
-                          direct.est=out.sum$z.avg, 
-                          direct.P.val=out.sum$z.avg.p, 
-                          total.est=out.sum$tau.coef, 
-                          total.P.val=out.sum$tau.p,
-                          pm.est=out.sum$n.avg, 
-                          pm.P.val=out.sum$n.avg.p) %>% 
-    mutate_all(~round(., 3))
-
-
-## molysis
-
-
-med.fit <- lmer(log10(Final_reads) ~ molysis + (1|subject_id),
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$molysis == 1))
-
-out.fit <- lmer(S.obs ~ molysis * log10(Final_reads) +  sample_type + (1|subject_id), 
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$molysis == 1))
-
-med.out <- mediate(model.m = med.fit,
-                   model.y = out.fit,
-                     treat = "molysis",
-                     mediator = "log10(Final_reads)",
-                     sims = 1000)
-
-out.sum <- summary(med.out)
-
-final.out.molysis <- data.frame(indirect.est=out.sum$d.avg, 
-                          indirect.P.val=out.sum$d.avg.p,
-                          direct.est=out.sum$z.avg, 
-                          direct.P.val=out.sum$z.avg.p, 
-                          total.est=out.sum$tau.coef, 
-                          total.P.val=out.sum$tau.p,
-                          pm.est=out.sum$n.avg, 
-                          pm.P.val=out.sum$n.avg.p) %>% 
-    mutate_all(~round(., 3))
-
-## qiaamp
-
-
-med.fit <- lmer(log10(Final_reads) ~ qiaamp + (1|subject_id),
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
-
-out.fit <- lmer(S.obs ~ qiaamp * log10(Final_reads) +  sample_type + (1|subject_id), 
-                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
-
-med.out <- mediate(model.m = med.fit,
-                   model.y = out.fit,
-                     treat = "qiaamp",
-                     mediator = "log10(Final_reads)",
-                     sims = 1000)
-
-out.sum <- summary(med.out)
-
-final.out.qiaamp <- data.frame(indirect.est=out.sum$d.avg, 
-                          indirect.P.val=out.sum$d.avg.p,
-                          direct.est=out.sum$z.avg, 
-                          direct.P.val=out.sum$z.avg.p, 
-                          total.est=out.sum$tau.coef, 
-                          total.P.val=out.sum$tau.p,
-                          pm.est=out.sum$n.avg, 
-                          pm.P.val=out.sum$n.avg.p) %>% 
-    mutate_all(~round(., 3))
-
-
-
-rbind(final.out.lypma,
-      final.out.benzonase,
-      final.out.host_zero, 
-      final.out.molysis,
-      final.out.qiaamp) %>%
-        mutate(treatment = c("lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"), .before = indirect.est)
-```
-
-
-
 ## Beta diversity distances - Morisita Horn index {.tabset}
+
+
 
 ### PERMANOVA - all samples (Table S8)
 
@@ -2676,9 +2489,250 @@ dev.off()
 
 ```
 
-## {-}
+### {-}
 
-## {-}
+
+
+# *iv. Mediation analysis*
+
+
+
+
+
+
+## mediation analysis {.tabset}
+
+### Mediation analysis (treatment - binary)
+
+outcome = S.obs
+exposure = treatment (binary)
+mediator = Final_reads
+mediator-outcome confounders = sample_type 
+exposure-mediator confounders = NA
+outcome model = Mixed effects linear regression 
+mediator model = Mixed effects linear regression
+
+Mediation analysis will be conducted only for **samples**.
+Sample type was considered as a mediator-outcome confounder, since it affected both S.obs and Final reads.
+**Here, the model cannot consider there was sample-type X treatment effect**
+Therefore none of the association was significant.
+
+```{r}
+
+# only mediator-outcome confounders
+detach_package <- function(pkg, character.only = FALSE)
+{
+  if(!character.only)
+  {
+    pkg <- deparse(substitute(pkg))
+  }
+  search_item <- paste("package", pkg, sep = ":")
+  while(search_item %in% search())
+  {
+    detach(search_item, unload = TRUE, character.only = TRUE)
+  }
+}
+
+detach_package(lmerTest)
+
+## all treatment groups
+
+sample_data <- sample_data %>% data.frame()
+sample_data_respiratory <- subset(sample_data, sample_data$sample_type == "Sputum" | sample_data$sample_type == "BAL" | sample_data$sample_type == "Nasal")
+
+
+med.fit <- lmer(log10(Final_reads) ~ treatment + (1|subject_id),
+                data = sample_data_respiratory) 
+
+out.fit <- lmer(S.obs ~ treatment * log10(Final_reads) + sample_type + (1|subject_id), 
+                data = sample_data_respiratory)
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "treatment",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.all <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+final.out.all
+
+```
+
+
+### Mediation analysis (treatment-stratified)
+
+outcome = S.obs
+exposure = treatment (stratified)
+mediator = Final_reads
+mediator-outcome confounders = sample_type
+exposure-mediator confounders = NA
+outcome model = Mixed effects linear regression 
+mediator model = Mixed effects linear regression
+
+**Mediation analysis was conducted stratified treatment.**
+
+
+```{r}
+
+## lypma
+
+
+med.fit <- lmer(log10(Final_reads) ~ lypma + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$lypma == 1))
+
+out.fit <- lmer(S.obs ~ lypma * log10(Final_reads) + sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$lypma == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "lypma",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.lypma <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+## benzonase
+
+
+med.fit <- lmer(log10(Final_reads) ~ benzonase + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$benzonase == 1))
+
+out.fit <- lmer(S.obs ~ benzonase * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$benzonase == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "benzonase",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.benzonase <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+## host zero
+
+
+med.fit <- lmer(log10(Final_reads) ~ host_zero + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$host_zero == 1))
+
+out.fit <- lmer(S.obs ~ host_zero * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$host_zero == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "host_zero",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.host_zero <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+
+## molysis
+
+
+med.fit <- lmer(log10(Final_reads) ~ molysis + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$molysis == 1))
+
+out.fit <- lmer(S.obs ~ molysis * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$molysis == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "molysis",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.molysis <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+## qiaamp
+
+
+med.fit <- lmer(log10(Final_reads) ~ qiaamp + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
+
+out.fit <- lmer(S.obs ~ qiaamp * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "qiaamp",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.qiaamp <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+
+
+rbind(final.out.lypma,
+      final.out.benzonase,
+      final.out.host_zero, 
+      final.out.molysis,
+      final.out.qiaamp) %>%
+        mutate(treatment = c("lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"), .before = indirect.est)
+```
+
+
+
 
 # *x.	How were changes of individual taxa?*
 
@@ -2692,7 +2746,6 @@ dev.off()
                         a.	Add q-val, mean relative abundance, gram strain, phylogenetic information
 
 ## DA taxa {.tabset}
-
 
 ### Factors affecting DA taxa (main text)
 
@@ -3383,11 +3436,16 @@ dev.off()
 
 ```
 
-## {-}
+### {-}
 
 # **3.4. Effect of treatments on functional analysis results**
 
-## *vi.	Did depletion methods change diversity, by sample type?*
+
+
+
+# *xi.	Did depletion methods change diversity, by sample type?*
+
+
 
         1.	How alpha-diversity changed along treatment?
                 a.	Figure of alpha (Species richness) and beta diversity (Fig. S8)
@@ -3821,11 +3879,15 @@ cbind(a, b, c) %>%
 ```
 
 
-## {-}
+### {-}
 
 
 
-## *vii.	What type of fuction were affected by the treatment?*
+# *xii.	What type of fuction were affected by the treatment?*
+
+
+
+
 
         1.	DA analysis result by sample type (Figure S9)
 
@@ -4249,7 +4311,11 @@ dev.off()
 
 ### {-}
 
-## Final results summary {.tabset}
+
+# Final results summary {.tabset}
+
+
+
 
 ### Rarefraction curve of species richenss (Fig S.11)
 

@@ -38,7 +38,7 @@ str_libraries <- c(
 
 path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car")
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car", "mediation")
         
 YAML_header <-
 '---
@@ -1010,7 +1010,7 @@ phyloseq_control_rel <- merge_phyloseq(phyloseq_control_rel, phyloseq_mock)
 sample_data(phyloseq_control_rel)$S.obs <- rowSums(t(otu_table(phyloseq_control_rel)) != 0)
 sample_data(phyloseq_control_rel)$sample_type <- 
         factor(sample_data(phyloseq_control_rel)$sample_type, levels = c("Mock theoretical", "Mock", "Neg."))
-sample_data(phyloseq_control_rel)$teratment <-
+sample_data(phyloseq_control_rel)$treatment <-
         factor(sample_data(phyloseq_control_rel)$treatment, levels = c("-", "Control", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"))
 
 
@@ -2161,6 +2161,237 @@ save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 ### {-}
 
 
+# Mediation analysis
+
+### Mediation analysis (treatment - binary)
+
+outcome = S.obs
+exposure = treatment (binary)
+mediator = Final_reads
+mediator-outcome confounders = sample_type 
+exposure-mediator confounders = NA
+outcome model = Mixed effects linear regression 
+mediator model = Mixed effects linear regression
+
+Mediation analysis will be conducted only for **samples**.
+Sample type was considered as a mediator-outcome confounder, since it affected both S.obs and Final reads.
+**Here, the model cannot consider there was sample-type X treatment effect**
+Therefore none of the association was significant.
+
+```{r}
+
+# only mediator-outcome confounders
+detach_package <- function(pkg, character.only = FALSE)
+{
+  if(!character.only)
+  {
+    pkg <- deparse(substitute(pkg))
+  }
+  search_item <- paste("package", pkg, sep = ":")
+  while(search_item %in% search())
+  {
+    detach(search_item, unload = TRUE, character.only = TRUE)
+  }
+}
+
+detach_package(lmerTest)
+
+## all treatment groups
+
+sample_data <- sample_data %>% data.frame()
+sample_data_respiratory <- subset(sample_data, sample_data$sample_type == "Sputum" | sample_data$sample_type == "BAL" | sample_data$sample_type == "Nasal")
+
+
+med.fit <- lmer(log10(Final_reads) ~ treatment + (1|subject_id),
+                data = sample_data_respiratory) 
+
+out.fit <- lmer(S.obs ~ treatment * log10(Final_reads) + sample_type + (1|subject_id), 
+                data = sample_data_respiratory)
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "treatment",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.all <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+final.out.all
+
+```
+
+
+### Mediation analysis (treatment-stratified)
+
+outcome = S.obs
+exposure = treatment (stratified)
+mediator = Final_reads
+mediator-outcome confounders = sample_type
+exposure-mediator confounders = NA
+outcome model = Mixed effects linear regression 
+mediator model = Mixed effects linear regression
+
+**Mediation analysis was conducted stratified treatment.**
+
+
+```{r}
+
+## lypma
+
+
+med.fit <- lmer(log10(Final_reads) ~ lypma + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$lypma == 1))
+
+out.fit <- lmer(S.obs ~ lypma * log10(Final_reads) + sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$lypma == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "lypma",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.lypma <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+## benzonase
+
+
+med.fit <- lmer(log10(Final_reads) ~ benzonase + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$benzonase == 1))
+
+out.fit <- lmer(S.obs ~ benzonase * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$benzonase == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "benzonase",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.benzonase <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+## host zero
+
+
+med.fit <- lmer(log10(Final_reads) ~ host_zero + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$host_zero == 1))
+
+out.fit <- lmer(S.obs ~ host_zero * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$host_zero == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "host_zero",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.host_zero <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+
+## molysis
+
+
+med.fit <- lmer(log10(Final_reads) ~ molysis + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$molysis == 1))
+
+out.fit <- lmer(S.obs ~ molysis * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$molysis == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "molysis",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.molysis <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+## qiaamp
+
+
+med.fit <- lmer(log10(Final_reads) ~ qiaamp + (1|subject_id),
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
+
+out.fit <- lmer(S.obs ~ qiaamp * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
+
+med.out <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "qiaamp",
+                     mediator = "log10(Final_reads)",
+                     sims = 1000)
+
+out.sum <- summary(med.out)
+
+final.out.qiaamp <- data.frame(indirect.est=out.sum$d.avg, 
+                          indirect.P.val=out.sum$d.avg.p,
+                          direct.est=out.sum$z.avg, 
+                          direct.P.val=out.sum$z.avg.p, 
+                          total.est=out.sum$tau.coef, 
+                          total.P.val=out.sum$tau.p,
+                          pm.est=out.sum$n.avg, 
+                          pm.P.val=out.sum$n.avg.p) %>% 
+    mutate_all(~round(., 3))
+
+
+
+rbind(final.out.lypma,
+      final.out.benzonase,
+      final.out.host_zero, 
+      final.out.molysis,
+      final.out.qiaamp) %>%
+        mutate(treatment = c("lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"), .before = indirect.est)
+```
+
 
 
 ## Beta diversity distances - Morisita Horn index {.tabset}
@@ -2587,6 +2818,8 @@ dev.off()
 
 ```{r}
 
+
+
 f5a <- merge(filt_fit_data_pos$rel %>%
               gather(treatment,
                      value,
@@ -2613,7 +2846,303 @@ f5a <- merge(filt_fit_data_pos$rel %>%
               all = T) %>%
         mutate(sig = case_when(sig < 0.1 ~ "< 0.1",
                                .default = "> 0.1"),
-               feature = case_when(feature =="*Saccharomyces cerevisiae x Saccharomyces kudriavzevii*" ~ "*Saccharomyces kudriavzevii*",
+               feature = case_when(feature =="*Saccharomyces cerevisiae x Saccharomyces kudriavzevii*" ~ "*S. cerevisiae* X *S. kudriavzevii*",
+                               .default = feature)) %>%
+#Baloon plot
+        ggballoonplot(size = "value", y = "feature", x= "treatment", fill = "sig") +
+        
+        theme_classic(base_family = "serif") +
+        #colors for qvalues
+        gradient_fill(c("#006d2c", "#edf8fb")) +
+        xlab("Experimental group") +
+        ylab("Species") +
+        labs(tag = "A") +
+        theme(panel.grid.major = element_line(colour = "grey"),
+              legend.position = "top",
+              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              #Element markdown for taxa name italicizing
+              axis.text.y = ggtext::element_markdown(size = 7))  +
+        #Adding significance asterisks
+        scale_fill_manual(values = c("red", "grey"), aes(y = feature,
+                      x = treatment,
+                      label = sig)) +
+        guides(fill = guide_legend(title = c(expression(paste(italic("q"),
+                                                       "-value",
+                                                       sep = ""))),
+                                   title.position = "top"),
+               size = guide_legend(title = "Relative abundance",
+                                   title.position = "top",
+                                   order = 1,
+                                   nrow = 1),
+               ) + 
+        scale_x_discrete(labels=c("control" = "Untreated",
+                                  "lypma" = "lyPMA",
+                                  "benzonase" = "Benzonase",
+                                  "host_zero" = "Host-zero",
+                                  "molysis" = "Molysis",
+                                  "qiaamp" = "QIAamp")
+                         )
+#ffff33 qia
+
+f5b <- merge(filt_fit_data_bal$rel %>%
+              gather(treatment,
+                     value,
+                     Untreated:QIAamp,
+                     factor_key=TRUE),
+      filt_fit_data_bal$data_italic %>%
+              rownames_to_column("feature") %>%
+              gather(treatment,
+                     qval,
+                     lyPMA:QIAamp,
+                     factor_key=TRUE),
+      by.x = c('feature', 'treatment'),
+      by.y = c('feature', 'treatment'),
+      all = T) %>%
+        
+        merge(filt_fit_data_bal$data_sig %>%
+              rownames_to_column("feature") %>%
+              gather(treatment,
+                     sig,
+                     lyPMA:QIAamp,
+                     factor_key=TRUE),
+              by.x = c('feature', 'treatment'),
+              by.y = c('feature', 'treatment'),
+              all = T) %>%
+        mutate(sig = case_when(is.na(qval) ~ "> 0.1",
+                               qval < 0.1 ~ "< 0.1",
+                               .default = "> 0.1")) %>%
+
+#Baloon plot
+        ggballoonplot(size = "value", y = "feature", x= "treatment", fill = "sig") +
+        theme_classic(base_family = "serif") +
+        #colors for qvalues
+        xlab("Experimental group") +
+        ylab("Species") +
+        labs(tag = "B") +
+        theme(panel.grid.major = element_line(colour = "grey"),
+              legend.position = "top",
+              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              #Element markdown for taxa name italicizing
+              axis.text.y = ggtext::element_markdown(size = 7))  +
+        
+        scale_fill_manual(values = c("grey", "red"), aes(y = feature,
+                      x = treatment,
+                      label = sig)) +
+        guides(fill = guide_legend(title = c(expression(paste(italic("q"),
+                                                       "-value",
+                                                       sep = ""))),
+                                   title.position = "top"),
+               size = guide_legend(title = "Relative abundance",
+                                   title.position = "top",
+                                   order = 1,
+                                   nrow = 1),
+               ) + 
+        scale_x_discrete(labels=c("control" = "Untreated",
+                                  "lypma" = "lyPMA",
+                                  "benzonase" = "Benzonase",
+                                  "host_zero" = "Host-zero",
+                                  "molysis" = "Molysis",
+                                  "qiaamp" = "QIAamp")
+                         )
+
+f5c <- merge(filt_fit_data_ns$rel %>%
+              gather(treatment,
+                     value,
+                     Untreated:QIAamp,
+                     factor_key=TRUE),
+      filt_fit_data_ns$data_italic %>%
+              rownames_to_column("feature") %>%
+              gather(treatment,
+                     qval,
+                     lyPMA:QIAamp,
+                     factor_key=TRUE),
+      by.x = c('feature', 'treatment'),
+      by.y = c('feature', 'treatment'),
+      all = T) %>%
+        
+        merge(filt_fit_data_ns$data_sig %>%
+              rownames_to_column("feature") %>%
+              gather(treatment,
+                     sig,
+                     lyPMA:QIAamp,
+                     factor_key=TRUE),
+              by.x = c('feature', 'treatment'),
+              by.y = c('feature', 'treatment'),
+              all = T) %>%
+        mutate(sig = case_when(sig < 0.1 ~ "< 0.1",
+                               .default = "> 0.1")) %>%
+#Baloon plot
+        ggballoonplot(size = "value", y = "feature", x= "treatment", fill = "sig") +
+        
+        theme_classic(base_family = "serif") +
+        #colors for qvalues
+        gradient_fill(c("#006d2c", "#edf8fb")) +
+        xlab("Experimental group") +
+        ylab("Species") +
+        labs(tag = "C") +
+        theme(panel.grid.major = element_line(colour = "grey"),
+              legend.position = "top",
+              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              #Element markdown for taxa name italicizing
+              axis.text.y = ggtext::element_markdown(size = 7))  +
+        #Adding significance asterisks
+        scale_fill_manual(values = c("red", "grey"), aes(y = feature,
+                      x = treatment,
+                      label = sig)) +
+        guides(fill = guide_legend(title = c(expression(paste(italic("q"),
+                                                       "-value",
+                                                       sep = ""))),
+                                   title.position = "top"),
+               size = guide_legend(title = "Relative abundance",
+                                   title.position = "top",
+                                   order = 1,
+                                   nrow = 1),
+               ) + 
+        scale_x_discrete(labels=c("control" = "Untreated",
+                                  "lypma" = "lyPMA",
+                                  "benzonase" = "Benzonase",
+                                  "host_zero" = "Host-zero",
+                                  "molysis" = "Molysis",
+                                  "qiaamp" = "QIAamp")
+                         )
+
+f5d <- merge(filt_fit_data_spt$rel %>%
+              gather(treatment,
+                     value,
+                     Untreated:QIAamp,
+                     factor_key=TRUE),
+      filt_fit_data_spt$data_italic %>%
+              rownames_to_column("feature") %>%
+              gather(treatment,
+                     qval,
+                     lyPMA:QIAamp,
+                     factor_key=TRUE),
+      by.x = c('feature', 'treatment'),
+      by.y = c('feature', 'treatment'),
+      all = T) %>%
+        merge(filt_fit_data_spt$data_sig %>%
+              rownames_to_column("feature") %>%
+              gather(treatment,
+                     sig,
+                     lyPMA:QIAamp,
+                     factor_key=TRUE),
+              by.x = c('feature', 'treatment'),
+              by.y = c('feature', 'treatment'),
+              all = T) %>%
+        mutate(sig = case_when(sig < 0.1 ~ "< 0.1",
+                               .default = "> 0.1")) %>%
+#Baloon plot
+        ggballoonplot(size = "value", y = "feature", x= "treatment", fill = "sig") +
+        
+        theme_classic(base_family = "serif") +
+        #colors for qvalues
+        gradient_fill(c("#006d2c", "#edf8fb")) +
+        xlab("Experimental group") +
+        ylab("Species") +
+        labs(tag = "D") +
+        theme(panel.grid.major = element_line(colour = "grey"),
+              legend.position = "top",
+              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              #Element markdown for taxa name italicizing
+              axis.text.y = ggtext::element_markdown(size = 7),
+              axis.title.x = element_text(margin = margin(t = 20)))  +
+        #Adding significance asterisks
+        scale_fill_manual(values = c("red", "grey"), aes(y = feature,
+                      x = treatment,
+                      label = sig)) +
+        guides(fill = guide_legend(title = c(expression(paste(italic("q"),
+                                                       "-value",
+                                                       sep = ""))),
+                                   title.position = "top"),
+               size = guide_legend(title = "Relative abundance",
+                                   title.position = "top",
+                                   order = 1,
+                                   nrow = 1),
+               ) + 
+        scale_x_discrete(labels=c("control" = "Untreated",
+                                  "lypma" = "lyPMA",
+                                  "benzonase" = "Benzonase",
+                                  "host_zero" = "Host-zero",
+                                  "molysis" = "Molysis",
+                                  "qiaamp" = "QIAamp")
+                         )
+fig4 <- ggarrange(f5a, f5b, f5c, f5d, align = "hv", common.legend = T)
+
+fig4
+
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+fig4
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+```
+
+### Balloon plot + α
+
+**Ballon plot with strain information (Eukaryota, gram-stain)**
+
+
+```{r}
+#list of gram negative bacteria
+list_gram_neg <- phyloseq_unfiltered$phyloseq_rel %>%
+        tax_table %>%
+        data.frame %>%
+        subset(., .$gram_stain == "Gram-negative") %>%
+        row.names()
+#list of gram positives
+list_gram_pos <- phyloseq_unfiltered$phyloseq_rel %>%
+        tax_table %>%
+        data.frame %>%
+        subset(., .$gram_stain == "Gram-positive") %>%
+        row.names()
+
+#list of gram positives
+list_gram_fungi <- phyloseq_unfiltered$phyloseq_rel %>%
+        tax_table %>%
+        data.frame %>%
+        subset(., .$gram_stain == "Fungi") %>%
+        row.names()
+
+
+
+
+f5a <- merge(filt_fit_data_pos$rel %>%
+              gather(treatment,
+                     value,
+                     Untreated:QIAamp,
+                     factor_key=TRUE),
+      filt_fit_data_pos$data_italic %>%
+              rownames_to_column("feature") %>%
+              gather(treatment,
+                     qval,
+                     lyPMA:QIAamp,
+                     factor_key=TRUE),
+      by.x = c('feature', 'treatment'),
+      by.y = c('feature', 'treatment'),
+      all = T) %>%
+        
+        merge(filt_fit_data_pos$data_sig %>%
+              rownames_to_column("feature") %>%
+              gather(treatment,
+                     sig,
+                     lyPMA:QIAamp,
+                     factor_key=TRUE),
+              by.x = c('feature', 'treatment'),
+              by.y = c('feature', 'treatment'),
+              all = T) %>%
+        mutate(sig = case_when(sig < 0.1 ~ "< 0.1",
+                               .default = "> 0.1"),
+               feature = case_when(feature =="*Saccharomyces cerevisiae x Saccharomyces kudriavzevii*" ~ "*S. cerevisiae* X *S. kudriavzevii*",
                                .default = feature)) %>%
 #Baloon plot
         ggballoonplot(size = "value", y = "feature", x= "treatment", fill = "sig") +
@@ -3053,7 +3582,7 @@ dev.off()
 **Table S10**. Effect size, standard error (SE) and p-value of a statistical test for function richness with an interaction term using linear mixed effect model (Species richness ~ sample type * treatment + log10 (final reads) + (1|subject_id) ).
 
 ```{r}
-
+library(lmerTest)
 sample_data <- sample_data(phyloseq$phyloseq_path_rpk)
 sample_data$log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("BAL") & sample_data$treatment %in% c("Untreated")) %>% .$Final_reads) + 1))
 

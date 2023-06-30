@@ -328,7 +328,7 @@ picogreen_library_ng_ul  <-
         rename(sequencing_id = "Sample", picogreen_library_ng_ul = "Concentration (ng/ul)") %>% 
         select(c("sequencing_id", "picogreen_library_ng_ul"))
 
-picogreen <- merge(picogreen_template_ng_ul,  picogreen_library_ng_ul, by = "sequencing_id")
+picogreen <- merge(picogreen_template_ng_ul,  picogreen_library_ng_ul, by = "sequencing_id", all = T)
 
 sample_data <- merge(sample_data %>% rownames_to_column("sequencing_id"), picogreen, all = T, by = "sequencing_id") %>%
         subset(.,!is.na(.$baylor_id)) %>% remove_rownames() %>% column_to_rownames("sequencing_id")
@@ -339,6 +339,7 @@ sample_data$picogreen_library_ng_ul <-
         ifelse(sample_data$picogreen_library_ng_ul < 0,
                0,
                sample_data$picogreen_library_ng_ul)
+
         #Putting half of minimum for the samples
 sample_data$picogreen_library_ng_ul <- 
         ifelse(sample_data$picogreen_library_ng_ul == 0,

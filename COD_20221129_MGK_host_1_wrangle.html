@@ -7,9 +7,9 @@
 
         <meta name="author" content="Minsik Kim" />
     
-        <meta name="date" content="2023-03-14" />
+        <meta name="date" content="2023-04-12" />
     
-    <title>COD_20230301_HOST_1_Wrangle</title>
+    <title>COD_20230412_HOST_1_Wrangle</title>
 
         <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -2930,12 +2930,12 @@ margin-left: 0 !important;
    </div>
    
         
-      <h1 class="title">COD_20230301_HOST_1_Wrangle</h1>
+      <h1 class="title">COD_20230412_HOST_1_Wrangle</h1>
       
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Minsik Kim
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2023-03-14</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2023-04-12</p>
            
 
    
@@ -2963,7 +2963,7 @@ str_libraries &lt;- c(
 
 path_working &lt;- &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git&quot;
 path_library &lt;- &quot;/Library/Frameworks/R.framework/Resources/library&quot;
-str_libraries &lt;- c(&quot;readxl&quot;, &quot;phyloseq&quot;, &quot;tidyverse&quot;, &quot;pacman&quot;, &quot;yaml&quot;, &quot;ggplot2&quot;, &quot;vegan&quot;, &quot;microbiome&quot;, &quot;ggpubr&quot;, &quot;viridis&quot;, &quot;decontam&quot;, &quot;gridExtra&quot;, &quot;ggpubr&quot;, &quot;lme4&quot;, &quot;lmerTest&quot;, &quot;writexl&quot;, &quot;harrietr&quot;, &quot;Maaslin2&quot;, &quot;ggtext&quot;, &quot;ggpmisc&quot;, &quot;gridExtra&quot;, &quot;gamm4&quot;, &quot;reshape2&quot;)
+str_libraries &lt;- c(&quot;readxl&quot;, &quot;phyloseq&quot;, &quot;tidyverse&quot;, &quot;pacman&quot;, &quot;yaml&quot;, &quot;ggplot2&quot;, &quot;vegan&quot;, &quot;microbiome&quot;, &quot;ggpubr&quot;, &quot;viridis&quot;, &quot;decontam&quot;, &quot;gridExtra&quot;, &quot;ggpubr&quot;, &quot;lme4&quot;, &quot;lmerTest&quot;, &quot;writexl&quot;, &quot;harrietr&quot;, &quot;Maaslin2&quot;, &quot;ggtext&quot;, &quot;ggpmisc&quot;, &quot;gridExtra&quot;, &quot;gamm4&quot;, &quot;reshape2&quot;, &quot;AMR&quot;)
         
 YAML_header &lt;-
 &#39;---
@@ -3056,6 +3056,7 @@ FUN.LineZero.Report()</code></pre>
 ##     gridExtra: 2.3
 ##     gamm4: 0.2.6
 ##     reshape2: 1.4.4
+##     AMR: 2.0.0
 ## 
 ## Operating System: Darwin 
 ##     Library Path: /Library/Frameworks/R.framework/Resources/library 
@@ -3095,7 +3096,7 @@ setwd(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microb
         #Additional BAl and NS data
         sample_data4 &lt;- read_excel(&quot;SOP_20220606_MGK_BAL_NB_host_depletion.xlsx&quot;, sheet = 2)
         #control_data
-        sample_data5 &lt;- read_excel(&quot;SOP_20230112_MGK_host_depletion_controls.xlsx&quot;, sheet = 2)
+        sample_data5 &lt;- read_excel(&quot;SOP_20230112_MGK_host_depletion_controls.xlsx&quot;, sheet = 2) %&gt;% subset(., .$sample_type != &quot;nasal_swab&quot;)
         
 #Laoding the qPCR data
         #Loading data  - host
@@ -3152,7 +3153,10 @@ standard concentration, etc.)</li>
 #Prior calculatoin was based on zymo&#39;s specification. (20 ng / uL, which is wrong). This need to be modified
 
 sample_result&lt;- sample_result %&gt;% 
-        mutate(DNA_bac_ng_uL = DNA_host_well/2, DNA_host_ng_uL = DNA_bac_well/2,
+        mutate(DNA_bac_ng_uL = DNA_host_well/2, 
+               DNA_host_ng_uL = DNA_bac_well/2,
+               DNA_bac_gene_copies_uL = DNA_bac_ng_uL * 198349.73, 
+               DNA_bac_16S_copies_uL = DNA_bac_gene_copies_uL * 7, 
                DNA_host_nondil = DNA_host_ng_uL * 10, DNA_bac_nondil = DNA_bac_ng_uL * 10, #qPCR was conducted for 10-fold diluted samples.
                host_proportion = (DNA_host_nondil/(DNA_host_nondil + DNA_bac_nondil)))
 
@@ -3179,10 +3183,32 @@ sample_result &lt;- sample_result %&gt;% mutate(
 <li>Saving RDS</li>
 </ol>
 <p><strong><em>1. Loading phyloseq object</em></strong></p>
-<pre class="r"><code>phyloseq &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom&quot;)
+<pre class="r"><code>phyloseq1 &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom&quot;)
+phyloseq2 &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.EstCount.biom&quot;)
 
-readstat &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt&quot;, sep = &quot;\t&quot;) %&gt;%
+
+#Merging
+
+readstat1 &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt&quot;, sep = &quot;\t&quot;) %&gt;%
         rename(baylor_other_id = SampleID)
+#control data
+readstat2 &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/ReadStats.txt&quot;, sep = &quot;\t&quot;) %&gt;%
+        rename(baylor_id = SampleID)
+
+baylor_ids &lt;- rbind(read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/3_Documentation/Communications/2022-06-22_baylor_shipping_host_depletion_lowinput/CMMR_MetadataCapture_20220622_LaiP-PQ00181_Host DNADepletion.xlsx&quot;, skip = 27),
+                    baylor_ids2 &lt;- read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx&quot;, skip = 27)
+)</code></pre>
+<pre><code>## New names:
+## New names:
+## • `` -&gt; `...2`</code></pre>
+<pre class="r"><code>baylor_ids &lt;- baylor_ids %&gt;% select(c(&quot;UNIQUE alphanumeric ID&quot;, &quot;Optional              secondary ID&quot;)) %&gt;%
+        rename(baylor_id = &quot;UNIQUE alphanumeric ID&quot;,
+               baylor_other_id = &quot;Optional              secondary ID&quot;,) %&gt;%
+        subset(., !is.na(.$baylor_other_id))
+
+#Merging
+readstat &lt;- rbind(merge(readstat1, baylor_ids, by = &quot;baylor_other_id&quot;),
+                  merge(readstat2, baylor_ids, by = &quot;baylor_id&quot;))
 
 #Generating baylor ID
 sample_result &lt;- sample_result %&gt;%
@@ -3195,58 +3221,194 @@ sample_result &lt;- sample_result %&gt;%
             grepl(&quot;NS_26|NS_37&quot;, sample_id) ~ paste(sample_id, aliquot, treatment, sep = &quot;_&quot;),
             TRUE ~ paste(sample_id, treatment, sep = &quot;_&quot;))) %&gt;%
         mutate(baylor_other_id = gsub(&quot;20220610&quot;, &quot;20220606&quot;, baylor_other_id)) # older extraction date used for baylor shipping log
+        
+
 #Merging Readstat + metadata
-sample_data &lt;- merge(readstat, sample_result, by = &quot;baylor_other_id&quot;) %&gt;%
-        column_to_rownames(var = &quot;baylor_other_id&quot;) %&gt;%
-        sample_data()</code></pre>
+sample_data1 &lt;- merge(readstat, sample_result, by = &quot;baylor_other_id&quot;) %&gt;%
+        mutate(baylor_other_id2 = baylor_other_id) %&gt;%
+        column_to_rownames(var = &quot;baylor_other_id2&quot;) %&gt;%
+        sample_data()
+sample_data2 &lt;- merge(readstat, sample_result, by = &quot;baylor_other_id&quot;) %&gt;%
+        mutate(baylor_id2 = baylor_id) %&gt;%
+        column_to_rownames(var = &quot;baylor_id2&quot;) %&gt;%
+        sample_data()
+phyloseq &lt;- merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1), merge_phyloseq(sample_data(sample_data2), phyloseq2))</code></pre>
 <p><strong><em>2. Adding more data to the phyloseq -
 sampledata</em></strong></p>
 <pre class="r"><code>#Adding host DNA proportion of sequencing results
-sample_data &lt;- sample_data %&gt;% data.frame %&gt;% 
-        mutate(sequencing_host_prop = Host_mapped/Raw_reads, .after = Metaphlan_mapped) %&gt;%
-        sample_data
+sample_data &lt;- sample_data(phyloseq) %&gt;% data.frame %&gt;% 
+        mutate(sequencing_host_prop = Host_mapped/Reads_after_trim, .after = Metaphlan_mapped)
 
 #Adding Treatment status
 sample_data$treated &lt;- rowSums(sample_data[, c(&quot;lypma&quot;, &quot;benzonase&quot;, &quot;molysis&quot;, &quot;host_zero&quot;, &quot;qiaamp&quot;)])
+sample_data$treated &lt;- ifelse(is.na(sample_data$treated), 0, sample_data$treated)
 
 # Adding library prep results --------------------------------------------
 lib_fail_list &lt;- c(&quot;NS_6_b_lyPMA&quot;, &quot;NS_8_b_lyPMA&quot;, &quot;NS_17_b_lyPMA&quot;, &quot;NS_21_b_host_zero&quot;, &quot;NS_22_b_host_zero&quot;, &quot;NS_19_d_molysis&quot;, &quot;NS_21_d_molysis&quot;, &quot;NS_22_d_molysis&quot;, &quot;NS_23_d_molysis&quot;, &quot;NS_26_b_lyPMA&quot;, &quot;BAL_073_b_host_zero&quot;, &quot;BAL_073_c_molysis&quot;, &quot;BAL_078_d_lyPMA&quot;)
-sample_data$lib_failed &lt;- row.names(sample_data) %in% lib_fail_list
+sample_data$lib_failed &lt;- sample_data$baylor_other_id %in% lib_fail_list</code></pre>
+<p><strong><em>2. Adding more data to the phyloseq -
+picogreen</em></strong></p>
+<pre class="r"><code>#Adding host DNA proportion of sequencing results
+picogreen &lt;- rbind(read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx&quot;, sheet = 1, skip = 1),
+       read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx&quot;, sheet = 2, skip = 1)
+       ) %&gt;% rename(baylor_other_id = &quot;Sample&quot;, picogreen_ng_ul = &quot;Concentration (ng/ul)&quot;) %&gt;% select(c(&quot;baylor_other_id&quot;, 
+                                                                                                        &quot;picogreen_ng_ul&quot;))
+sample_data &lt;- merge(sample_data %&gt;% rownames_to_column(&quot;row.names&quot;), picogreen, all = T, by = &quot;baylor_other_id&quot;) %&gt;% subset(.,!is.na(.$row.names)) %&gt;% remove_rownames() %&gt;% column_to_rownames(&quot;row.names&quot;)
+
 
 #constructing phylose object
-phyloseq &lt;- merge_phyloseq(phyloseq, sample_data)</code></pre>
+phyloseq &lt;- merge_phyloseq(otu_table(phyloseq), tax_table(phyloseq), sample_data(sample_data))</code></pre>
 <p><strong><em>3. Factorize predictors</em></strong></p>
 <pre class="r"><code># Factorize predicters ----------------------------------------------------
 # + creating lables for figures
+
 sample_data(phyloseq) &lt;- sample_data(phyloseq) %&gt;% data.frame(check.names = F) %&gt;% 
         mutate(treatment = tolower(treatment), 
                treatment = factor(treatment,
                                   levels = c(&quot;control&quot;, &quot;lypma&quot;, &quot;benzonase&quot;, &quot;host_zero&quot;, &quot;molysis&quot;, &quot;qiaamp&quot;),
-                                  labels = c(&quot;Control&quot;, &quot;lyPMA&quot;, &quot;Benzoanse&quot;, &quot;Host zero&quot;, &quot;Molysis&quot;, &quot;QIAamp&quot;)),
+                                  labels = c(&quot;Untreated&quot;, &quot;lyPMA&quot;, &quot;Benzonase&quot;, &quot;Host zero&quot;, &quot;Molysis&quot;, &quot;QIAamp&quot;)),
                sample_type = factor(sample_type,
-                                    levels = c(&quot;BAL&quot;, &quot;nasal_swab&quot;, &quot;Sputum&quot;, &quot;neg_extraction&quot;, &quot;pos_extraction&quot;, &quot;neg_depletion&quot;, &quot;pos_depletion&quot;), 
-                                    labels = c(&quot;BAL&quot;, &quot;Nasal swab&quot;, &quot;Sputum&quot;, &quot;Neg. ext.&quot;, &quot;Pos. ext.&quot;, &quot;Neg. dep.&quot;, &quot;Pos. dep.&quot;))) %&gt;%
+                                    levels = c(&quot;neg_depletion&quot;, &quot;neg_extraction&quot;, &quot;pos_extraction&quot;, &quot;pos_depletion&quot;, &quot;BAL&quot;, &quot;nasal_swab&quot;, &quot;Sputum&quot;), 
+                                    #labels = c(&quot;BAL&quot;, &quot;Nasal&quot;, &quot;Sputum&quot;, &quot;Neg. ext.&quot;, &quot;Pos. ext.&quot;, &quot;Neg. dep.&quot;, &quot;Pos. dep.&quot;))) %&gt;%
+                                    labels = c( &quot;Neg.&quot;, &quot;Neg.&quot;, &quot;Mock&quot;, &quot;Mock&quot;, &quot;BAL&quot;, &quot;Nasal&quot;, &quot;Sputum&quot;))) %&gt;%
+        #rename(subject_id = &quot;original_sample&quot;) %&gt;%
         sample_data()
 
 
-write.csv(sample_result, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv&quot;)</code></pre>
+sample_data(phyloseq)$subject_id &lt;- ifelse(is.na(sample_data(phyloseq)$subject_id), as.character(sample_data(phyloseq)$sample_type), sample_data(phyloseq)$subject_id)
+sample_data(phyloseq)$subject_id &lt;- ifelse(sample_data(phyloseq)$subject_id == &quot;lab_member&quot;, as.character(sample_data(phyloseq)$original_sample),
+                                           sample_data(phyloseq)$subject_id)</code></pre>
 <p>Adding functional data</p>
 <pre class="r"><code>#Loading phyloseq object
-setwd(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/humann3&quot;)
-path_rpk &lt;- read.csv(&quot;PathAbundance.relab.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F, row.names = &quot;# Pathway&quot;) %&gt;% select(-c(&quot;taxonomy&quot;))
-path_tax &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/humann3/PathAbundance.relab.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F) %&gt;%
+setwd(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed&quot;)
+path_rpk &lt;- read.csv(&quot;20221102_PQ00331_Host_Depletion/humann3/PathAbundance.relab.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F, row.names = &quot;# Pathway&quot;) %&gt;% select(-c(&quot;taxonomy&quot;))
+path_tax &lt;- read.csv(&quot;20221102_PQ00331_Host_Depletion/humann3/PathAbundance.relab.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F) %&gt;%
         select(c(&quot;taxonomy&quot;, &quot;# Pathway&quot;)) %&gt;% rename(pathway = &quot;# Pathway&quot;, group = &quot;taxonomy&quot;)
 row.names(path_tax) &lt;- path_tax$pathway
 
-phy &lt;- list()
+path_rpk2 &lt;- read.csv(&quot;20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F, row.names = &quot;# Pathway&quot;) %&gt;% select(-c(&quot;taxonomy&quot;))
+path_tax2 &lt;- read.csv(&quot;20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F) %&gt;%
+        select(c(&quot;taxonomy&quot;, &quot;# Pathway&quot;)) %&gt;% rename(pathway = &quot;# Pathway&quot;, group = &quot;taxonomy&quot;)
+row.names(path_tax2) &lt;- path_tax2$pathway
+
+#Merging Readstat + metadata
+phyloseq_path_rpk1 &lt;- #merge_phyloseq(
+        merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %&gt;% as.matrix()))#,
+        #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %&gt;% as.matrix()))
+
+phyloseq_path_rpk2 &lt;- #merge_phyloseq(
+        merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %&gt;% as.matrix()))#,
+        #merge_phyloseq(otu_table(path_rpk2, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax2 %&gt;% as.matrix()))
+phyloseq_path_rpk &lt;- merge_phyloseq(phyloseq_path_rpk1, phyloseq_path_rpk2)</code></pre>
+<pre class="r"><code>phy &lt;- list()
+sample_data &lt;- sample_data(phyloseq)
+sample_names(phyloseq) &lt;- sample_data(phyloseq)$baylor_other_id
+sample_names(phyloseq_path_rpk) &lt;- sample_data(phyloseq_path_rpk)$baylor_other_id
 phy$phyloseq_count &lt;- phyloseq
 phy$phyloseq_rel &lt;- transform_sample_counts(phyloseq, function(x){x / sum(x)})
-phy$phyloseq_path_rpkm &lt;- merge_phyloseq(otu_table(path_rpk, taxa_are_rows = T), sample_data(phyloseq), tax_table(path_tax %&gt;% as.matrix()))</code></pre>
-<p><strong><em>4. Saving RDS</em></strong></p>
-<pre class="r"><code># Saving object -----------------------------------------------------------
+phy$phyloseq_path_rpk &lt;-phyloseq_path_rpk
 
-write.csv(sample_result, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv&quot;)
-write_rds(phy, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds&quot;)</code></pre>
+
+tax_table(phy$phyloseq_count) &lt;- cbind(tax_table(phy$phyloseq_count),
+                                       AMR::mo_gramstain(taxa_names(phy$phyloseq_count))) %&gt;%
+        tax_table() %&gt;% 
+        data.frame %&gt;% 
+        rename(&quot;gram_stain&quot; = &quot;V8&quot;) %&gt;% 
+        mutate(gram_stain = case_when(Domain == &quot;k__Eukaryota&quot; ~ &quot;Fungi&quot;,
+                                      Species == &quot;s__Natronorubrum_sediminis&quot; ~ &quot;Archaea&quot;,
+                                      Species == &quot;s__Methanobrevibacter_smithii&quot; ~ &quot;Gram-positive&quot;,
+                                      .default = gram_stain)) %&gt;%
+        as.matrix()
+
+
+tax_table(phy$phyloseq_rel) &lt;- cbind(tax_table(phy$phyloseq_rel),
+                                       AMR::mo_gramstain(taxa_names(phy$phyloseq_rel))) %&gt;%
+        tax_table() %&gt;% 
+        data.frame %&gt;% 
+        rename(&quot;gram_stain&quot; = &quot;V8&quot;) %&gt;% 
+        mutate(gram_stain = case_when(Domain == &quot;k__Eukaryota&quot; ~ &quot;Fungi&quot;,
+                                      Species == &quot;s__Natronorubrum_sediminis&quot; ~ &quot;Archaea&quot;,
+                                      Species == &quot;s__Methanobrevibacter_smithii&quot; ~ &quot;Gram-positive&quot;,
+                                      .default = gram_stain)) %&gt;%
+        as.matrix()
+
+sample_data(phy$phyloseq_rel)$gram_neg_prop &lt;- phy$phyloseq_rel %&gt;% 
+        subset_taxa(gram_stain == &quot;Gram-negative&quot;) %&gt;% 
+        otu_table() %&gt;% 
+        colSums(na.rm = F)
+sample_data(phy$phyloseq_count)$gram_neg_prop &lt;- phy$phyloseq_rel %&gt;% 
+        subset_taxa(gram_stain == &quot;Gram-negative&quot;) %&gt;% 
+        otu_table() %&gt;% 
+        colSums(na.rm = F)
+sample_data(phy$phyloseq_path_rpk)$gram_neg_prop &lt;- phy$phyloseq_rel %&gt;% 
+        subset_taxa(gram_stain == &quot;Gram-negative&quot;) %&gt;% 
+        otu_table() %&gt;% 
+        colSums(na.rm = F)</code></pre>
+<p><strong><em>4. Removing unnecessary metadata</em></strong></p>
+<pre class="r"><code>#sample_data(phy$phyloseq_rel) &lt;- sample_data(phy$phyloseq_rel) %&gt;% 
+#        data.frame() %&gt;% 
+#        select(-c(&quot;barcode&quot;, &quot;BoxNumber&quot;, &quot;BoxName&quot;, &quot;Boxposition&quot;, &quot;ambiguous_sample&quot;, &quot;qPCR_dilution&quot;, &quot;DNA_host_well&quot;, &quot;DNA_bac_well&quot;, &quot;DNA_host_nondil&quot;, &quot;DNA_bac_nondil&quot;, &quot;note&quot;, &quot;project_id&quot;, &quot;order&quot;, &quot;depleiton_id&quot;, &quot;pellet&quot;, &quot;collection_date&quot;, &quot;original_sample&quot;, &quot;frozen&quot;, &quot;cryo_preserve&quot;, &quot;position&quot;, &quot;treated&quot;)) %&gt;% sample_data
+#sample_data(phy$phyloseq_count) &lt;- sample_data(phy$phyloseq_count) %&gt;% 
+#        data.frame() %&gt;% 
+#        select(-c(&quot;barcode&quot;, &quot;BoxNumber&quot;, &quot;BoxName&quot;, &quot;Boxposition&quot;, &quot;ambiguous_sample&quot;, &quot;qPCR_dilution&quot;, &quot;DNA_host_well&quot;, &quot;DNA_bac_well&quot;, &quot;DNA_host_nondil&quot;, &quot;DNA_bac_nondil&quot;, &quot;note&quot;, &quot;project_id&quot;, &quot;order&quot;, &quot;depleiton_id&quot;, &quot;pellet&quot;, &quot;collection_date&quot;, &quot;original_sample&quot;, &quot;frozen&quot;, &quot;cryo_preserve&quot;, &quot;position&quot;, &quot;treated&quot;)) %&gt;% sample_data
+#sample_data(phy$phyloseq_path_rpk)&lt;- sample_data(phy$phyloseq_path_rpk) %&gt;% 
+#        data.frame() %&gt;% 
+#        select(-c(&quot;barcode&quot;, &quot;BoxNumber&quot;, &quot;BoxName&quot;, &quot;Boxposition&quot;, &quot;ambiguous_sample&quot;, &quot;qPCR_dilution&quot;, &quot;DNA_host_well&quot;, &quot;DNA_bac_well&quot;, &quot;DNA_host_nondil&quot;, &quot;DNA_bac_nondil&quot;, &quot;note&quot;, &quot;project_id&quot;, &quot;order&quot;, &quot;depleiton_id&quot;, &quot;pellet&quot;, &quot;collection_date&quot;, &quot;original_sample&quot;, &quot;frozen&quot;, &quot;cryo_preserve&quot;, &quot;position&quot;, &quot;treated&quot;)) %&gt;% sample_data</code></pre>
+<p><strong><em>5. Saving RDS</em></strong></p>
+<pre class="r"><code># Saving object -----------------------------------------------------------
+#write.csv(sample_result, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Tables/DAT_20230122_MGK_host_control_qPCR.csv&quot;)
+write_rds(phy, &quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds&quot;)</code></pre>
+<pre class="r"><code>#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries &lt;- c(&quot;r&quot;, str_libraries)
+for (str_libraries in str_libraries) {
+    str_libraries |&gt;
+        pacman::p_citation() |&gt;
+        print(bibtex = FALSE) |&gt;
+        capture.output() %&gt;%
+        .[-1:-3] %&gt;% .[. != &quot;&quot;] |&gt;
+        stringr::str_squish() |&gt;
+        stringr::str_replace(&quot;_&quot;, &quot;&quot;) |&gt;
+        cat()
+    cat(&quot;\n&quot;)
+}</code></pre>
+<pre><code>## R Core Team (2022). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/. We have invested a lot of time and effort in creating R, please cite it when using it for data analysis. See also &#39;citation(&quot;pkgname&quot;)&#39; for citing R packages.
+## Wickham H, Bryan J (2023). readxl: Read Excel Files_. R package version 1.4.2, &lt;https://CRAN.R-project.org/package=readxl&gt;.
+## phyloseq: An R package for reproducible interactive analysis and graphics of microbiome census data. Paul J. McMurdie and Susan Holmes (2013) PLoS ONE 8(4):e61217.
+## Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019). &quot;Welcome to the tidyverse.&quot; Journal of Open Source Software_, *4*(43), 1686. doi:10.21105/joss.01686 &lt;https://doi.org/10.21105/joss.01686&gt;.
+## Rinker, T. W. &amp; Kurkiewicz, D. (2017). pacman: Package Management for R. version 0.5.0. Buffalo, New York. http://github.com/trinker/pacman
+## Garbett SP, Stephens J, Simonov K, Xie Y, Dong Z, Wickham H, Horner J, reikoch, Beasley W, O&#39;Connor B, Warnes GR, Quinn M, Kamvar ZN (2023). yaml: Methods to Convert R Data to YAML and Back_. R package version 2.3.7, &lt;https://CRAN.R-project.org/package=yaml&gt;. ATTENTION: This citation information has been auto-generated from the package DESCRIPTION file and may need manual editing, see &#39;help(&quot;citation&quot;)&#39;.
+## H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+## Oksanen J, Simpson G, Blanchet F, Kindt R, Legendre P, Minchin P, O&#39;Hara R, Solymos P, Stevens M, Szoecs E, Wagner H, Barbour M, Bedward M, Bolker B, Borcard D, Carvalho G, Chirico M, De Caceres M, Durand S, Evangelista H, FitzJohn R, Friendly M, Furneaux B, Hannigan G, Hill M, Lahti L, McGlinn D, Ouellette M, Ribeiro Cunha E, Smith T, Stier A, Ter Braak C, Weedon J (2022). vegan: Community Ecology Package. R package version 2.6-4, &lt;https://CRAN.R-project.org/package=vegan&gt;.
+## Leo Lahti et al. microbiome R package. URL: http://microbiome.github.io
+## Kassambara A (2023). ggpubr: &#39;ggplot2&#39; Based Publication Ready Plots. R package version 0.6.0, &lt;https://CRAN.R-project.org/package=ggpubr&gt;.
+## Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2021). Rvision - Colorblind-Friendly Color Maps for R. R package version 0.6.2.
+## Davis NM, Proctor D, Holmes SP, Relman DA, Callahan BJ (2017). &quot;Simple statistical identification and removal of contaminant sequences in marker-gene and metagenomics data.&quot; bioRxiv_, 221499. doi:10.1101/221499 &lt;https://doi.org/10.1101/221499&gt;.
+## Auguie B (2017). gridExtra: Miscellaneous Functions for &quot;Grid&quot; Graphics. R package version 2.3, &lt;https://CRAN.R-project.org/package=gridExtra&gt;.
+## Kassambara A (2023). ggpubr: &#39;ggplot2&#39; Based Publication Ready Plots. R package version 0.6.0, &lt;https://CRAN.R-project.org/package=ggpubr&gt;.
+## Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear Mixed-Effects Models Using lme4. Journal of Statistical Software, 67(1), 1-48. doi:10.18637/jss.v067.i01.
+## Kuznetsova A, Brockhoff PB, Christensen RHB (2017). &quot;lmerTest Package: Tests in Linear Mixed Effects Models.&quot; Journal of Statistical Software, *82*(13), 1-26. doi:10.18637/jss.v082.i13 &lt;https://doi.org/10.18637/jss.v082.i13&gt;.
+## Ooms J (2023). writexl: Export Data Frames to Excel &#39;xlsx&#39; Format_. R package version 1.4.2, &lt;https://CRAN.R-project.org/package=writexl&gt;.
+## Gonçalves da Silva A (2017). harrietr: Wrangle Phylogenetic Distance Matrices and Other Utilities. R package version 0.2.3, &lt;https://CRAN.R-project.org/package=harrietr&gt;.
+## Mallick H et al. (2020). Multivariable Association in Population-scale Meta-omics Studies, http://huttenhower.sph.harvard.edu/maaslin2. To cite the MaAsLin 2 software, please use: Mallick H, Rahnavard A, McIver LJ (2020). MaAsLin 2: Multivariable Association in Population-scale Meta-omics Studies. R/Bioconductor package, http://huttenhower.sph.harvard.edu/maaslin2.
+## Wilke C, Wiernik B (2022). ggtext: Improved Text Rendering Support for &#39;ggplot2&#39;. R package version 0.1.2, &lt;https://CRAN.R-project.org/package=ggtext&gt;.
+## Aphalo P (2022). ggpmisc: Miscellaneous Extensions to &#39;ggplot2&#39;_. R package version 0.5.2, &lt;https://CRAN.R-project.org/package=ggpmisc&gt;.
+## Auguie B (2017). gridExtra: Miscellaneous Functions for &quot;Grid&quot; Graphics. R package version 2.3, &lt;https://CRAN.R-project.org/package=gridExtra&gt;.
+## Wood S, Scheipl F (2020). gamm4: Generalized Additive Mixed Models using &#39;mgcv&#39; and &#39;lme4&#39;. R package version 0.2-6, &lt;https://CRAN.R-project.org/package=gamm4&gt;. ATTENTION: This citation information has been auto-generated from the package DESCRIPTION file and may need manual editing, see &#39;help(&quot;citation&quot;)&#39;.
+## Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/.
+## Berends MS, Luz CF, Friedrich AW, Sinha BNM, Albers CJ, Glasner C (2022). &quot;AMR: An R Package for Working with Antimicrobial Resistance Data.&quot; Journal of Statistical Software_, *104*(3), 1-31. doi:10.18637/jss.v104.i03 &lt;https://doi.org/10.18637/jss.v104.i03&gt;.</code></pre>
+<pre class="r"><code>#===============================================================================</code></pre>
 </div>
 </div>
 

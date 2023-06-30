@@ -2370,7 +2370,7 @@ Effect size, standard error (SE) and p-value of a statistical test for Bray-Curt
 **Hard to interpret, as it does not have proper baseline (control is not there as control does not have distances)**
 
 ```{r}
-
+library(lmerTest)
 path_horn_dist_long_within_sampleid_from_control$treatment <- factor(path_horn_dist_long_within_sampleid_from_control$treatment,
                                                                      levels = c("Untreated",
                                                                                 "lypma",
@@ -3578,8 +3578,7 @@ dev.off()
 
 ```{r, warning=FALSE, message=FALSE}
 
-args=(commandArgs(FALSE))
-
+args=(commandArgs(TRUE))
 
 if(length(args)==0){
     print("No arguments supplied")
@@ -3808,8 +3807,6 @@ res_permanovaD2$R.squared
 **As a sanity check, rarefaction based analysis was conducted using LDM**
 
 ```{r, warning=FALSE, message=FALSE}
-
-args=(commandArgs(FALSE))
 
 
 if(length(args)==0){
@@ -4050,8 +4047,6 @@ res_permanovaD2$R.squared
 **As a sanity check, rarefaction based analysis was conducted using LDM**
 
 ```{r, warning=FALSE, message=FALSE}
-
-args=(commandArgs(FALSE))
 
 
 if(length(args)==0){

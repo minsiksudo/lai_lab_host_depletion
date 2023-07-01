@@ -439,6 +439,9 @@ tax_table(phy$phyloseq_count) <- cbind(tax_table(phy$phyloseq_count),
                                       Species == "s__Natronorubrum_sediminis" ~ "Gram-negative",
                                       Species == "s__Methanobrevibacter_smithii" ~ "Gram-positive",
                                       .default = gram_stain)) %>%
+        mutate(Species = case_when(Species == "s__Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii" ~ "s__S._cerevisiae x S._kudriavzevii",
+                                      grepl("_group", Species) ~ gsub("_group", "", Species),
+                                      .default = Species)) %>%
         as.matrix()
 
 
@@ -451,7 +454,13 @@ tax_table(phy$phyloseq_rel) <- cbind(tax_table(phy$phyloseq_rel),
                                       Species == "s__Natronorubrum_sediminis" ~ "Gram-negative",
                                       Species == "s__Methanobrevibacter_smithii" ~ "Gram-positive",
                                       .default = gram_stain)) %>%
+        mutate(Species = case_when(Species == "s__Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii" ~ "s__S._cerevisiae x S._kudriavzevii",
+                                      grepl("_group", Species) ~ gsub("_group", "", Species),
+                                      .default = Species)) %>%
         as.matrix()
+
+taxa_names(phy$phyloseq_count) <- tax_table(phy$phyloseq_count) %>% data.frame %>% .$Species %>% gsub("s__", "", .)
+taxa_names(phy$phyloseq_rel) <- tax_table(phy$phyloseq_count) %>% data.frame %>% .$Species %>% gsub("s__", "", .)
 
 sample_data(phy$phyloseq_rel)$gram_neg_prop <- phy$phyloseq_rel %>% 
         subset_taxa(gram_stain == "Gram-negative") %>% 

@@ -668,42 +668,10 @@ phyloseq_control_rel %>%
         ylab("Relative abundancne") +
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Gram stain in Zymo mock") +
-        theme(legend.text = element_markdown()) +
+        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
         guides(fill=guide_legend(title="Gram-stain")) +
         facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
                     scales= "free_x", nrow=1)
-
-#there could be opportunistic pathogens...
-                                
-#Manipulating phyloseq - only top 10 
-
-sample_data(phyloseq_control_rel) <- cbind(phyloseq_control_rel %>%
-              sample_data %>%
-              data.frame(),
-      phyloseq_control_rel %>% 
-        otu_table %>%
-        data.frame %>%
-        subset(., rownames(.) %in% head(taxa_sums(subset_samples(phyloseq_control_rel,sample_type == "Mock" & S.obs != 0)) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)) %>%
-        t()
-)
-
-
-sample_data(phyloseq_control_rel) %>%
-        data.frame() %>%
-        subset(., !is.na(.$Escherichia_coli)) %>% 
-        group_by(sample_type, treatment) %>% 
-        summarise(N = n(),
-                  `<i>Escherichia coli</i><br>(median [IQR])` = paste(format(round(median(Escherichia_coli),4),nsmall = 4, big.mark = ","), " [", format(round(quantile(Escherichia_coli, 0.25),4), nsmall = 4, big.mark = ","), ", ", format(round(quantile(Escherichia_coli, 0.75),4), nsmall = 4, big.mark = ","), "]", sep = ""),
-                  `<i>Pseudomonas aeruginosa</i><br>(median [IQR])` = paste(format(round(median(Pseudomonas_aeruginosa_group),4),nsmall = 4, big.mark = ","), " [", format(round(quantile(Pseudomonas_aeruginosa_group, 0.25),4), nsmall = 4, big.mark = ","), ", ", format(round(quantile(Pseudomonas_aeruginosa_group, 0.75),4), nsmall = 4, big.mark = ","), "]", sep = ""),
-                  `<i>Salmonella enterica</i><br>(median [IQR])` = paste(format(round(median(Salmonella_enterica),4),nsmall = 4, big.mark = ","), " [", format(round(quantile(Salmonella_enterica, 0.25),4), nsmall = 4, big.mark = ","), ", ", format(round(quantile(Salmonella_enterica, 0.75),4), nsmall = 4, big.mark = ","), "]", sep = "")
-        ) %>%
-        rename(`Sample type` = sample_type) %>%
-        data.frame(check.names = F) %>% mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "serif")
-
-
 
 ```
 
@@ -977,9 +945,7 @@ hist(log10(taxa_qc$mean_rel_abd), xlab = "log10(Mean relative abundance)", main 
 
 ### decontam - stratified by sample type
 
-Decontam analysis result stratified by sample type
-
-Decontam analysis result stratified by sample type
+Decontam ran with a new variable ((1-host ratio) * library concentration).
 
 ```{r warning=FALSE, message=FALSE}
 #Stratified by sample type
@@ -987,106 +953,56 @@ sample_data(phyloseq_unfiltered$phyloseq_rel)$is.neg <- grepl("Neg", sample_data
 
 contaminant <- data.frame() 
 
-#cat("decontam prevalence - all")
-contaminant1 <- 
-data.frame("prevalence", "all", fix.empty.names = F, 
-phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0 & sample_type != "Mock") %>%
-        isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names()
+phyloseq_decontam_bal <- phyloseq_unfiltered$phyloseq_rel %>% 
+        subset_samples(S.obs != 0) %>%
+        subset_samples(sample_type == "Neg." | sample_type == "BAL")
+phyloseq_decontam_ns <- phyloseq_unfiltered$phyloseq_rel %>% 
+        subset_samples(S.obs != 0) %>%
+        subset_samples(sample_type == "Neg." | sample_type == "Nasal")
+phyloseq_decontam_spt <- phyloseq_unfiltered$phyloseq_rel %>% 
+        subset_samples(S.obs != 0) %>%
+        subset_samples(sample_type == "Neg." | sample_type == "Sputum")
+
+
+contaminant_combined_bal <- 
+data.frame("BAL", fix.empty.names = F, 
+        isContaminant(phyloseq_decontam_bal, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
 )
 
-#cat("decontam prevalence - BAL")
-contaminant2 <- 
-data.frame("prevalence", "BAL", fix.empty.names = F, 
-subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
-        isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
-
-#cat("decontam prevalence - Nasal")
-contaminant3 <- 
-        data.frame("prevalence", "Nasal swab", fix.empty.names = F, 
-subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal", "Neg.")) %>%
-        isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
-
-#cat("prevalence", "decontam prevalence - Sputum")
-contaminant4 <- 
-data.frame("prevalence", "Sputum", fix.empty.names = F,
-subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum", "Neg.")) %>%
-        isContaminant(., method="prevalence", neg = "is.neg", threshold = 0.1) %>% subset(.,.$contaminant) %>% row.names())
-
-#cat("decontam frequency - All")
-contaminant5 <- 
-data.frame("frequency", "all", fix.empty.names = F,
-phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
-        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
-
-#cat("decontam frequency - BAL")
-#contaminant6 <- 
-#data.frame("frequency", "BAL", fix.empty.names = F,
-#subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL")) %>%
-#        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
-#)
-
-#cat("decontam frequency - Nasal")
-#contaminant7 <- 
-#data.frame("frequency", "Nasal swab", fix.empty.names = F,
-#subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal")) %>%
-#        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
-#)
-
-#cat("decontam frequency - Sputum")
-contaminant8 <- 
-data.frame("frequency", "Sputum", fix.empty.names = F,
-subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum")) %>%
-        isContaminant(method="frequency", conc="DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names()
+contaminant_combined_ns <- 
+data.frame("Nasal swab", fix.empty.names = F, 
+        isContaminant(phyloseq_decontam_ns, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
 )
-#cat("decontam combined - All")
-contaminant9 <- 
-data.frame("combined", "all", fix.empty.names = F,
 
-phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0) %>%
-        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
 
-#cat("decontam combined - BAL")
-contaminant10 <- 
-data.frame("combined", "BAL", fix.empty.names = F,
-subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("BAL", "Neg.")) %>%
-        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
+contaminant_combined_spt <- 
+data.frame("Sputum", fix.empty.names = F, 
+        isContaminant(phyloseq_decontam_spt, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
+)
 
-#cat("decontam combined - Nasal")
-#contaminant11 <- 
-#data.frame("combined", "Nasal swab", fix.empty.names = F,
-#subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Nasal", "Neg.")) %>%
-#        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names() 
-#)
 
-#cat("decontam combined - Sputum")
-contaminant12 <- 
-data.frame("combined", "Sputum", fix.empty.names = F,
-subset_samples(phyloseq_unfiltered$phyloseq_rel %>% subset_samples(S.obs != 0), sample_type %in% c("Sputum", "Neg.")) %>%
-        isContaminant(method="combined", neg="is.neg", conc = "DNA_bac_well") %>% subset(.,.$contaminant) %>% row.names())
 
-#Some contaminant table was not included as they were empty. (Contaminant 6, 7, 11)
-contaminant <- rbind(contaminant1, contaminant2, contaminant3, contaminant4, contaminant5, contaminant8, contaminant9, contaminant10, contaminant12)
-names(contaminant) <- c("method", "sample_type", "contaminant")
-cat("List of contaminant (prevalence method) - from stratified analysis\n\n")
-contaminant %>% subset(., .$method == "prevalence" & .$sample_type != "all") %>% .$contaminant %>% unique()
+contaminants <- rbind(contaminant_combined_bal, contaminant_combined_ns, contaminant_combined_spt)
+        
+names(contaminants) <- c("Sample type", "Taxa")
 
-cat("Prevalence decontam table\n\n")
-contaminant %>% subset(., .$method == "prevalence") %>% .$sample_type %>% table
-cat("Frequency decontam table\n\n")
-contaminant %>% subset(., .$method == "frequency") %>% .$sample_type %>% table
-cat("Combined decontam table\n\n")
-contaminant %>% subset(., .$method == "combined") %>% .$sample_type %>% table
+species_italic <- function(data) {
+  names <- gsub("_", " ", data)
+  names <- gsub("[]]|[[]", "", names)
+  names <- gsub(" sp", " sp.", names)
+  names <- gsub(" sp.", "* sp.", names)
+  names <- gsub(" group", "* group.", names)
+  names <- ifelse(grepl("[*]", names), paste("*", names, sep = ""), paste("*", names, "*", sep = ""))
+  names
+}
 
-matrix(nrow=3,ncol=4) %>% data.frame() %>% rename(" " = X1, "BAL" = X2, "Nasal swab" = X3, "Sputum" = X4) %>%
-        rownames_to_column("x") %>% mutate(x = c("Prevalence method", "Frequency method", "Combined"),
-                                           " " = c(16, 3, 6),
-                                           "BAL" = c(14, 0, 1),
-                                           "Nasal swab" = c(12, 0, 0),
-                                           "Sputum" = c(12, 3, 2)
-                                           ) %>% column_to_rownames("x") %>%
-        kbl(format = "html") %>%
-        add_header_above(c(" " = 1, "Non-stratified" = 1, "Stratified" = 3)) %>% 
+
+contaminants %>% 
+        mutate(Taxa = species_italic(Taxa)) %>%
+        kbl(format = "markdown", escape = F) %>%
         kable_styling(full_width = 0, html_font = "serif") 
+
+
 
 ```
 
@@ -1116,23 +1032,21 @@ red_flag_taxa <- data.frame(species = taxa_qc$species,
                             red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq_unfiltered$phyloseq_rel) %>%
                                                                t %>% rownames() %>%
                                 length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1,0)) %>%
-        mutate(red_flag_decontam_prev = species %in% (contaminant %>%
-                                    subset(., .$method == "prevalence" & .$sample_type != "all") %>%
-                                    .$contaminant %>% unique()))
+        mutate(red_flag_decontam = species %in% (contaminants$Taxa %>% unique()))
 
 
 red_flag_function <- data.frame(function. = function_qc$function., red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpk) %>% t %>% rownames() %>% length * 0.05 & function_qc$mean_rpk < quantile(function_qc$mean_rpk, 0.75), 1, 0))
 
 #phyloseq of table 1
 phyloseq$phyloseq_count_prev <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_decontam_prev != 1)$species,
+                                           red_flag_taxa$red_flag_decontam != 1)$species,
                                     phyloseq$phyloseq_count)
 #phyloseq for analysis
 phyloseq$phyloseq_rel <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
+                                           red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam)$species,
                                     phyloseq$phyloseq_rel)
 phyloseq$phyloseq_count <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
+                                           red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam)$species,
                                     phyloseq$phyloseq_count)
 phyloseq$phyloseq_path_rpk <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpk)
 
@@ -2538,7 +2452,37 @@ filt_fit_data_pos <- read.csv("data/filt_fit_data_pos.csv")
 
 cat("Factors affecting DA taxa (q<0.1)")
 
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
+filt_maaslin_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table
+
+```
+
+### List of DA taxa (Supplementary)
+
+Table. List of differentailly abundant taxa identified by MaAsLin. Significant associations (q < 0.1) that is showing high change (|log2-fold change| > 0.5) were listed.
+
+```{r, warning=FALSE, message=FALSE}
+
+filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$coef) > 0.5) %>% subset(., .$metadata != "sample_type" & .$metadata != "log10.Final_reads") %>% select(c("feature", "metadata", "coef", "qval")) %>%
+        mutate(feature = paste("*",
+                               gsub("_", " ", feature) %>% gsub(" sp", " sp.", .) %>% gsub(" group", "", .),
+                               "*",
+                               sep = "")
+        ) %>% rename(Taxa = "feature",
+                     Treatment = "metadata",
+                     "log<sub>2</sub>(fold-change)" = "coef",
+                     `*q*-value` = "qval") %>%
+        mutate(Treatment = case_when(Treatment == "lypma" ~ "lyPMA",
+                         Treatment == "host_zero" ~ "Host zero",
+                         Treatment == "benzonase" ~ "Benzonase",
+                         Treatment == "molysis" ~ "Molysis",
+                         Treatment == "qiaamp" ~ "QIAamp",
+                         .default = Treatment),
+               "log<sub>2</sub>(fold-change)" = round(`log<sub>2</sub>(fold-change)`, 3),
+               `*q*-value` = round(`*q*-value`, 3)) %>%
+        remove_rownames() %>% 
+        kbl(format = "markdown", escape = F) %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
 
 ```
 

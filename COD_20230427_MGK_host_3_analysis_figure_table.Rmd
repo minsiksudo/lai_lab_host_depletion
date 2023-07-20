@@ -299,7 +299,7 @@ sample_data <- sample_data(phyloseq$phyloseq_count)
 
 ### Tinyvamp results
 
-```{r warning=F, message=FALSE, "Data loading"}
+```{r warning=F, message=FALSE, "Data loading 2"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
 tinyvamp_host_zero <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/hostzero_p_hats.RDS") %>%
@@ -317,7 +317,6 @@ tinyvamp_lypma <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 tinyvamp_molysis <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/molysis_p_hats.RDS") %>% 
         t()
         
-tinyvamp_molysis
 #tinyvamp_benzonase <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/benzonase_p_hats.RDS")
 
 sample_data_tv <- phyloseq$phyloseq_rel %>%
@@ -619,14 +618,9 @@ tableS1 <- glmer(lib_failed ~ sample_type + treatment + sample_type * treatment 
                                 round(Estimate + 1.96 * SE, 2),
                                 ")", 
                                 sep = ""),
-               "<i>t</i>-value" = round(`<i>t</i>-value`, 3)) %>%
-        select(c("Effect size (95% CI)", "<i>t</i>-value", " ")) %>% 
+               "<i>t</i>-value" = round(`<i>t</i>-value`, 3)) %>% 
+        dplyr::select(c("Effect size (95% CI)", "<i>t</i>-value", " ")) %>% 
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "serif")
-
-
-
-        
-
 
 tableS1
 
@@ -924,7 +918,7 @@ save_kable(tables2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 
 
 
-## Figure of sequencing result (Fig. S2-3) {.tabset}
+## Figure of sequencing result (Fig. S3-4) {.tabset}
 
 
 
@@ -1060,11 +1054,11 @@ dev.off()
 
 
 
-## Host ratio qPCR vs sequencing (Figure S3)
+## Host ratio qPCR vs sequencing (Figure S4)
         
         1.	metagenomics is gold standard for % host, but most people don't have the money to do deep sequencing. So secondary analysis is to calculate correlation between %host by qPCR vs %host by metagenomics (this can be a supplementary figure but would at least mention correlation in text)
 
-**Figure S3.** (A) Correlation between host DNA proportion measured with qPCR and metagenomic next generation sequencing (mNGS) and (B) Bland-Altman plot of host DNA % of qPCR and mNGS.
+**Figure S4.** (A) Correlation between host DNA proportion measured with qPCR and metagenomic next generation sequencing (mNGS) and (B) Bland-Altman plot of host DNA % of qPCR and mNGS.
 
 ```{r, message=FALSE}
 
@@ -1147,14 +1141,14 @@ dev.off()
 
 ## Negative controls {.tabset}
 
-### Bar plot of negative controls (Fig. S4)
+### Bar plot of negative controls (Fig. S5)
 
-**Fig. S4**. Barplot of negative controls by treatment methods at species level
+**Fig. S5**. Barplot of negative controls by treatment methods at species level
 
 ### {-}
 
 
-## decontam {.tabset}
+## decontam (Table S4) {.tabset}
 
 ### decontam - stratified by sample_type (Table S4)
 
@@ -1214,8 +1208,8 @@ names(contaminants) <- c("Sample type", "Taxa")
 merged_contaminants <- merge(contaminants, prev_all %>% rownames_to_column("Taxa"), by = "Taxa") %>%
         merge(., prev_neg %>% rownames_to_column("Taxa"), by = "Taxa") %>%
         select(c("Sample type", "Taxa", "Prevalence (all)", "Prevalence (negative controls)")) %>%
-        remove_rownames() %>% 
-        .[order(.$"Sample type", .$"Taxa"),]
+        .[order(.$"Sample type", .$"Taxa"),] %>%
+        remove_rownames()
 
 
 
@@ -1331,11 +1325,11 @@ red_flag_function <-
 #phyloseq of table 1
 
 phyloseq$phyloseq_count_prev <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_decontam != 1)$species,
+                                           red_flag_taxa$red_flag_prev_abd != 1)$species,
                                     phyloseq$phyloseq_count)
 #phyloseq for analysis
 phyloseq$phyloseq_count <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam)$species,
+                                           red_flag_taxa$red_flag_prev_abd != 1)$species,
                                     phyloseq$phyloseq_count)
 
 phyloseq$phyloseq_rel <- transform_sample_counts(phyloseq$phyloseq_count, function(x){x/sum(x)})
@@ -1638,7 +1632,21 @@ sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% s
 
 ```{r, warning=FALSE, message=FALSE}
 
-my_plot_bar <- 
+my_plot_bar = function (physeq, x = "Sample", y = "Abundance", fill = NULL, title = NULL, 
+                        facet_grid = NULL) {
+    mdf = psmelt(physeq)
+    p = ggplot(mdf, aes_string(x = x, y = y, fill = fill))
+    p = p + geom_bar(stat = "identity")
+    p = p + theme(axis.text.x = element_text(angle = -90, hjust = 0)) +
+            scale_x_discrete(drop = F)
+    if (!is.null(facet_grid)) {
+        p <- p + facet_grid(facet_grid)
+    }
+    if (!is.null(title)) {
+        p <- p + ggtitle(title)
+    }
+    return(p)
+}
 
 a <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                               sample_type == "Mock")) %>%
@@ -1895,11 +1903,11 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         ggtitle("C    Sputum")
 
 
-fig2 <- ggarrange(c, c %>% g_legend() %>% as_ggplot,
-                  d, d %>% g_legend() %>% as_ggplot,
-                  e, e %>% g_legend() %>% as_ggplot,
-                  a, a %>% g_legend() %>% as_ggplot,
-                  b, b %>% g_legend() %>% as_ggplot,
+fig2 <- ggarrange(c, c %>% lemon::g_legend() %>% as_ggplot,
+                  d, d %>% lemon::g_legend() %>% as_ggplot,
+                  e, e %>% lemon::g_legend() %>% as_ggplot,
+                  a, a %>% lemon::g_legend() %>% as_ggplot,
+                  b, b %>% lemon::g_legend() %>% as_ggplot,
                   ncol=2,nrow=5, widths = c(3, 1),
                   legend = "none",
                   align = "hv")
@@ -3767,7 +3775,7 @@ filt_fit_data_bal$rel <- cbind(filt_bal_sig %>% otu_table %>% t, filt_bal_sig %>
 figS7 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
         theme_classic(base_family = "serif") +
         #labs(tag = "A") +
-        geom_point(size = 2) +
+        geom_point(size = 2, alpha = 0.5) +
         xlab("MaAslin coefficient") +
         ylab("-log<sub>10</sub>(*q*-value)") +
         ylim(c(-1, 35)) +
@@ -3778,7 +3786,7 @@ figS7 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata
                  x=0, y=80,
                  label = "<i>q</i>-value = 0.1, fold-change = 0") +
         theme(legend.position = "top", axis.title.y = ggtext::element_markdown(), legend.text = element_markdown()) +
-        scale_color_manual(values = c("#4daf4a",  "#984ea3", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628"),
+        scale_color_manual(values = c("#4daf4a",  "grey", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628"),
                            breaks = c("log10.Final_reads", "sample_type", "lypma", "benzonase", "host_zero",  "molysis", "qiaamp"), 
                            labels = c("log<sub>10</sub>(Final reads)", "Sample type", "lyPMA", "Benzonase", "Host zero",  "Molysis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         guides(col = guide_legend(title = "Covariates", title.position = "top", nrow = 1))
@@ -3786,7 +3794,7 @@ figS7 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata
 figS7
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS7.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
-    height = 90, # The height of the plot in inches
+    height = 90, # The height of the plot in inches/
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -4445,16 +4453,53 @@ sample_data(phyloseq_rel_nz)$sampletype_treatment <- paste(sample_data(phyloseq_
 
 ```{r}
 
-f4a <-        ggplot(subset(sample_data(phyloseq$phyloseq_path_rpk) %>% data.frame, sample_data(phyloseq$phyloseq_path_rpk)$sample_type %in% c("Sputum", "Nasal", "BAL", "Mock")), aes(y = S.obs)) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Species richness") +
+
+f4a <- ggplot(subset(sample_data(phyloseq$phyloseq_path_rpk) %>% 
+                             data.frame, sample_data(phyloseq$phyloseq_path_rpk)$sample_type %in% c("Sputum", "Nasal", "BAL", "Mock")), aes(x = treatment, y = S.obs)) +
+        geom_jitter(aes(color = treatment), position = position_jitter(0.2), size = 1.2) +
+        stat_summary(aes(color = treatment),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        ylab("Function richness") +
+        xlab("Treatment group") +
         theme_classic (base_size = 12, base_family = "serif") + 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using 
         labs(tag = "A") +
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
         facet_wrap(~sample_type, nrow = 1) + 
-        guides(fill = guide_legend(nrow = 1))
+        guides(fill = guide_legend(nrow = 1)) 
 
+dat_text <- data.frame(
+  label = c("",
+            "*", "**", "**", "**", "***", #label for Mock
+            "*", #label for BAL
+            "*", "***", "**", 
+            "**", "***", "***", "***", "***"),
+  sample_type = c("Mock",
+                  "Mock", "Mock", "Mock", "Mock", "Mock", 
+            "BAL", 
+            "Nasal", "Nasal", "Nasal", 
+            "Sputum", "Sputum", "Sputum", "Sputum", "Sputum"),
+  treatment     = c("Untreated",
+                    "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp", 
+            "Molysis", 
+            "lyPMA", "Host zero", "QIAamp", 
+            "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+  S.obs = c(0,
+            40, 30, 32, 31, 28,
+            43, 
+            10, 22, 25, 
+            85, 100, 130, 120, 110)
+)
+
+dat_text$sample_type <- factor(dat_text$sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum"))
+dat_text$treatment <- factor(dat_text$treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"))
+
+
+#f3a <- f3a + geom_text(
+#  data    = dat_text,
+#  mapping = aes(x = treatment, y = S.obs, label = label)
+#)
 
 
 #distances of betadiversity - boxplots
@@ -5012,7 +5057,7 @@ f_fit_data_bal$rel <- cbind(f_bal_sig %>% otu_table %>% t, f_bal_sig %>% sample_
 figS9 <- ggplot(f_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
         theme_classic(base_family = "serif") +
         #labs(tag = "A") +
-        geom_point(size = 2) +
+        geom_point(size = 2, alpha = 0.5) +
         xlab("MaAslin coefficient") +
         ylab("-log<sub>10</sub>(*q*-value)") +
         geom_hline(yintercept = 1, col = "gray") +
@@ -5022,7 +5067,7 @@ figS9 <- ggplot(f_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) 
                  x=0, y=80,
                  label = "<i>q</i>-value = 0.1, fold-change = 0") +
         theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
-        scale_color_manual(values = c("#4daf4a",  "#984ea3", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628"),
+        scale_color_manual(values = c("#4daf4a",  "grey", "#f781bf", "#377eb8", "#ff7f00", "#ffff33", "#a65628"),
                            breaks = c("log10.Final_reads", "sample_type", "lypma", "benzonase", "host_zero",  "molysis", "qiaamp"), 
                            labels = c("log10(Final reads)", "Sample type", "lyPMA", "Benzonase", "Host zero",  "Molysis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         guides(col = guide_legend(title = "Covariates", title.position = "top", nrow = 2))

@@ -1,12 +1,13 @@
 library(phyloseq)
 library(Maaslin2)
 library(tidyverse)
+library(decontam)
 
 
 # Loading data ------------------------------------------------------------
 
 
-phyloseq <- readRDS("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds")
+phyloseq <- readRDS("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/Archive/PHY_20230521_MGK_host_tidy.rds")
 
 # Adding alpha diversity indices ------------------------------------------
 
@@ -27,10 +28,10 @@ alpha_diversity <- function(data) {
 
 sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
 sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
-sample_data(phyloseq$phyloseq_path_rpkm) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpkm))
+sample_data(phyloseq$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpk))
 
 
-
+phyloseq_unfiltered <- phyloseq
 # Decontam ----------------------------------------------------------------
 sample_data(phyloseq_unfiltered$phyloseq_rel)$is.neg <- grepl("Neg", sample_data(phyloseq_unfiltered$phyloseq_rel)$sample_type)
 
@@ -79,9 +80,8 @@ species_italic <- function(data) {
 
 
 contaminants %>% 
-        mutate(Taxa = species_italic(Taxa)) %>%
-        kbl(format = "markdown", escape = F) %>%
-        kable_styling(full_width = 0, html_font = "serif") 
+        mutate(Taxa = species_italic(Taxa))
+
 
 contaminant <- contaminants$Taxa
 
@@ -105,9 +105,9 @@ taxa_qc <- data.frame("species" =  otu_table(subset_samples(phyloseq$phyloseq_co
                               colMeans(na.rm = T) #mean relativ abundacne 
 )
 
-function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>% t() %>% colnames(),
-                          "prevalence" = ifelse(subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
-                          "mean_rpkm" = subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
+function_qc <- data.frame("function" =  otu_table(subset_samples(phyloseq$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))) %>% t() %>% colnames(),
+                          "prevalence" = ifelse(subset_samples(phyloseq$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() > 0, 1, 0) %>% t() %>% colSums(), #Prevalence of taxa
+                          "mean_rpk" = subset_samples(phyloseq$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum")) %>% otu_table() %>% t() %>% colMeans(na.rm = T) #mean relativ abundacne 
 )
 
 
@@ -117,12 +117,10 @@ red_flag_taxa <- data.frame(species = taxa_qc$species,
                             red_flag_prev_abd = ifelse(taxa_qc$prevalence < otu_table(phyloseq$phyloseq_rel) %>%
                                                                t %>% rownames() %>%
                                                                length * 0.05 & taxa_qc$mean_rel_abd < quantile(taxa_qc$mean_rel_abd, 0.75), 1,0)) %>%
-        mutate(red_flag_decontam_prev = species %in% (contaminant %>%
-                                                              subset(., .$method == "prevalence" & .$sample_type != "all") %>%
-                                                              .$contaminant %>% unique()))
+        mutate(red_flag_decontam_prev = species %in% (contaminants$Taxa %>% unique()))
 
 
-red_flag_function <- data.frame(function. = function_qc$function., red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpkm) %>% t %>% rownames() %>% length * 0.05 & function_qc$mean_rpkm < quantile(function_qc$mean_rpkm, 0.75), 1, 0))
+red_flag_function <- data.frame(function. = function_qc$function., red_flag_prev_abd = ifelse(function_qc$prevalence < otu_table(phyloseq$phyloseq_path_rpk) %>% t %>% rownames() %>% length * 0.05 & function_qc$mean_rpk < quantile(function_qc$mean_rpk, 0.75), 1, 0))
 
 
 # Adding variables for MaAsLin --------------------------------------------
@@ -131,16 +129,16 @@ sample_data(phyloseq$phyloseq_rel)$log10.Final_reads <- log10(sample_data(phylos
 sample_data(phyloseq$phyloseq_rel)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_rel)$sample_type, sample_data(phyloseq$phyloseq_rel)$treatment, sep = ":")
 sample_data(phyloseq$phyloseq_count)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_count)$Final_reads)
 sample_data(phyloseq$phyloseq_count)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_count)$Final_reads)
-sample_data(phyloseq$phyloseq_path_rpkm)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_path_rpkm)$Final_reads)
-sample_data(phyloseq$phyloseq_path_rpkm)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpkm)$sample_type, sample_data(phyloseq$phyloseq_path_rpkm)$treatment, sep = ":")
+sample_data(phyloseq$phyloseq_path_rpk)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_path_rpk)$Final_reads)
+sample_data(phyloseq$phyloseq_path_rpk)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpk)$sample_type, sample_data(phyloseq$phyloseq_path_rpk)$treatment, sep = ":")
 
 
 # Making new phyloseq object ----------------------------------------------
 
 phyloseq$phyloseq_count_filtered <- prune_taxa(subset(red_flag_taxa,
-                                                     red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
+                                                     red_flag_taxa$red_flag_prev_abd != 1)$species,
                                               phyloseq$phyloseq_count)
-phyloseq$phyloseq_path_rpkm_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpkm)
+phyloseq$phyloseq_path_rpk_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpk)
 phyloseq$phyloseq_rel_filtered <- transform_sample_counts(phyloseq$phyloseq_count_filtered, function (x) {x/sum(x)})
 
 
@@ -200,7 +198,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                        transform = "LOG", #default
-                       normalization = "TSS", # for RPKM, normalization is bit hard
+                       normalization = "TSS", # for rpk, normalization is bit hard
                        random_effects = c("subject_id"), 
                        plot_heatmap = F,
                        plot_scatter = F)
@@ -249,7 +247,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "TSS", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for rpk, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -293,17 +291,17 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$ph
 maaslin_interaction <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
 
 
-sample_data <- sample_data(phyloseq$phyloseq_path_rpkm) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))
-phyloseq$phyloseq_path_rpkm <- subset_samples(phyloseq$phyloseq_path_rpkm, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock", "Neg."))
-sample_data(phyloseq$phyloseq_path_rpkm)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_path_rpkm)$Final_reads)
-sample_data(phyloseq$phyloseq_path_rpkm)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpkm)$sample_type, sample_data(phyloseq$phyloseq_path_rpkm)$treatment, sep = ":")
+sample_data <- sample_data(phyloseq$phyloseq_path_rpk) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))
+phyloseq$phyloseq_path_rpk <- subset_samples(phyloseq$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock", "Neg."))
+sample_data(phyloseq$phyloseq_path_rpk)$log10.Final_reads <- log10(sample_data(phyloseq$phyloseq_path_rpk)$Final_reads)
+sample_data(phyloseq$phyloseq_path_rpk)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpk)$sample_type, sample_data(phyloseq$phyloseq_path_rpk)$treatment, sep = ":")
 
 
 
 
 #all samples
-capture.output(maaslin_all2 = Maaslin2(input_data = otu_table(phyloseq$phyloseq_path_rpkm) %>% t %>% data.frame(), 
-                                       input_metadata = phyloseq$phyloseq_path_rpkm %>% sample_data %>% data.frame(check.names = F), 
+capture.output(maaslin_all2 = Maaslin2(input_data = otu_table(phyloseq$phyloseq_path_rpk) %>% t %>% data.frame(), 
+                                       input_metadata = phyloseq$phyloseq_path_rpk %>% sample_data %>% data.frame(check.names = F), 
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
@@ -318,8 +316,8 @@ f_maaslin_all <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsi
 # # y ~ log(final reads) + sample_type + treatment 
 
 
-capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Mock")) %>% t %>% data.frame(),
-                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Mock")) %>% data.frame(), 
+capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Mock")) %>% t %>% data.frame(),
+                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Mock")) %>% data.frame(), 
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
@@ -333,8 +331,8 @@ f_fit_data_pos <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@mins
 #NS
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Nasal")) %>% t %>% data.frame(),
-                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Nasal")) %>% data.frame(), 
+capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Nasal")) %>% t %>% data.frame(),
+                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Nasal")) %>% data.frame(), 
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
@@ -348,12 +346,12 @@ f_fit_data_ns <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsi
 #bal
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "BAL")) %>% t %>% data.frame(),
-                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "BAL")) %>% data.frame(), 
+capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "BAL")) %>% t %>% data.frame(),
+                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "BAL")) %>% data.frame(), 
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "TSS", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for rpk, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -365,8 +363,8 @@ f_fit_data_bal <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@mins
 #sputum
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Sputum")) %>% t %>% data.frame(),
-                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Sputum")) %>% data.frame(), 
+capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Sputum")) %>% t %>% data.frame(),
+                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Sputum")) %>% data.frame(), 
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
@@ -382,8 +380,8 @@ f_fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@mins
 #NS + mock
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Nasal" | sample_type == "Mock")) %>% t %>% data.frame(),
-                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Nasal" | sample_type == "Mock")) %>% data.frame(), 
+capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Nasal" | sample_type == "Mock")) %>% t %>% data.frame(),
+                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Nasal" | sample_type == "Mock")) %>% data.frame(), 
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
@@ -397,12 +395,12 @@ f_fit_data_ns_mock <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@
 #bal + mock
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "BAL" | sample_type == "Mock")) %>% t %>% data.frame(),
-                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "BAL" | sample_type == "Mock")) %>% data.frame(), 
+capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "BAL" | sample_type == "Mock")) %>% t %>% data.frame(),
+                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "BAL" | sample_type == "Mock")) %>% data.frame(), 
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "TSS", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for rpk, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -414,8 +412,8 @@ f_fit_data_bal_mock <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/
 #sputum + mock
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Sputum" | sample_type == "Mock")) %>% t %>% data.frame(),
-                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm, sample_type == "Sputum" | sample_type == "Mock")) %>% data.frame(), 
+capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Sputum" | sample_type == "Mock")) %>% t %>% data.frame(),
+                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk, sample_type == "Sputum" | sample_type == "Mock")) %>% data.frame(), 
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
@@ -429,11 +427,11 @@ f_fit_data_spt_mock <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/
 
 
 #Generating interaction term
-sample_data(phyloseq$phyloseq_path_rpkm)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpkm)$sample_type, sample_data(phyloseq$phyloseq_path_rpkm)$treatment, sep = "*")
+sample_data(phyloseq$phyloseq_path_rpk)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpk)$sample_type, sample_data(phyloseq$phyloseq_path_rpk)$treatment, sep = "*")
 
 
-capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$phyloseq_path_rpkm) %>% t %>% data.frame(), 
-                                              input_metadata = phyloseq$phyloseq_path_rpkm %>% sample_data %>% data.frame(check.names = F), 
+capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$phyloseq_path_rpk) %>% t %>% data.frame(), 
+                                              input_metadata = phyloseq$phyloseq_path_rpk %>% sample_data %>% data.frame(check.names = F), 
                                               output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                               fixed_effects = c("sample_type", "log10.Final_reads", "treatment", "sampletype_treatment"), 
                                               transform = "LOG", #default
@@ -528,7 +526,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "TSS", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for rpk, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -577,7 +575,7 @@ capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(ph
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "TSS", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for rpk, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -622,8 +620,8 @@ filt_maaslin_interaction <- read.csv("/Users/minsikkim/Dropbox (Partners HealthC
 
 
 #all samples
-capture.output(maaslin_all2 = Maaslin2(input_data = otu_table(phyloseq$phyloseq_path_rpkm_filtered) %>% t %>% data.frame(), 
-                                       input_metadata = phyloseq$phyloseq_path_rpkm_filtered %>% sample_data %>% data.frame(check.names = F), 
+capture.output(maaslin_all2 = Maaslin2(input_data = otu_table(phyloseq$phyloseq_path_rpk_filtered) %>% t %>% data.frame(), 
+                                       input_metadata = phyloseq$phyloseq_path_rpk_filtered %>% sample_data %>% data.frame(check.names = F), 
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("sample_type", "log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
@@ -638,8 +636,8 @@ filt_f_maaslin_all <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@
 # # y ~ log(final reads) + sample_type + treatment 
 
 
-capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Mock")) %>% t %>% data.frame(),
-                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Mock")) %>% data.frame(), 
+capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Mock")) %>% t %>% data.frame(),
+                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Mock")) %>% data.frame(), 
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
@@ -652,8 +650,8 @@ filt_f_fit_data_pos <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/
 #NS
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Nasal")) %>% t %>% data.frame(),
-                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Nasal")) %>% data.frame(), 
+capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Nasal")) %>% t %>% data.frame(),
+                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Nasal")) %>% data.frame(), 
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
@@ -667,12 +665,12 @@ filt_f_fit_data_ns <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@
 #bal
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "BAL")) %>% t %>% data.frame(),
-                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "BAL")) %>% data.frame(), 
+capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "BAL")) %>% t %>% data.frame(),
+                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "BAL")) %>% data.frame(), 
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "TSS", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for rpk, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -684,8 +682,8 @@ filt_f_fit_data_bal <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/
 #sputum
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Sputum")) %>% t %>% data.frame(),
-                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Sputum")) %>% data.frame(), 
+capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Sputum")) %>% t %>% data.frame(),
+                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Sputum")) %>% data.frame(), 
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
@@ -701,8 +699,8 @@ filt_f_fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/
 #NS + mock
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Nasal" | sample_type == "Mock")) %>% t %>% data.frame(),
-                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Nasal" | sample_type == "Mock")) %>% data.frame(), 
+capture.output(fit_data_ns2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Nasal" | sample_type == "Mock")) %>% t %>% data.frame(),
+                                       input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Nasal" | sample_type == "Mock")) %>% data.frame(), 
                                        output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                        fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                        transform = "LOG", #default
@@ -716,12 +714,12 @@ filt_f_fit_data_ns_mock <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCa
 #bal + mock
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "BAL" | sample_type == "Mock")) %>% t %>% data.frame(),
-                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "BAL" | sample_type == "Mock")) %>% data.frame(), 
+capture.output(fit_data_bal2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "BAL" | sample_type == "Mock")) %>% t %>% data.frame(),
+                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "BAL" | sample_type == "Mock")) %>% data.frame(), 
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
-                                        normalization = "TSS", # for RPKM, normalization is bit hard
+                                        normalization = "TSS", # for rpk, normalization is bit hard
                                         random_effects = c("subject_id"), 
                                         plot_heatmap = F,
                                         plot_scatter = F)
@@ -733,8 +731,8 @@ filt_f_fit_data_bal_mock <- read.csv("/Users/minsikkim/Dropbox (Partners HealthC
 #sputum + mock
 # # y ~ log(final reads) + sample_type + treatment 
 
-capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Sputum" | sample_type == "Mock")) %>% t %>% data.frame(),
-                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpkm_filtered, sample_type == "Sputum" | sample_type == "Mock")) %>% data.frame(), 
+capture.output(fit_data_spt2 = Maaslin2(input_data = otu_table(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Sputum" | sample_type == "Mock")) %>% t %>% data.frame(),
+                                        input_metadata = sample_data(subset_samples(phyloseq$phyloseq_path_rpk_filtered, sample_type == "Sputum" | sample_type == "Mock")) %>% data.frame(), 
                                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                         fixed_effects = c("log10.Final_reads","lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                                         transform = "LOG", #default
@@ -748,11 +746,11 @@ filt_f_fit_data_spt_mock <- read.csv("/Users/minsikkim/Dropbox (Partners HealthC
 
 
 #Generating interaction term
-sample_data(phyloseq$phyloseq_path_rpkm_filtered)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpkm_filtered)$sample_type, sample_data(phyloseq$phyloseq_path_rpkm_filtered)$treatment, sep = "*")
+sample_data(phyloseq$phyloseq_path_rpk_filtered)$sampletype_treatment <- paste(sample_data(phyloseq$phyloseq_path_rpk_filtered)$sample_type, sample_data(phyloseq$phyloseq_path_rpk_filtered)$treatment, sep = "*")
 
 
-capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$phyloseq_path_rpkm_filtered) %>% t %>% data.frame(), 
-                                              input_metadata = phyloseq$phyloseq_path_rpkm_filtered %>% sample_data %>% data.frame(check.names = F), 
+capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$phyloseq_path_rpk_filtered) %>% t %>% data.frame(), 
+                                              input_metadata = phyloseq$phyloseq_path_rpk_filtered %>% sample_data %>% data.frame(check.names = F), 
                                               output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
                                               fixed_effects = c("sample_type", "log10.Final_reads", "treatment", "sampletype_treatment"), 
                                               transform = "LOG", #default

@@ -2677,31 +2677,34 @@ f3a <- ggplot(subset(sample_data(phyloseq$phyloseq_count) %>%
         theme_classic (base_size = 12, base_family = "serif") + 
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using 
         labs(tag = "A") +
-        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+        theme(plot.tag = element_text(size = 15),
+              axis.text.x = element_blank(),
+              axis.ticks.x = element_blank(),
+              legend.position = "top") +
         facet_wrap(~sample_type, nrow = 1) + 
-        guides(fill = guide_legend(nrow = 1)) 
+        guides(col = guide_legend(nrow = 1)) 
 
 dat_text <- data.frame(
-  label = c("",
-            "*", "**", "**", "**", "***", #label for Mock
-            "*", #label for BAL
-            "*", "***", "**", 
-            "**", "***", "***", "***", "***"),
-  sample_type = c("Mock",
-                  "Mock", "Mock", "Mock", "Mock", "Mock", 
-            "BAL", 
-            "Nasal", "Nasal", "Nasal", 
-            "Sputum", "Sputum", "Sputum", "Sputum", "Sputum"),
-  treatment     = c("Untreated",
-                    "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp", 
-            "Molysis", 
-            "lyPMA", "Host zero", "QIAamp", 
-            "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
-  S.obs = c(0,
-            40, 30, 32, 31, 28,
-            43, 
-            10, 22, 25, 
-            85, 100, 130, 120, 110)
+  label = c(
+          "", "***", "***", "**", "***", #label for Mock
+          "", "", "", "*", "", #label for BAL
+          "", "", "***", "*", "**", 
+          "**", "***", "***", "***", "***"),
+  sample_type = c(
+          "Mock", "Mock", "Mock", "Mock", "Mock", 
+          "BAL", "BAL", "BAL", "BAL", "BAL", 
+          "Nasal", "Nasal", "Nasal", "Nasal", "Nasal", 
+          "Sputum", "Sputum", "Sputum", "Sputum", "Sputum"),
+  treatment     = c(
+          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp", 
+          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp",
+          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp",
+          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+  S.obs = c(
+          50, 30, 35, 33, 31,
+          30, 35, 50, 52, 50,
+          30, 30, 30, 35, 30,
+          100, 120, 147, 140, 125)
 )
 
 dat_text$sample_type <- factor(dat_text$sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum"))
@@ -2845,9 +2848,7 @@ f3b2 <- path_horn_dist_long_within_sampleid_from_control %>%
         #geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "serif") +
         scale_x_continuous(breaks = c(-0.5, 0, 0.5, 1, 1.5), labels = c(-0.5, "0 (low bias)", 0.5, 1, "1.5 (high bias)"))
 
-fig3 <- ggarrange(f3a, f3b2, ncol = 1, common.legend = T, align = "hv") +
-        guides(fill = guide_legend(nrow = 1))
-fig3
+fig3 <- ggarrange(f3a, f3b2, ncol = 1, common.legend = T, align = "hv")
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches

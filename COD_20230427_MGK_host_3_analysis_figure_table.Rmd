@@ -1212,26 +1212,22 @@ merged_contaminants <- merge(contaminants, prev_all %>% rownames_to_column("Taxa
         remove_rownames()
 
 
-
-species_italic <- function(data) {
-  names <- gsub("_", " ", data)
-  names <- gsub("[]]|[[]", "", names)
-  names <- gsub(" sp", " sp.", names)
-  names <- gsub(" sp.", "* sp.", names)
-  names <- gsub(" group", "* group.", names)
-  names <- ifelse(grepl("[*]", names), paste("*", names, sep = ""), paste("*", names, "*", sep = ""))
-  names
+species_italic2 <- function(data){
+  data <- gsub("_", " ", data)
+  data <- gsub("[]]|[[]", "", data)
+  data <- gsub(" sp", " sp.", data)
+  data <- gsub(" sp.", "</em> sp.", data)
+  data <- gsub(" group", "", data)
+  data <- ifelse(grepl("[*]", data), paste("<em>", data, sep = ""), paste("<em>", data, "</em>", sep = ""))
+  data
 }
 
-
 tableS4 <- merged_contaminants %>% 
-        mutate(Taxa = species_italic(Taxa)) %>%
-        kbl(format = "markdown", escape = F) %>%
+        mutate(Taxa = species_italic2(Taxa)) %>%
+        kbl(format = "html", escape = F) %>%
         kable_styling(full_width = 0, html_font = "serif") 
-
-
-
 tableS4
+
 
 save_kable(tableS4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS4.html", self_contained = T)
 ```
@@ -1265,8 +1261,6 @@ contaminants %>%
 
 
 ## Filtering taxa {.tabset}
-
-
 
 ### Prevalence filtering 
 
@@ -1458,7 +1452,8 @@ save_kable(table1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Projec
 
 ### {-}
 
-## **+ α** *Does breakaay detects underestimated bugs in untreated sample?*
+
+## **+ α** *Amy's analys result have changes in taxa?*
 
  - Waiting for Amy's analysis result
 
@@ -1787,9 +1782,7 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
            transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
    tax_table(phyloseq_temp) <- tax_table(.) 
    sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
-           factor %>% 
-           as.numeric %>% 
-           factor
+           factor(labels = c("A", "B", "C", "D", "E"))
    phyloseq_temp
   } %>% 
         my_plot_bar(., x = "subject_id", fill="species20") + 
@@ -1837,11 +1830,10 @@ d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
            subset_samples(., S.obs != 0)
    tax_table(phyloseq_temp) <- tax_table(.) 
    sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
-           factor %>% 
-           as.numeric %>% 
-           factor
+           factor(labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")) %>%
+           as.character()
    phyloseq_temp
-  } %>%
+  } %>% 
         my_plot_bar(., x = "subject_id", fill="species20") + 
         ylab("") +
         theme_classic(base_size = 11, base_family = "serif") +
@@ -1885,9 +1877,7 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
            subset_samples(., S.obs != 0)
    tax_table(phyloseq_temp) <- tax_table(.) 
    sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
-           factor %>% 
-           as.numeric %>% 
-           factor
+           factor(labels = c("A", "B", "C", "D", "E"))
    phyloseq_temp
   } %>%
         my_plot_bar(., x = "subject_id", fill="species20")+
@@ -1907,8 +1897,8 @@ fig2 <- ggarrange(c, c %>% lemon::g_legend() %>% as_ggplot,
                   d, d %>% lemon::g_legend() %>% as_ggplot,
                   e, e %>% lemon::g_legend() %>% as_ggplot,
                   a, a %>% lemon::g_legend() %>% as_ggplot,
-                  b, b %>% lemon::g_legend() %>% as_ggplot,
-                  ncol=2,nrow=5, widths = c(3, 1),
+                  #b, b %>% lemon::g_legend() %>% as_ggplot,
+                  ncol=2,nrow=4, widths = c(3, 1),
                   legend = "none",
                   align = "hv")
 
@@ -3811,8 +3801,6 @@ dev.off()
 
 ```{r}
 
-
-
 f5a <- merge(filt_fit_data_pos$rel %>%
               gather(treatment,
                      value,
@@ -3910,16 +3898,17 @@ f5b <- merge(filt_fit_data_bal$rel %>%
         ggballoonplot(size = "value", y = "feature", x= "treatment", fill = "sig") +
         theme_classic(base_family = "serif") +
         #colors for qvalues
-        xlab("Experimental group") +
-        ylab("Species") +
-        labs(tag = "B")  +
-        ggtitle("BAL") +
+        #xlab("Experimental group") +
+        #ylab("Species") +
+        #labs(tag = "B")  +
+        ggtitle("A  BAL") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
-              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7))  +
-        
+              axis.text.y = ggtext::element_markdown(size = 7),
+              axis.title.y = element_blank(),
+              axis.title.x = element_blank())  +
         scale_fill_manual(values = c("grey", "red"), aes(y = feature,
                       x = treatment,
                       label = sig)) +
@@ -3930,7 +3919,7 @@ f5b <- merge(filt_fit_data_bal$rel %>%
                size = guide_legend(title = "Relative abundance",
                                    title.position = "top",
                                    order = 1,
-                                   nrow = 1),
+                                   nrow = 1)
                ) + 
         scale_x_discrete(labels=c("control" = "Untreated",
                                   "lypma" = "lyPMA",
@@ -3974,13 +3963,14 @@ f5c <- merge(filt_fit_data_ns$rel %>%
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
         ylab("Species") +
-        labs(tag = "C")  +
-        ggtitle("Nasal swab") +
+        #labs(tag = "C")  +
+        ggtitle("B  Nasal swab") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
-              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7))  +
+              axis.text.y = ggtext::element_markdown(size = 7),
+              axis.title.x = element_blank())  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
                       x = treatment,
@@ -3988,7 +3978,8 @@ f5c <- merge(filt_fit_data_ns$rel %>%
         guides(fill = guide_legend(title = c(expression(paste(italic("q"),
                                                        "-value",
                                                        sep = ""))),
-                                   title.position = "top"),
+                                   title.position = "top",
+                                   override.aes = list(size=5)),
                size = guide_legend(title = "Relative abundance",
                                    title.position = "top",
                                    order = 1,
@@ -4034,15 +4025,16 @@ f5d <- merge(filt_fit_data_spt$rel %>%
         #colors for qvalues
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
-        ylab("Species") +
-        labs(tag = "D")  +
-        ggtitle("Sputum") +
+        #ylab("Species") +
+        #labs(tag = "D")  +
+        ggtitle("C  Sputum") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
-              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 7),
-              axis.title.x = element_text(margin = margin(t = 20)))  +
+              axis.title.x = element_text(margin = margin(t = 20)),
+              axis.title.y = element_blank())  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
                       x = treatment,
@@ -4063,12 +4055,20 @@ f5d <- merge(filt_fit_data_spt$rel %>%
                                   "molysis" = "Molysis",
                                   "qiaamp" = "QIAamp")
                          )
-fig4 <- ggarrange(f5a, f5b, f5c, f5d, align = "hv", common.legend = T)
+
+fig4 <- ggarrange(f5c %>% lemon::g_legend() %>% as_ggplot,
+                  f5b,
+                  f5c,
+                  f5d,
+                  #b, b %>% lemon::g_legend() %>% as_ggplot,
+                  ncol=1, heights = c(1.5, 4, 4, 4),
+                  legend = "none",
+                  align = "hv")
 
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
-    height = 170, # The height of the plot in inches
+    height = 220, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue

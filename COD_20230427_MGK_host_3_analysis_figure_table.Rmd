@@ -302,20 +302,26 @@ sample_data <- sample_data(phyloseq$phyloseq_count)
 ```{r warning=F, message=FALSE, "Data loading 2"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
-tinyvamp_host_zero <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/hostzero_p_hats.RDS") %>%
+
+
+tinyvamp_untreated <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230719_amy/untreated_sparser2.RDS") %>%
         t()
 
-tinyvamp_untreated <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/untreated_p_hats.RDS") %>%
+tinyvamp_lypma <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230719_amy/lypma_sparser2.RDS") %>%
         t()
 
-tinyvamp_qiaamp <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/qiaamp_p_hats.RDS") %>%
+tinyvamp_benzonase <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230719_amy/benzonase_sparser2.RDS") %>%
         t()
 
-tinyvamp_lypma <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/lympa_p_hats.RDS") %>%
+tinyvamp_host_zero <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230719_amy/hostzero_sparser2.RDS") %>%
         t()
 
-tinyvamp_molysis <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/molysis_p_hats.RDS") %>% 
+tinyvamp_molysis <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230719_amy/molysis_sparser2.RDS") %>% 
         t()
+
+tinyvamp_qiaamp <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230719_amy/qiaamp_sparser2.RDS") %>% 
+        t()
+
         
 #tinyvamp_benzonase <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/benzonase_p_hats.RDS")
 
@@ -324,14 +330,27 @@ sample_data_tv <- phyloseq$phyloseq_rel %>%
         sample_data %>% data.frame() %>% mutate("names"= paste(.$original_sample, .$treatment, sep = "_")) %>%
         remove_rownames() %>% column_to_rownames("names") %>% sample_data()
 
-phyloseq_tv <- merge_phyloseq(merge_phyloseq(sample_data_tv, otu_table(tinyvamp_host_zero, taxa_are_rows = T)),
-               merge_phyloseq(sample_data_tv, otu_table(tinyvamp_lypma, taxa_are_rows = T)),
-               merge_phyloseq(sample_data_tv, otu_table(tinyvamp_molysis, taxa_are_rows = T)),
-               merge_phyloseq(sample_data_tv, otu_table(tinyvamp_qiaamp, taxa_are_rows = T)),
-               merge_phyloseq(sample_data_tv, otu_table(tinyvamp_untreated, taxa_are_rows = T)),
-               tax_table(phyloseq$phyloseq_rel)
+phyloseq_tv <- merge_phyloseq(
+        merge_phyloseq(sample_data_tv,
+                       otu_table(tinyvamp_untreated,
+                                 taxa_are_rows = T)),
+        merge_phyloseq(sample_data_tv,
+                       otu_table(tinyvamp_lypma,
+                                 taxa_are_rows = T)),
+        merge_phyloseq(sample_data_tv,
+                       otu_table(tinyvamp_benzonase,
+                                 taxa_are_rows = T)),
+        merge_phyloseq(sample_data_tv,
+                       otu_table(tinyvamp_host_zero,
+                                 taxa_are_rows = T)),
+        merge_phyloseq(sample_data_tv,
+                       otu_table(tinyvamp_molysis,
+                                 taxa_are_rows = T)),
+        merge_phyloseq(sample_data_tv,
+                       otu_table(tinyvamp_qiaamp,
+                                 taxa_are_rows = T)),
+        tax_table(phyloseq$phyloseq_rel)
 )
-
 
 ```
 
@@ -2869,25 +2888,6 @@ dev.off()
 ```
 
 
-### Boxplot of speices richness
-
-```{r}
-
-f3a <-        ggplot(subset(sample_data(phyloseq$phyloseq_count) %>% data.frame, sample_data(phyloseq$phyloseq_count)$sample_type %in% c("Sputum", "Nasal", "BAL", "Mock")), aes(y = S.obs)) +
-        geom_boxplot(aes(fill = treatment), lwd = 0.2) +
-        scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        ylab("Species richness") +
-        xlab("Treatment group") +
-        theme_classic (base_size = 12, base_family = "serif") + 
-        labs(tag = "A") +
-        theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-              legend.position = "top") +
-        facet_wrap(~sample_type, nrow = 1) + 
-        guides(fill = guide_legend(nrow = 1))
-
-f3a
-```              
-
 ### {-}
 
 
@@ -3225,9 +3225,9 @@ save_kable(tableS6, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Proje
 
 ```
 
-### PERMANOVA - Stratified (Table 3)
+### PERMANOVA - Stratified (Table S7)
 
-**Table 3**. Degree of freedom, effect size (residual, R^2) and p-value of permutational ANOVA for Morisita-Horn distiances  for species richness stratified by sample type (MH-distance ~ lyPMA + Benzoase + Host zero + Molysis + QIAamp + log10 (Final_reads), strata = subject_id).
+**Table S7**. Degree of freedom, effect size (residual, R^2) and p-value of permutational ANOVA for Morisita-Horn distiances  for species richness stratified by sample type (MH-distance ~ lyPMA + Benzoase + Host zero + Molysis + QIAamp + log10 (Final_reads), strata = subject_id).
 
 
 ```{r}
@@ -3305,9 +3305,9 @@ save_kable(table3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Projec
 
 ```
 
-### LM on M-H distance (Table S7)
+### LM on M-H distance (Table S8)
 
-**Table S7**. Effect size, standard error (SE) and p-value of a statistical test for Horn-Morisita distance from untreated to each treated within subject (BC-distance wihtin subject by treatment~ sample type + treatment + sampetype * treatment + log10 (Final_reads) + (1|subject_id) ).
+**Table S8**. Effect size, standard error (SE) and p-value of a statistical test for Horn-Morisita distance from untreated to each treated within subject (BC-distance wihtin subject by treatment~ sample type + treatment + sampetype * treatment + log10 (Final_reads) + (1|subject_id) ).
 
 ```{r}
 
@@ -3411,7 +3411,7 @@ tables7
 
 ```
 
-### Permanova figure (Figure S6)
+### PCA figure (Figure S6)
 
 **Fig. S6. Stratified beta diversity PCA plot based on M-H index**
 
@@ -3648,8 +3648,6 @@ save_kable(table2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Projec
 table2
 
 ```
-
-
 
 
 # *x.	How were changes of individual taxa?*
@@ -4085,9 +4083,9 @@ dev.off()
 ```
 
 
-### List of DA taxa (Table S8)
+### List of DA taxa (Table S9)
 
-**Table S8.** List of differentailly abundant taxa identified by MaAsLin. Significant associations (q < 0.1) that is showing high change (|log2-fold change| > 0.5) were listed.
+**Table S9.** List of differentailly abundant taxa identified by MaAsLin. Significant associations (q < 0.1) that is showing high change (|log2-fold change| > 0.5) were listed.
 
 ```{r, warning=FALSE, message=FALSE}
 
@@ -4419,9 +4417,6 @@ dev.off()
 
 # **3.4. Effect of treatments on functional analysis results**
 
-
-
-
 # *xi.	Did depletion methods change diversity, by sample type?*
 
 
@@ -4468,33 +4463,40 @@ f4a <- ggplot(subset(sample_data(phyloseq$phyloseq_path_rpk) %>%
         labs(tag = "A") +
         theme(plot.tag = element_text(size = 15),  axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
         facet_wrap(~sample_type, nrow = 1) + 
-        guides(fill = guide_legend(nrow = 1)) 
+        guides(col = guide_legend(nrow = 1)) 
 
 dat_text <- data.frame(
-  label = c("",
-            "*", "**", "**", "**", "***", #label for Mock
-            "*", #label for BAL
-            "*", "***", "**", 
-            "**", "***", "***", "***", "***"),
-  sample_type = c("Mock",
-                  "Mock", "Mock", "Mock", "Mock", "Mock", 
-            "BAL", 
-            "Nasal", "Nasal", "Nasal", 
-            "Sputum", "Sputum", "Sputum", "Sputum", "Sputum"),
-  treatment     = c("Untreated",
-                    "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp", 
-            "Molysis", 
-            "lyPMA", "Host zero", "QIAamp", 
-            "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
-  S.obs = c(0,
-            40, 30, 32, 31, 28,
-            43, 
-            10, 22, 25, 
-            85, 100, 130, 120, 110)
+  label = c(
+          "**", "***", "***", "", "***", #label for Mock
+          "", "**", "***", "***", "**", #label for BAL
+          "", "", "***", "**", "***", 
+          "**", "***", "***", "***", "***"),
+  sample_type = c(
+          "Mock", "Mock", "Mock", "Mock", "Mock", 
+          "BAL", "BAL", "BAL", "BAL", "BAL", 
+          "Nasal", "Nasal", "Nasal", "Nasal", "Nasal", 
+          "Sputum", "Sputum", "Sputum", "Sputum", "Sputum"),
+  treatment     = c(
+          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp", 
+          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp",
+          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp",
+          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+  S.obs = c(
+          420, 400, 330, 410, 400,
+          250, 230, 300, 320, 300,
+          210, 220, 230, 240, 250,
+          330, 350, 370, 350, 360)
 )
 
 dat_text$sample_type <- factor(dat_text$sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum"))
 dat_text$treatment <- factor(dat_text$treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"))
+
+
+
+f4a <- f4a + geom_text(
+  data    = dat_text,
+  mapping = aes(x = treatment, y = S.obs, label = label)
+)
 
 
 #f3a <- f3a + geom_text(
@@ -4688,9 +4690,9 @@ lmer(S.obs ~ sample_type * treatment + log_centered_final_reads + (1|subject_id)
 
 ```
 
-### Function richness - all & stratified (Table S9)
+### Function richness - all & stratified (Table S10)
 
-**Table S9.** Effect size, standard error (SE) and p-value of a statistical test for function richness with an interaction term using linear mixed effect model (Species richness ~ treatment + (1|subject_id) ).
+**Table S10.** Effect size, standard error (SE) and p-value of a statistical test for function richness with an interaction term using linear mixed effect model (Species richness ~ treatment + (1|subject_id) ).
 
 
 both non stratified and **Stratified analysis** will be conducted.
@@ -4699,7 +4701,7 @@ Association was not adjusted with sequencing depth.
 
 ```{r}
 
-sr_lmer_all <- lmer(S.obs ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum"))) %>% 
+sr_lmer_mock <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Mock"))) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -4789,7 +4791,7 @@ sr_lmer_spt <- lmer(S.obs ~ treatment + (1|subject_id), data = sample_data %>% d
         select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
 
 
-tables9 <- cbind(sr_lmer_all, sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
+tables9 <- cbind(sr_lmer_mock, sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
     kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "All" = 3, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "serif")
@@ -4860,10 +4862,10 @@ bray_perm_inter %>% data.frame(check.names = F) %>% rownames_to_column("row.name
 
 ```
 
-### Function beta - stratified (Table S10)
+### Function beta - stratified (Table S11)
 
 
-**Table S10**. Degree of freedom, effect size (residual, R^2) and p-value of permutational ANOVA for functional Horn-Morisita distances with an interaction term and strata term (BC-distance of functions ~ sample type * treatment + log10(final reads), strata = subject id).
+**Table S11**. Degree of freedom, effect size (residual, R^2) and p-value of permutational ANOVA for functional Horn-Morisita distances with an interaction term and strata term (BC-distance of functions ~ sample type * treatment + log10(final reads), strata = subject id).
 
 ```{r}
 
@@ -5373,9 +5375,431 @@ dev.off()
 ### {-}
 
 
-# Final results summary {.tabset}
+# 3.5. Sensitivity analysis after decontamination
+
+# *xiii. Is species richness similar after decontamination?*
+
+        Species richness of raw and decontaminated figure
+
+                a.	boxplot of species richness (Fig 3A)
+                b.	decontaminated boxplot of species richness
+     
+
+## Sensitivity analysis {.tabset}
+
+### Species richness of decontaminated output
+
+As some of the species richenss got way higher, this data cannot be used for alpha diversity indices.
+
+```{r}
 
 
+f10a <- ggplot(subset(sample_data(phyloseq$phyloseq_count) %>% 
+                             data.frame, sample_data(phyloseq$phyloseq_count)$sample_type %in% c("Sputum", "Nasal", "BAL", "Mock")), aes(x = treatment, y = S.obs)) +
+        geom_jitter(aes(color = treatment), position = position_jitter(0.2), size = 1.2) +
+        stat_summary(aes(color = treatment),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        ylab("Species richness") +
+        xlab("Treatment group") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using 
+        labs(tag = "A") +
+        ggtitle(" Raw data") +
+        theme(plot.tag = element_text(size = 15),
+              axis.text.x = element_blank(),
+              axis.ticks.x = element_blank(),
+              legend.position = "top") +
+        facet_wrap(~sample_type, nrow = 1) + 
+        guides(col = guide_legend(nrow = 1)) 
+
+f10b <- ggplot(subset(sample_data(phyloseq_tv) %>% 
+                             data.frame, sample_data(phyloseq_tv)$sample_type %in% c("Sputum", "Nasal", "BAL", "Mock")), aes(x = treatment, y = S.obs)) +
+        geom_jitter(aes(color = treatment), position = position_jitter(0.2), size = 1.2) +
+        stat_summary(aes(color = treatment),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        ylab("Species richness") +
+        xlab("Treatment group") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using 
+        labs(tag = "B") +
+        ggtitle("Decontaminated data") +
+        theme(plot.tag = element_text(size = 15),
+              axis.text.x = element_blank(),
+              axis.ticks.x = element_blank(),
+              legend.position = "top") +
+        facet_wrap(~sample_type, nrow = 1) + 
+        guides(col = guide_legend(nrow = 1)) 
+
+ggarrange(f10a, f10b, common.legend = T, ncol = 1)
+
+
+
+```
+
+
+### Beta diversity distances of decontaminated output
+
+As the increase in species richness are due to slight increase of relative abundanace of some taxa (became 0 to 0.0001, etc.), beta-diversity indice can be used for assessing the changes after host-depletion
+
+
+```{r}
+
+#Making subset of non-zero samples without neg
+
+phyloseq_rel_nz <- phyloseq$phyloseq_rel %>%
+        subset_samples(S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))
+
+#distances of betadiversity - boxplots
+horn_dist_long <- distance(phyloseq_rel_nz, method="horn") %>% as.matrix() %>% melt_dist() #making long data of distance matrices
+
+#Adding sample type and treatment name. 
+#this can be also done by merging metadata into the `horn_dist_long`
+names <- data.frame(str_split_fixed(horn_dist_long$iso1, "_", 3))
+names2 <- data.frame(str_split_fixed(horn_dist_long$iso2, "_", 3))
+horn_dist_long$sample_id_1 <- paste(names$X1, names$X2, sep = "_")
+horn_dist_long$method_1 <- ifelse(grepl("lyPMA", horn_dist_long$iso1),"lypma", 
+                                         ifelse(grepl("ben", horn_dist_long$iso1),"benzonase", 
+                                                ifelse(grepl("host", horn_dist_long$iso1),"host_zero", 
+                                                       ifelse(grepl("qia", horn_dist_long$iso1),"qiaamp", 
+                                                              ifelse(grepl("moly", horn_dist_long$iso1),"molysis", 
+                                                                     "control")))))
+
+
+#Adding data for iso 2 also should be done
+horn_dist_long$sample_id_2 <- paste(names2$X1, names2$X2, sep = "_")
+horn_dist_long$method_2 <-ifelse(grepl("lyPMA", horn_dist_long$iso2),"lypma", 
+                                        ifelse(grepl("ben", horn_dist_long$iso2),"benzonase", 
+                                               ifelse(grepl("host", horn_dist_long$iso2),"host_zero", 
+                                                      ifelse(grepl("qia", horn_dist_long$iso2),"qiaamp", 
+                                                             ifelse(grepl("moly", horn_dist_long$iso2),"molysis", 
+                                                                    "control")))))
+
+
+#subsetting distances of my interest
+horn_dist_long$sample_id_1 <- ifelse(grepl("pos", horn_dist_long$sample_id_1, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", horn_dist_long$sample_id_1, ignore.case = T),"Neg.",
+                                        horn_dist_long$sample_id_1))
+horn_dist_long$sample_id_2 <- ifelse(grepl("pos", horn_dist_long$sample_id_2, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", horn_dist_long$sample_id_2, ignore.case = T),"Neg.",
+                                        horn_dist_long$sample_id_2))
+
+
+path_horn_dist_long_within_sampleid_from_control <- subset(horn_dist_long, horn_dist_long$sample_id_1 == horn_dist_long$sample_id_2) # data within samples
+
+path_horn_dist_long_within_sampleid_from_control <- subset(path_horn_dist_long_within_sampleid_from_control,
+                                                           path_horn_dist_long_within_sampleid_from_control$method_1 != path_horn_dist_long_within_sampleid_from_control$method_2) # remove irrelevant association
+
+path_horn_dist_long_within_sampleid_from_control <- subset(path_horn_dist_long_within_sampleid_from_control, (path_horn_dist_long_within_sampleid_from_control$method_1 == "control") + (path_horn_dist_long_within_sampleid_from_control$method_2 == "control") != 0)
+
+
+path_horn_dist_long_within_sampleid_from_control$treatment <- path_horn_dist_long_within_sampleid_from_control$method_1
+
+path_horn_dist_long_within_sampleid_from_control$treatment <- ifelse(path_horn_dist_long_within_sampleid_from_control$treatment == "control", path_horn_dist_long_within_sampleid_from_control$method_2, path_horn_dist_long_within_sampleid_from_control$treatment) 
+
+
+#Setting key method
+path_horn_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", path_horn_dist_long_within_sampleid_from_control$iso1), "Nasal",
+                                                                  ifelse(grepl("CFB", path_horn_dist_long_within_sampleid_from_control$iso1), "Sputum",
+                                                                         ifelse(grepl("BAL", path_horn_dist_long_within_sampleid_from_control$iso1), "BAL",
+                                                                                ifelse(grepl("pos|POS", path_horn_dist_long_within_sampleid_from_control$iso1, ignore.case = T), "Mock",
+                                                                                       ifelse(grepl("neg|N_EXT", path_horn_dist_long_within_sampleid_from_control$iso1), "Neg.",NA)))))
+
+#Making a column for baseline (controls, from where?)
+path_horn_dist_long_within_sampleid_from_control <- path_horn_dist_long_within_sampleid_from_control %>% 
+        mutate(dist_from = case_when(method_1 == "control" ~ iso1,
+                                     method_2 == "control" ~ iso2))
+
+dummy <- data.frame(iso1 = path_horn_dist_long_within_sampleid_from_control$dist_from %>% unique,
+           iso2 = path_horn_dist_long_within_sampleid_from_control$dist_from %>% unique,
+           dist = 0,
+           treatment = "Untreated",
+           method_1 = "control",
+           method_2 = "control"
+           )
+names <- data.frame(str_split_fixed(dummy$iso1, "_", 3))
+names2 <- data.frame(str_split_fixed(dummy$iso2, "_", 3))
+dummy$sample_id_1 <- paste(names$X1, names$X2, sep = "_")
+#Adding data for iso 2 also should be done
+dummy$sample_id_2 <- paste(names2$X1, names2$X2, sep = "_")
+
+
+#subsetting distances of my interest
+dummy$sample_id_1 <- ifelse(grepl("pos", dummy$sample_id_1, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", dummy$sample_id_1, ignore.case = T),"Neg.",
+                                        dummy$sample_id_1))
+dummy$sample_id_2 <- ifelse(grepl("pos", dummy$sample_id_2, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", dummy$sample_id_2, ignore.case = T),"Neg.",
+                                        dummy$sample_id_2))
+dummy$sample_type <- ifelse(grepl("NS", dummy$iso1), "Nasal",
+                            ifelse(grepl("CFB", dummy$iso1), "Sputum",
+                                   ifelse(grepl("BAL", dummy$iso1), "BAL",
+                                          ifelse(grepl("pos|POS", dummy$iso1, ignore.case = T), "Mock",
+                                                 ifelse(grepl("neg|N_EXT", dummy$iso1), "Neg.",NA)))))
+dummy <- subset(dummy, !is.na(dummy$sample_type))
+path_horn_dist_long_within_sampleid_from_control <- bind_rows(path_horn_dist_long_within_sampleid_from_control, dummy)
+
+
+
+#Making figure of beta diversity distances
+fd1 <- path_horn_dist_long_within_sampleid_from_control %>% 
+        mutate(across(sample_type, factor, levels=c("Mock", "BAL", "Nasal","Sputum"))) %>%
+        subset(., .$sample_type != "Neg.") %>% 
+        group_by(sample_type, treatment) %>%
+        summarise(mean = mean(dist, na.rm = TRUE),
+            sd = sd(dist, na.rm = TRUE),
+            n = n()) %>%
+  mutate(se = sd / sqrt(n),
+         lower.ci = mean - qt(1 - (0.05 / 2), n - 1) * se,
+         upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se,
+         treatment = factor(treatment, levels = c("Untreated", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
+                            labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp"))) %>%#,
+         #text = paste(sprintf("%.2f", round(mean, digits = 2)), " [", sprintf("%.2f", round(lower.ci, digits = 2)), ", ", sprintf("%.2f", round(upper.ci, digits = 2)), "]", sep = "")) %>%
+        ggplot(aes(x = mean, y = treatment, col = treatment)) +
+        geom_point(aes(x=mean), shape=15, size=3) +
+        geom_linerange(aes(xmin=lower.ci, xmax=upper.ci)) +
+        facet_wrap(~sample_type, nrow = 4) +
+        scale_y_discrete(limits=rev) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        xlab("Distance from untreated") +
+        ylab("Treatment group") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        theme(plot.tag = element_text(size = 15),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              legend.position = "none") +
+        labs(tag = "A") +
+        ggtitle("M-H dist for raw composition") +
+        geom_vline(xintercept = 0, col = "black", linetype="dotted") +
+        #coord_cartesian(xlim=c(-0.5, 1)) +
+        #geom_text(aes(x = 0, label = treatment), hjust = 0, nudge_x = -.55, size = 3, color = "black", family = "serif") +
+        #geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "serif") +
+        scale_x_continuous(breaks = c(-0.5, 0, 0.5, 1, 1.5), labels = c(-0.5, "0 (low bias)", 0.5, 1, "1.5 (high bias)"))
+
+
+#Making subset of non-zero samples without neg
+
+phyloseq_rel_nz_tv <- phyloseq_tv %>%
+        subset_samples(S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))
+
+#distances of betadiversity - boxplots
+horn_dist_long <- distance(phyloseq_rel_nz_tv, method="horn") %>% as.matrix() %>% melt_dist() #making long data of distance matrices
+
+#Adding sample type and treatment name. 
+#this can be also done by merging metadata into the `horn_dist_long`
+names <- data.frame(str_split_fixed(horn_dist_long$iso1, "_", 3))
+names2 <- data.frame(str_split_fixed(horn_dist_long$iso2, "_", 3))
+horn_dist_long$sample_id_1 <- paste(names$X1, names$X2, sep = "_")
+horn_dist_long$method_1 <- ifelse(grepl("lyPMA", horn_dist_long$iso1),"lypma", 
+                                         ifelse(grepl("Ben", horn_dist_long$iso1),"benzonase", 
+                                                ifelse(grepl("Host", horn_dist_long$iso1),"host zero", 
+                                                       ifelse(grepl("QIA", horn_dist_long$iso1),"qiaamp", 
+                                                              ifelse(grepl("Moly", horn_dist_long$iso1),"molysis", 
+                                                                     "control")))))
+
+
+#Adding data for iso 2 also should be done
+horn_dist_long$sample_id_2 <- paste(names2$X1, names2$X2, sep = "_")
+horn_dist_long$method_2 <-ifelse(grepl("lyPMA", horn_dist_long$iso2),"lypma", 
+                                        ifelse(grepl("Ben", horn_dist_long$iso2),"benzonase", 
+                                               ifelse(grepl("Host", horn_dist_long$iso2),"host_zero", 
+                                                      ifelse(grepl("QIA", horn_dist_long$iso2),"qiaamp", 
+                                                             ifelse(grepl("Moly", horn_dist_long$iso2),"molysis", 
+                                                                    "control")))))
+
+
+#subsetting distances of my interest
+horn_dist_long$sample_id_1 <- ifelse(grepl("pos", horn_dist_long$sample_id_1, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", horn_dist_long$sample_id_1, ignore.case = T),"Neg.",
+                                        horn_dist_long$sample_id_1))
+horn_dist_long$sample_id_2 <- ifelse(grepl("pos", horn_dist_long$sample_id_2, ignore.case = T),"Mock", 
+                                 ifelse(grepl("neg|n_", horn_dist_long$sample_id_2, ignore.case = T),"Neg.",
+                                        horn_dist_long$sample_id_2))
+
+
+path_horn_dist_long_within_sampleid_from_control <- subset(horn_dist_long, horn_dist_long$sample_id_1 == horn_dist_long$sample_id_2) # data within samples
+
+path_horn_dist_long_within_sampleid_from_control <- subset(path_horn_dist_long_within_sampleid_from_control,
+                                                           path_horn_dist_long_within_sampleid_from_control$method_1 != path_horn_dist_long_within_sampleid_from_control$method_2) # remove irrelevant association
+
+path_horn_dist_long_within_sampleid_from_control <- subset(path_horn_dist_long_within_sampleid_from_control, (path_horn_dist_long_within_sampleid_from_control$method_1 == "control") + (path_horn_dist_long_within_sampleid_from_control$method_2 == "control") != 0)
+
+
+path_horn_dist_long_within_sampleid_from_control$treatment <- path_horn_dist_long_within_sampleid_from_control$method_1
+
+path_horn_dist_long_within_sampleid_from_control$treatment <- ifelse(path_horn_dist_long_within_sampleid_from_control$treatment == "control", path_horn_dist_long_within_sampleid_from_control$method_2, path_horn_dist_long_within_sampleid_from_control$treatment) 
+
+
+#Setting key method
+path_horn_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", path_horn_dist_long_within_sampleid_from_control$iso1), "Nasal",
+                                                                  ifelse(grepl("CFB", path_horn_dist_long_within_sampleid_from_control$iso1), "Sputum",
+                                                                         ifelse(grepl("BAL", path_horn_dist_long_within_sampleid_from_control$iso1), "BAL",
+                                                                                ifelse(grepl("pos|POS", path_horn_dist_long_within_sampleid_from_control$iso1, ignore.case = T), "Mock",
+                                                                                       ifelse(grepl("neg|N_EXT", path_horn_dist_long_within_sampleid_from_control$iso1), "Neg.",NA)))))
+
+#Making a column for baseline (controls, from where?)
+path_horn_dist_long_within_sampleid_from_control <- path_horn_dist_long_within_sampleid_from_control %>% 
+        mutate(dist_from = case_when(method_1 == "control" ~ iso1,
+                                     method_2 == "control" ~ iso2))
+
+dummy <- data.frame(iso1 = path_horn_dist_long_within_sampleid_from_control$dist_from %>% unique,
+           iso2 = path_horn_dist_long_within_sampleid_from_control$dist_from %>% unique,
+           dist = 0,
+           treatment = "Untreated",
+           method_1 = "control",
+           method_2 = "control"
+           )
+names <- data.frame(str_split_fixed(dummy$iso1, "_", 3))
+names2 <- data.frame(str_split_fixed(dummy$iso2, "_", 3))
+dummy$sample_id_1 <- paste(names$X1, names$X2, sep = "_")
+#Adding data for iso 2 also should be done
+dummy$sample_id_2 <- paste(names2$X1, names2$X2, sep = "_")
+
+
+#subsetting distances of my interest
+
+dummy$sample_type <- ifelse(grepl("NS", dummy$iso1), "Nasal",
+                            ifelse(grepl("CFB", dummy$iso1), "Sputum",
+                                   ifelse(grepl("BAL", dummy$iso1), "BAL",
+                                          ifelse(grepl("pos|POS", dummy$iso1, ignore.case = T), "Mock",
+                                                 ifelse(grepl("neg|N_EXT", dummy$iso1), "Neg.",NA)))))
+
+
+path_horn_dist_long_within_sampleid_from_control <- bind_rows(path_horn_dist_long_within_sampleid_from_control,
+                                                              dummy) 
+
+#Making figure of beta diversity distances
+fd2 <- path_horn_dist_long_within_sampleid_from_control %>% 
+        mutate(across(sample_type, factor, levels=c("BAL", "Nasal","Sputum"))) %>%
+        subset(., .$sample_type != "Neg.") %>% 
+        group_by(sample_type, treatment) %>%
+        summarise(mean = mean(dist, na.rm = TRUE),
+            sd = sd(dist, na.rm = TRUE),
+            n = n()) %>%
+  mutate(se = sd / sqrt(n),
+         lower.ci = mean - qt(1 - (0.05 / 2), n - 1) * se,
+         upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se,
+         treatment = factor(treatment, levels = c("Untreated", "lypma", "benzonase", "host zero", "molysis", "qiaamp"),
+                            labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp"))) %>%#,
+         #text = paste(sprintf("%.2f", round(mean, digits = 2)), " [", sprintf("%.2f", round(lower.ci, digits = 2)), ", ", sprintf("%.2f", round(upper.ci, digits = 2)), "]", sep = "")) %>%
+        ggplot(aes(x = mean, y = treatment, col = treatment)) +
+        geom_point(aes(x=mean), shape=15, size=3) +
+        geom_linerange(aes(xmin=lower.ci, xmax=upper.ci)) +
+        facet_wrap(~sample_type, nrow = 4) +
+        scale_y_discrete(limits=rev) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        xlab("Distance from untreated") +
+        ylab("Treatment group") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        theme(plot.tag = element_text(size = 15),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              legend.position = "none") +
+        labs(tag = "B") +
+        ggtitle("M-H dist for decontaminated composition") +
+        geom_vline(xintercept = 0, col = "black", linetype="dotted") +
+        #coord_cartesian(xlim=c(-0.5, 1)) +
+        #geom_text(aes(x = 0, label = treatment), hjust = 0, nudge_x = -.55, size = 3, color = "black", family = "serif") +
+        #geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "serif") +
+        scale_x_continuous(breaks = c(-0.5, 0, 0.5, 1, 1.5), labels = c(-0.5, "0 (low bias)", 0.5, 1, "1.5 (high bias)"))
+
+figa1 <- ggarrange(fd1, fd2, ncol = 1, common.legend = T, align = "hv")
+
+
+
+figa1
+
+
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA1.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 220, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+figa1 
+dev.off()
+
+
+
+
+```
+
+### Beta diversity plot
+
+```{r}
+figd2a <- ordinate(subset_samples(phyloseq_rel_nz, sample_type != "Neg." & sample_type != "Mock"), method = "PCoA", distance = "horn") %>%
+        plot_ordination(phyloseq_rel_nz, ., col = "treatment") +
+        #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
+                           name = "Treatment",
+                           breaks = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+                           labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
+        geom_point(size = 3) +
+        theme_classic (base_size = 12, base_family = "serif") +
+        facet_wrap(~sample_type, scales = "free") +
+        labs(tag = "A") +
+        ggtitle("Raw microbial composition") +
+        theme(plot.tag = element_text(size = 15), legend.position = "top")# +
+        #stat_ellipse(type = "norm") +
+        #stat_ellipse(type = "t")
+
+figd2b <- ordinate(subset_samples(phyloseq_tv, sample_type != "Neg." & sample_type != "Mock"), method = "PCoA", distance = "horn") %>%
+        plot_ordination(phyloseq_tv, ., col = "treatment") +
+        #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
+                           name = "Treatment",
+                           breaks = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+                           labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
+        geom_point(size = 3) +
+        theme_classic (base_size = 12, base_family = "serif") +
+        facet_wrap(~sample_type, scales = "free") +
+        labs(tag = "A") +
+        ggtitle("Decontaminated microbial composition") +
+        theme(plot.tag = element_text(size = 15), legend.position = "top")# +
+        #stat_ellipse(type = "norm") +
+        #stat_ellipse(type = "t")
+
+
+figA2 <- ggarrange(figd2a, figd2b, common.legend = T, nrow = 2)
+figA2
+
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA2.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 180, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+figA2 
+dev.off()
+
+
+
+
+```
+
+### 
+
+
+### PERMANOVA for decontaminated result
+
+
+
+```{r}
+
+horn_perm_all <- vegan::adonis2(distance(phyloseq_tv, method="bray") ~ sample_type * treatment + subject_id + log10(Final_reads),
+                                  data = phyloseq_tv %>% sample_data %>% data.frame(check.names = F),
+                                  permutations = 10000)
+
+tableA1
+
+
+save_kable(tableA1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableA1.html", self_contained = T)
+
+
+```
 
 
 ### Rarefraction curve of species richenss (Fig S.11)
@@ -5436,30 +5860,14 @@ dev.off()
 
 ```                   
 
-
-### Mean change in species richness
-
-```{r}
-#Mean species richness change
-sample_data %>% data.frame() %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")) %>% 
-        select(c("sample_type", "subject_id", "treatment", "S.obs")) %>%
-        spread(., treatment, S.obs) %>%
-        group_by(sample_type) %>%
-        summarise(lyPMA = mean(lyPMA - Untreated, na.rm = T),
-                  Benzonase = mean(Benzonase - Untreated, na.rm = T),
-                  `Host zero` = mean(`Host zero` - Untreated, na.rm = T),
-                  Molysis = mean(Molysis - Untreated, na.rm = T),
-                  QIAamp = mean(QIAamp - Untreated, na.rm = T)) %>%
-        t() %>% 
-        kbl(format = "html",caption = "Changes of species richenss by sample type and traetment (subject pairwise)") %>%
-        kable_styling(full_width = 0, html_font = "serif")
-        
-```
+##  {.unnumbered}
 
 
-### Sequencing summary (Table 4)
+# 3.6. Summary
 
-**Table 4**. Summary table
+## Sequencing summary (Table 3)
+
+**Table 3**. Summary table
 
 **3.5. Create a summary table like Table 5 in Birdy's DNA extraction methods paper to help drive home the takehome message. There are pros and cons to each method**
 
@@ -5540,8 +5948,6 @@ save_kable(table4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Projec
 
 ```
 
-
-##  {.unnumbered}
 
 Done.
 

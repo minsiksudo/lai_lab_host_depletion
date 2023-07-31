@@ -5387,9 +5387,10 @@ dev.off()
 
 ## Sensitivity analysis {.tabset}
 
+
 ### Species richness of decontaminated output
 
-As some of the species richenss got way higher, this data cannot be used for alpha diversity indices.
+As some of the species richness got way higher, this data cannot be used for alpha diversity indices.
 
 ```{r}
 
@@ -5432,11 +5433,125 @@ f10b <- ggplot(subset(sample_data(phyloseq_tv) %>%
         facet_wrap(~sample_type, nrow = 1) + 
         guides(col = guide_legend(nrow = 1)) 
 
-ggarrange(f10a, f10b, common.legend = T, ncol = 1)
+figa1 <- ggarrange(f10a, f10b, common.legend = T, ncol = 1)
+
+
+
+
+
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA1.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 180, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+figa1
+dev.off()
+
 
 
 
 ```
+
+### Species richness change by treatment (after decontamination)
+
+
+```{r}
+sr_lmer_bal <- lmer(S.obs ~ treatment + (1|subject_id),
+                    data = sample_data(phyloseq_tv) %>% 
+                             data.frame %>% 
+                            subset(.,.$sample_type == "BAL")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        
+sr_lmer_ns <- lmer(S.obs ~ treatment + (1|subject_id),
+                   data = sample_data(phyloseq_tv) %>% 
+                             data.frame %>% 
+                            subset(.,.$sample_type == "Nasal")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("ns_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = ), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = ),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = ),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+
+
+sr_lmer_spt <- lmer(S.obs ~ treatment + (1|subject_id), 
+                    data = sample_data(phyloseq_tv) %>% 
+                             data.frame %>% 
+                            subset(.,.$sample_type == "Sputum")) %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>%
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("spt_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+                rename("<i>p</i>-value" = "Pr(>|t|)",
+               SE = "Std. Error") %>%
+        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
+                                " (", 
+                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ", ",
+                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                ")", 
+                                sep = ""),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        
+
+tableA1 <- 
+        cbind(sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
+    kbl(format = "html", escape = 0) %>%
+        add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
+        kable_styling(full_width = 0, html_font = "serif")
+
+tableA1
+
+save_kable(tableA1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableA1.html", self_contained = T)
+
+
+
+```
+
+
 
 
 ### Beta diversity distances of decontaminated output
@@ -5704,20 +5819,20 @@ fd2 <- path_horn_dist_long_within_sampleid_from_control %>%
         #geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "serif") +
         scale_x_continuous(breaks = c(-0.5, 0, 0.5, 1, 1.5), labels = c(-0.5, "0 (low bias)", 0.5, 1, "1.5 (high bias)"))
 
-figa1 <- ggarrange(fd1, fd2, ncol = 1, common.legend = T, align = "hv")
+figa2 <- ggarrange(fd1, fd2, ncol = 1, common.legend = T, align = "hv")
 
 
 
-figa1
+figa2
 
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA1.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA2.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 220, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
-figa1 
+figa2
 dev.off()
 
 
@@ -5756,23 +5871,23 @@ figd2b <- ordinate(subset_samples(phyloseq_tv, sample_type != "Neg." & sample_ty
         geom_point(size = 3) +
         theme_classic (base_size = 12, base_family = "serif") +
         facet_wrap(~sample_type, scales = "free") +
-        labs(tag = "A") +
+        labs(tag = "B") +
         ggtitle("Decontaminated microbial composition") +
         theme(plot.tag = element_text(size = 15), legend.position = "top")# +
         #stat_ellipse(type = "norm") +
         #stat_ellipse(type = "t")
 
 
-figA2 <- ggarrange(figd2a, figd2b, common.legend = T, nrow = 2)
-figA2
+figA3 <- ggarrange(figd2a, figd2b, common.legend = T, nrow = 2)
+figA3
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA2.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA3.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 180, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
-figA2 
+figA3
 dev.off()
 
 
@@ -5780,23 +5895,306 @@ dev.off()
 
 ```
 
-### 
+### Differences between raw vs decontaminated - PCA plot
 
+```{r}
+sample_data(phyloseq_tv)$decontaminated <- 1
+
+sample_data(phyloseq$phyloseq_rel)$decontaminated <- 0
+
+phyloseq_tv_compare <- merge_phyloseq(phyloseq_tv,
+                                       phyloseq$phyloseq_rel) %>% 
+                                subset_samples(., S.obs != 0)
+
+sample_data(phyloseq_tv_compare)$decontaminated <-
+        as.factor(sample_data(phyloseq_tv_compare)$decontaminated)
+
+figA4 <- ordinate(subset_samples(phyloseq_tv_compare,
+                        sample_type != "Neg." & sample_type != "Mock"),
+         method = "PCoA", distance = "horn") %>%
+        plot_ordination(phyloseq_tv_compare,
+                        .,
+                        col = "treatment", shape = "decontaminated") +
+        #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
+                           name = "Treatment",
+                           breaks = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+                           labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
+        geom_point(size = 3) +
+        theme_classic (base_size = 12, base_family = "serif") +
+        facet_wrap(~sample_type, scales = "free") +
+        ggtitle("Decontaminated microbial composition") +
+        theme(plot.tag = element_text(size = 15), legend.position = "top") +
+        guides(shape = guide_legend(title = "Decontaminated"))
+        #stat_ellipse(type = "norm") +
+        #stat_ellipse(type = "t")
+
+
+
+figA4
+
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA4.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 180, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+figA4
+dev.off()
+
+
+
+```
+
+### Differences between raw vs decontaminated - forest plot
+
+```{r}
+
+#Making subset of non-zero samples without neg
+
+phyloseq_rel_nz <- phyloseq_tv_compare %>%
+        subset_samples(S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum"))
+
+sample_names(phyloseq_rel_nz) <- paste(
+        sample_data(phyloseq_rel_nz)$original_sample,
+        sample_data(phyloseq_rel_nz)$treatment,
+        "_",
+        sample_data(phyloseq_rel_nz)$decontaminated,
+        sep = "_")
+        
+
+#distances of betadiversity - boxplots
+horn_dist_long <- distance(phyloseq_rel_nz, method="horn") %>% as.matrix() %>% melt_dist() #making long data of distance matrices
+
+#Adding sample type and treatment name. 
+#this can be also done by merging metadata into the `horn_dist_long`
+horn_dist_long$sample_id_1 <- gsub("___1|___0", "", horn_dist_long$iso1)
+horn_dist_long$sample_id_2 <- gsub("___1|___0", "", horn_dist_long$iso2)
+
+horn_dist_long$method_1 <- ifelse(grepl("lyPMA", horn_dist_long$iso1, ignore.case = T),"lypma", 
+                                         ifelse(grepl("ben", horn_dist_long$iso1, ignore.case = T),"benzonase", 
+                                                ifelse(grepl("host", horn_dist_long$iso1, ignore.case = T),"host_zero", 
+                                                       ifelse(grepl("qia", horn_dist_long$iso1, ignore.case = T),"qiaamp", 
+                                                              ifelse(grepl("moly", horn_dist_long$iso1, ignore.case = T),"molysis", 
+                                                                     "control")))))
+
+
+#Adding data for iso 2 also should be done
+
+horn_dist_long$method_2 <- ifelse(grepl("lyPMA", horn_dist_long$iso2, ignore.case = T),"lypma", 
+                                         ifelse(grepl("ben", horn_dist_long$iso2, ignore.case = T),"benzonase", 
+                                                ifelse(grepl("host", horn_dist_long$iso2, ignore.case = T),"host_zero", 
+                                                       ifelse(grepl("qia", horn_dist_long$iso2, ignore.case = T),"qiaamp", 
+                                                              ifelse(grepl("moly", horn_dist_long$iso2, ignore.case = T),"molysis", 
+                                                                     "control")))))
+
+
+
+#subsetting distances of my interest
+path_horn_dist_long_within_sampleid_from_control <- subset(horn_dist_long, horn_dist_long$sample_id_1 == horn_dist_long$sample_id_2) # data within samples
+
+path_horn_dist_long_within_sampleid_from_control$treatment <- path_horn_dist_long_within_sampleid_from_control$method_1
+
+#Setting key method
+path_horn_dist_long_within_sampleid_from_control$sample_type <- ifelse(grepl("NS", path_horn_dist_long_within_sampleid_from_control$iso1), "Nasal",
+                                                                  ifelse(grepl("CFB", path_horn_dist_long_within_sampleid_from_control$iso1), "Sputum",
+                                                                         ifelse(grepl("BAL", path_horn_dist_long_within_sampleid_from_control$iso1), "BAL",
+                                                                                ifelse(grepl("pos|POS", path_horn_dist_long_within_sampleid_from_control$iso1, ignore.case = T), "Mock",
+                                                                                       ifelse(grepl("neg|N_EXT", path_horn_dist_long_within_sampleid_from_control$iso1), "Neg.",NA)))))
+
+
+
+#Making figure of beta diversity distances
+fA5 <- path_horn_dist_long_within_sampleid_from_control %>% 
+        mutate(across(sample_type, factor, levels=c("BAL", "Nasal","Sputum"))) %>%
+        subset(., .$sample_type != "Neg.") %>% 
+        group_by(sample_type, treatment) %>%
+        summarise(mean = mean(dist, na.rm = TRUE),
+            sd = sd(dist, na.rm = TRUE),
+            n = n()) %>%
+  mutate(se = sd / sqrt(n),
+         lower.ci = mean - qt(1 - (0.05 / 2), n - 1) * se,
+         upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se,
+         treatment = factor(treatment, levels = c("control", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
+                            labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp"))) %>%#,
+         #text = paste(sprintf("%.2f", round(mean, digits = 2)), " [", sprintf("%.2f", round(lower.ci, digits = 2)), ", ", sprintf("%.2f", round(upper.ci, digits = 2)), "]", sep = "")) %>%
+        ggplot(aes(x = mean, y = treatment, col = treatment)) +
+        geom_point(aes(x=mean), shape=15, size=3) +
+        geom_linerange(aes(xmin=lower.ci, xmax=upper.ci)) +
+        facet_wrap(~sample_type, nrow = 4) +
+        scale_y_discrete(limits=rev) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAaamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        xlab("Distance from raw microbial comopostion") +
+        ylab("Treatment group") +
+        theme_classic (base_size = 12, base_family = "serif") + 
+        theme(plot.tag = element_text(size = 15),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              legend.position = "top") +
+        ggtitle("M-H distance from raw to decontaminated data, paired") +
+        geom_vline(xintercept = 0, col = "black", linetype="dotted") +
+        #coord_cartesian(xlim=c(-0.5, 1)) +
+        #geom_text(aes(x = 0, label = treatment), hjust = 0, nudge_x = -.55, size = 3, color = "black", family = "serif") +
+        #geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "serif") +
+        scale_x_continuous(breaks = c(-0.5, 0, 0.5, 1, 1.5), labels = c(-0.5, "0 (low bias)", 0.5, 1, "1.5 (high bias)"))
+
+fA5
+
+
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureA5.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 180, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+fA5
+
+dev.off()
+
+```
 
 ### PERMANOVA for decontaminated result
 
+```{r}
+
+
+horn_perm_simple <- vegan::adonis2(distance(phyloseq_rel_nz, method="horn") ~ subject_id + treatment + decontaminated,
+                                  data = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F),
+                                  permutations = 10000)
+
+horn_perm_all <- vegan::adonis2(distance(phyloseq_rel_nz, method="horn") ~ sample_type * treatment + subject_id + log10(Final_reads) + decontaminated,
+                                  data = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F),
+                                  permutations = 10000)
+
+horn_perm_ns <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp + log10(Final_reads) + decontaminated,
+                               data = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>%
+                                       sample_data %>% data.frame(check.names = F),
+                               strata = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>% 
+                                       sample_data %>% data.frame(check.names = F) %>% .$subject_id, permutations = 10000)
+
+horn_perm_bal  <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp + log10(Final_reads) + decontaminated,
+                                 data = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>% sample_data %>% data.frame(check.names = F),
+                                 strata = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>%
+                                         sample_data %>% data.frame(check.names = F) %>% .$subject_id,
+                                  permutations = 10000)
+
+horn_perm_spt <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp + log10(Final_reads) + decontaminated,
+                                data = subset_samples(phyloseq_rel_nz, sample_type == "Sputum") %>% sample_data %>% data.frame(check.names = F),
+                                strata = subset_samples(phyloseq_rel_nz, sample_type == "Sputum")
+                                %>% sample_data %>% data.frame(check.names = F) %>% .$subject_id,
+                                  permutations = 10000)
+
+
+
+tableA2 <- horn_perm_simple %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
+        mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
+                                     row.names == "treatment" ~ 'Treatment',
+                                     row.names == "subject_id" ~ 'Subject',
+                                     row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
+                                     row.names == "decontaminated" ~ 'Decontamination',
+                                     row.names == "sample_type:treatment" ~ 'Sample type * Treatment',
+                                     row.names == "Residual" ~ 'Residual',
+                                     row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
+        mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
+                                            abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        rename("<i>p</i>-value" = "Pr(>F)",
+               "R<sup>2</sup>" = "R2",
+               "Degree of freedom" = "Df") %>% 
+        mutate(`<i>p</i>-value` = format(`<i>p</i>-value`, nsmall = 3)) %>%
+        select(c("Degree of freedom", "R<sup>2</sup>", "<i>p</i>-value", " ")) %>% 
+        kbl(format = "html", escape = 0) %>%
+        kable_styling(full_width = 0, html_font = "serif")
+
+tableA2
+
+save_kable(tableA2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableA2.html", self_contained = T)
+
+
+```
+
+### PERMANOVA - Stratified (Table S7)
+
+**Table S7**. Degree of freedom, effect size (residual, R^2) and p-value of permutational ANOVA for Morisita-Horn distiances  for species richness stratified by sample type (MH-distance ~ lyPMA + Benzoase + Host zero + Molysis + QIAamp + log10 (Final_reads), strata = subject_id).
 
 
 ```{r}
 
-horn_perm_all <- vegan::adonis2(distance(phyloseq_tv, method="bray") ~ sample_type * treatment + subject_id + log10(Final_reads),
-                                  data = phyloseq_tv %>% sample_data %>% data.frame(check.names = F),
-                                  permutations = 10000)
+a <- horn_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
+                                     row.names == "benzonase" ~ 'Benzonase',
+                                     row.names == "host_zero" ~ 'Host zero',
+                                     row.names == "molysis" ~ 'Molysis',
+                                     row.names == "qiaamp" ~ 'QIAamp',
+                                     row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
+                                     row.names == "Residual" ~ 'Residual',
+                                     row.names == "decontaminated" ~ 'Decomtaminated',
+                                     row.names == "Total" ~ 'Total')) %>%
+        column_to_rownames('row.names') %>% 
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
+                                            abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        rename("<i>p</i>-value" = "Pr(>F)",
+               "R<sup>2</sup>" = "R2",
+               "Degree of freedom" = "Df") %>% 
+        select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
-tableA1
+b <- horn_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
+                                     row.names == "benzonase" ~ 'Benzonase',
+                                     row.names == "host_zero" ~ 'Host zero',
+                                     row.names == "molysis" ~ 'Molysis',
+                                     row.names == "qiaamp" ~ 'QIAamp',
+                                     row.names == "subject_id" ~ 'Subject id',
+                                     row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
+                                     row.names == "decontaminated" ~ 'Decomtaminated',
+                                     row.names == "Residual" ~ 'Residual',
+                                     row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
+                                            abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        rename("<i>p</i>-value" = "Pr(>F)",
+               "R<sup>2</sup>" = "R2",
+               "Degree of freedom" = "Df") %>% 
+        select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
+
+c <- horn_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+        mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
+                                     row.names == "benzonase" ~ 'Benzonase',
+                                     row.names == "host_zero" ~ 'Host zero',
+                                     row.names == "molysis" ~ 'Molysis',
+                                     row.names == "qiaamp" ~ 'QIAamp',
+                                     row.names == "decontaminated" ~ 'Decomtaminated',
+                                     row.names == "subject_id" ~ 'Subject id',
+                                     row.names == "log10(Final_reads)" ~ 'log10(Final reads)',
+                                     row.names == "Residual" ~ 'Residual',
+                                     row.names == "Total" ~ 'Total')) %>% column_to_rownames('row.names') %>% 
+                mutate(` ` = case_when(abs(`Pr(>F)`) < 0.001 ~ "***",
+                                            abs(`Pr(>F)`) < 0.01 ~ "**",
+                                            abs(`Pr(>F)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(across(is.numeric, round, digits=3)) %>% 
+        rename("<i>p</i>-value" = "Pr(>F)",
+               "R<sup>2</sup>" = "R2",
+               "Degree of freedom" = "Df") %>% 
+        select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
 
-save_kable(tableA1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableA1.html", self_contained = T)
+tableA2 <- cbind(a, b, c) %>% 
+        kbl(format = "html", escape = 0) %>%
+        add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
+        kable_styling(full_width = 0, html_font = "serif")
+
+tableA2
+
+save_kable(tableA2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableA2.html", self_contained = T)
 
 
 ```

@@ -3293,14 +3293,14 @@ c <- horn_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.n
         select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
 
-table3 <- cbind(a, b, c) %>% 
+tableS7 <- cbind(a, b, c) %>% 
         kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "serif")
 
-table3
+tableS7
 
-save_kable(table3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table3.html", self_contained = T)
+save_kable(table3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS7.html", self_contained = T)
 
 
 ```
@@ -3398,15 +3398,15 @@ c <- lm(dist ~ treatment, data = path_horn_dist_long_within_sampleid_from_contro
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
         select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
 
-tables7 <- cbind(a, b, c) %>% 
+tables8 <- cbind(a, b, c) %>% 
         kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "serif")
 
 
-save_kable(tables7, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tables7.html", self_contained = T)
+save_kable(tables8, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tables8.html", self_contained = T)
 
-tables7
+tables8
 
 
 ```
@@ -3842,7 +3842,8 @@ f5a <- merge(filt_fit_data_pos$rel %>%
               legend.position = "top",
               axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7))  +
+              axis.text.y = ggtext::element_markdown(size = 8),
+              plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
                       x = treatment,
@@ -3899,15 +3900,16 @@ f5b <- merge(filt_fit_data_bal$rel %>%
         #colors for qvalues
         #xlab("Experimental group") +
         #ylab("Species") +
-        #labs(tag = "B")  +
-        ggtitle("A  BAL") +
+        labs(tag = "A")  +
+        ggtitle("BAL") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7),
+              axis.text.y = ggtext::element_markdown(size = 8),
               axis.title.y = element_blank(),
-              axis.title.x = element_blank())  +
+              axis.title.x = element_blank(),
+              plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
         scale_fill_manual(values = c("grey", "red"), aes(y = feature,
                       x = treatment,
                       label = sig)) +
@@ -3962,14 +3964,15 @@ f5c <- merge(filt_fit_data_ns$rel %>%
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
         ylab("Species") +
-        #labs(tag = "C")  +
-        ggtitle("B  Nasal swab") +
+        labs(tag = "B")  +
+        ggtitle("Nasal swab") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7),
-              axis.title.x = element_blank())  +
+              axis.text.y = ggtext::element_markdown(size = 8),
+              axis.title.x = element_blank(),
+              plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
                       x = treatment,
@@ -4025,15 +4028,17 @@ f5d <- merge(filt_fit_data_spt$rel %>%
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
         #ylab("Species") +
-        #labs(tag = "D")  +
-        ggtitle("C  Sputum") +
+        labs(tag = "C")  +
+        ggtitle("Sputum") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7),
-              axis.title.x = element_text(margin = margin(t = 20)),
-              axis.title.y = element_blank())  +
+              axis.text.y = ggtext::element_markdown(size = 8),
+              #axis.title.x = element_blank(),
+              axis.title.x = element_text(margin = margin(t = 0)),
+              axis.title.y = element_blank(),
+              plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
                       x = treatment,
@@ -4064,6 +4069,7 @@ fig4 <- ggarrange(f5c %>% lemon::g_legend() %>% as_ggplot,
                   legend = "none",
                   align = "hv")
 
+fig4
 
 png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
@@ -4089,7 +4095,7 @@ dev.off()
 
 ```{r, warning=FALSE, message=FALSE}
 
-tableS8 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$coef) > 0.5) %>% subset(., .$metadata != "sample_type" & .$metadata != "log10.Final_reads") %>% select(c("feature", "metadata", "coef", "qval")) %>%
+tableS9 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$coef) > 0.5) %>% subset(., .$metadata != "sample_type" & .$metadata != "log10.Final_reads") %>% select(c("feature", "metadata", "coef", "qval")) %>%
         mutate(feature = paste("<i>", gsub("_", " ", feature), sep = "") %>%
                        gsub(" sp", "</i> sp.", .) %>% gsub(" group", "", .)) %>%
         mutate(feature = case_when(!grepl("</i>", feature) ~ paste(feature, "</i>", sep = ""),
@@ -4110,9 +4116,9 @@ tableS8 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$coef) > 0.5) %>% 
         kbl(format = "html", escape = FALSE) %>%
         kable_styling(full_width = 0, html_font = "serif")
 
-tableS8
+tableS9
 
-save_kable(tableS8, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS8.html", self_contained = T)
+save_kable(tableS9, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS9.html", self_contained = T)
 
 ```
 
@@ -4393,15 +4399,6 @@ f5d <- merge(filt_fit_data_spt$rel %>%
                                   "qiaamp" = "QIAamp")
                          )
 fig4 <- ggarrange(f5a, f5b, f5c, f5d, align = "hv", common.legend = T)
-
-fig4
-
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4.png",   # The directory you want to save the file in
-    width = 180, # The width of the plot in inches
-    height = 170, # The height of the plot in inches
-    units = "mm",
-    res = 600
-) #fixing multiple page issue
 
 fig4
 
@@ -4791,15 +4788,15 @@ sr_lmer_spt <- lmer(S.obs ~ treatment + (1|subject_id), data = sample_data %>% d
         select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
 
 
-tables9 <- cbind(sr_lmer_mock, sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
+tables10 <- cbind(sr_lmer_mock, sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
     kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "All" = 3, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "serif")
 
 
-save_kable(tables9, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tables9.html", self_contained = T)
+save_kable(tables10, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tables10.html", self_contained = T)
 
-tables9
+tables10
 
 ```
 
@@ -4930,14 +4927,14 @@ c <- bray_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.n
         select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
 
-tables10 <- cbind(a, b, c) %>% 
+tables11 <- cbind(a, b, c) %>% 
         kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "serif")
 
 
-tables10
-save_kable(tables10, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS10.html", self_contained = T)
+tables11
+save_kable(tables10, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS11.html", self_contained = T)
 
 ```
 
@@ -6336,12 +6333,12 @@ summary_spt <- matrix(nrow=5,ncol=3) %>% data.frame() %>%
                                            column_to_rownames("x")
                                            
 
-table4 <- cbind(summary_bal, summary_ns, summary_spt) %>% 
+table3 <- cbind(summary_bal, summary_ns, summary_spt) %>% 
         kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
                 kable_styling(full_width = 0, html_font = "serif")
-table4
-save_kable(table4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table4.html", self_contained = T)
+table3
+save_kable(table3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table3.html", self_contained = T)
 
 
 ```

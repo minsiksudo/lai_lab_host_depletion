@@ -30,6 +30,8 @@ sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phylo
 sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
 sample_data(phyloseq$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpk))
 
+#Chaning name of function taxa
+taxa_names(phyloseq$phyloseq_path_rpk) <- tax_table(phyloseq$phyloseq_path_rpk) %>% data.frame %>% .$group
 
 phyloseq_unfiltered <- phyloseq
 # Decontam ----------------------------------------------------------------
@@ -284,7 +286,7 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$ph
                                               transform = "LOG", #default
                                               normalization = "TSS", 
                                               random_effects = c("subject_id"), 
-                                              reference = c("sample_type,BAL", "treatment,Control", "sampletype_treatment,BAL*Control"), 
+                                              reference = c("sample_type,BAL", "treatment,Untreated", "sampletype_treatment,BAL*Untreated"), 
                                               plot_heatmap = F,
                                               plot_scatter = F))
 
@@ -437,7 +439,7 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$ph
                                               transform = "LOG", #default
                                               normalization = "TSS", 
                                               random_effects = c("subject_id"), 
-                                              reference = c("sample_type,BAL", "treatment,Control", "sampletype_treatment,BAL*Control"), 
+                                              reference = c("sample_type,BAL", "treatment,Untreated", "sampletype_treatment,BAL*Untreated"), 
                                               plot_heatmap = F,
                                               plot_scatter = F))
 
@@ -612,7 +614,7 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$ph
                                               transform = "LOG", #default
                                               normalization = "TSS", 
                                               random_effects = c("subject_id"), 
-                                              reference = c("sample_type,BAL", "treatment,Control", "sampletype_treatment,BAL*Control"), 
+                                              reference = c("sample_type,BAL", "treatment,Untreated", "sampletype_treatment,BAL*Untreated"), 
                                               plot_heatmap = F,
                                               plot_scatter = F))
 
@@ -756,7 +758,7 @@ capture.output(maaslin_interaction = Maaslin2(input_data = otu_table(phyloseq$ph
                                               transform = "LOG", #default
                                               normalization = "TSS", 
                                               random_effects = c("subject_id"), 
-                                              reference = c("sample_type,BAL", "treatment,Control", "sampletype_treatment,BAL*Control"), 
+                                              reference = c("sample_type,BAL", "treatment,Untreated", "sampletype_treatment,BAL*Untreated"), 
                                               plot_heatmap = F,
                                               plot_scatter = F))
 

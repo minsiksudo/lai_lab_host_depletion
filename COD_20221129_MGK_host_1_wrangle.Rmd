@@ -226,7 +226,10 @@ sample_result <- sample_result %>% mutate(
 ```{r warning=FALSE, `Loading phyloseq object`}
 
 phyloseq1 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
-phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
+phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
+
+phyloseq1_rel <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.RelAb.biom")
+phyloseq2_rel <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.RelAb.biom")
 
 
 #Merging
@@ -234,11 +237,11 @@ phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners 
 readstat1 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt", sep = "\t") %>%
         rename(baylor_other_id = SampleID)
 #control data
-readstat2 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/ReadStats.txt", sep = "\t") %>%
+readstat2 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/ReadStats.txt", sep = "\t") %>%
         rename(baylor_id = SampleID)
 
 baylor_ids <- rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/3_Documentation/Communications/2022-06-22_baylor_shipping_host_depletion_lowinput/CMMR_MetadataCapture_20220622_LaiP-PQ00181_Host DNADepletion.xlsx", skip = 27),
-                    baylor_ids2 <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx", skip = 27)
+                    baylor_ids2 <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx", skip = 27)
 )
 
 baylor_ids <- baylor_ids %>% select(c("UNIQUE alphanumeric ID", "Optional              secondary ID")) %>%
@@ -263,7 +266,7 @@ sample_result <- sample_result %>%
         mutate(baylor_other_id = gsub("20220610", "20220606", baylor_other_id)) # older extraction date used for baylor shipping log
         
 
-#Merging Readstat + metadata
+ #Merging Readstat + metadata
 sample_data1 <- merge(readstat, sample_result, by = "baylor_other_id") %>%
         mutate(baylor_other_id2 = baylor_other_id) %>%
         column_to_rownames(var = "baylor_other_id2") %>%
@@ -273,6 +276,10 @@ sample_data2 <- merge(readstat, sample_result, by = "baylor_other_id") %>%
         column_to_rownames(var = "baylor_id2") %>%
         sample_data()
 phyloseq <- merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1), merge_phyloseq(sample_data(sample_data2), phyloseq2))
+
+phyloseq_rel <- 
+        merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1_rel),
+                       merge_phyloseq(sample_data(sample_data2), phyloseq2_rel))
 
 
 
@@ -306,7 +313,7 @@ picogreen_template_ng_ul <-
         rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx",
                          sheet = 1,
                          skip = 2) %>% select(c("Sample", "Concentration (ng/ul)")), 
-                   read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx",
+                   read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx",
                               sheet = 1) %>%
                       select(c("Sample", "Concentration (ng/ul)"))
               ) %>%
@@ -320,7 +327,7 @@ picogreen_library_ng_ul  <-
               read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx",
                          sheet = 2,
                          skip = 2) %>% select(c("Sample", "Concentration (ng/ul)")), 
-                   read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx",
+                   read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx",
                               sheet = 2) %>%
                       select(c("Sample", "Concentration (ng/ul)"))
               ) %>%
@@ -387,6 +394,14 @@ sample_data(phyloseq)$subject_id <- ifelse(sample_data(phyloseq)$subject_id == "
 
 
 
+
+
+```
+
+revising sample_data of phyloseq with relative abundance table 
+
+```{r}
+phyloseq_rel <- merge_phyloseq(otu_table(phyloseq_rel), tax_table(phyloseq_rel), sample_data(phyloseq))
 ```
 
 Adding functional data
@@ -402,8 +417,8 @@ row.names(path_tax) <- path_tax$pathway
 
 
 
-path_rpk2 <- read.csv("20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
-path_tax2 <- read.csv("20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt", sep = "\t", check.names = F) %>%
+path_rpk2 <- read.csv("20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt", sep = "\t", check.names = F, row.names = "# Pathway") %>% select(-c("taxonomy"))
+path_tax2 <- read.csv("20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt", sep = "\t", check.names = F) %>%
         select(c("taxonomy", "# Pathway")) %>% rename(pathway = "# Pathway", group = "taxonomy")
 row.names(path_tax2) <- path_tax2$pathway
 
@@ -419,6 +434,8 @@ phyloseq_path_rpk <- merge_phyloseq(phyloseq_path_rpk1, phyloseq_path_rpk2)
 
 ```
 
+
+
 ```{r warning=FALSE, `Loading functional - RPK`}
 
 phy <- list()
@@ -426,7 +443,7 @@ sample_data <- sample_data(phyloseq)
 sample_names(phyloseq) <- sample_data(phyloseq)$baylor_other_id
 sample_names(phyloseq_path_rpk) <- sample_data(phyloseq_path_rpk)$baylor_other_id
 phy$phyloseq_count <- phyloseq
-phy$phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x / sum(x)})
+phy$phyloseq_rel <- phyloseq_rel
 phy$phyloseq_path_rpk <-phyloseq_path_rpk
 
 
@@ -460,7 +477,7 @@ tax_table(phy$phyloseq_rel) <- cbind(tax_table(phy$phyloseq_rel),
         as.matrix()
 
 taxa_names(phy$phyloseq_count) <- tax_table(phy$phyloseq_count) %>% data.frame %>% .$Species %>% gsub("s__", "", .)
-taxa_names(phy$phyloseq_rel) <- tax_table(phy$phyloseq_count) %>% data.frame %>% .$Species %>% gsub("s__", "", .)
+taxa_names(phy$phyloseq_rel) <- tax_table(phy$phyloseq_rel) %>% data.frame %>% .$Species %>% gsub("s__", "", .)
 
 sample_data(phy$phyloseq_rel)$gram_neg_prop <- phy$phyloseq_rel %>% 
         subset_taxa(gram_stain == "Gram-negative") %>% 

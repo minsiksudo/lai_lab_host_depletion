@@ -358,7 +358,7 @@ sample_data$pg_lib_bac_ng_ul <-
         (1-sample_data$sequencing_host_prop) * sample_data$picogreen_library_ng_ul
 
 
-sample_data
+
 #constructing phylose object
 phyloseq <- merge_phyloseq(otu_table(phyloseq), tax_table(phyloseq), sample_data(sample_data))
 
@@ -441,6 +441,7 @@ phyloseq_path_rpk <- merge_phyloseq(phyloseq_path_rpk1, phyloseq_path_rpk2)
 phy <- list()
 sample_data <- sample_data(phyloseq)
 sample_names(phyloseq) <- sample_data(phyloseq)$baylor_other_id
+sample_names(phyloseq_rel) <- sample_data(phyloseq_rel)$baylor_other_id
 sample_names(phyloseq_path_rpk) <- sample_data(phyloseq_path_rpk)$baylor_other_id
 phy$phyloseq_count <- phyloseq
 phy$phyloseq_rel <- phyloseq_rel

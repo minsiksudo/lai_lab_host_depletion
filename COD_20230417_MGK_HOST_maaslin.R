@@ -31,7 +31,7 @@ sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phy
 sample_data(phyloseq$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpk))
 
 #Chaning name of function taxa
-taxa_names(phyloseq$phyloseq_path_rpk) <- tax_table(phyloseq$phyloseq_path_rpk) %>% data.frame %>% .$group
+#taxa_names(phyloseq$phyloseq_path_rpk) <- tax_table(phyloseq$phyloseq_path_rpk) %>% data.frame %>% .$group
 
 phyloseq_unfiltered <- phyloseq
 # Decontam ----------------------------------------------------------------

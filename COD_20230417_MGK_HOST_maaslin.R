@@ -140,8 +140,12 @@ sample_data(phyloseq$phyloseq_path_rpk)$sampletype_treatment <- paste(sample_dat
 phyloseq$phyloseq_count_filtered <- prune_taxa(subset(red_flag_taxa,
                                                      red_flag_taxa$red_flag_prev_abd != 1)$species,
                                               phyloseq$phyloseq_count)
+
 phyloseq$phyloseq_path_rpk_filtered <- prune_taxa(subset(red_flag_taxa, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpk)
-phyloseq$phyloseq_rel_filtered <- transform_sample_counts(phyloseq$phyloseq_count_filtered, function (x) {x/sum(x)})
+phyloseq$phyloseq_rel_filtered <- prune_taxa(subset(red_flag_taxa,
+                                                    red_flag_taxa$red_flag_prev_abd != 1)$species,
+                                             phyloseq$phyloseq_rel) %>% 
+        transform_sample_counts(., function (x) {x/sum(x)})
 
 
 

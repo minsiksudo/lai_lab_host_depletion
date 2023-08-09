@@ -7,7 +7,7 @@ library(decontam)
 # Loading data ------------------------------------------------------------
 
 
-phyloseq <- readRDS("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/Archive/PHY_20230521_MGK_host_tidy.rds")
+phyloseq <- readRDS("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 # Adding alpha diversity indices ------------------------------------------
 

@@ -3031,32 +3031,32 @@ FUN.LineZero.Report &lt;- function() {
 FUN.LineZero.Report()</code></pre>
 <pre><code>## Line Zero Environment:
 ## 
-## R: 4.2.2 
+## R: 4.3.1 
 ## Libraries:
-##     readxl: 1.4.2
-##     phyloseq: 1.40.0
+##     readxl: 1.4.3
+##     phyloseq: 1.44.0
 ##     tidyverse: 2.0.0
 ##     pacman: 0.5.1
 ##     yaml: 2.3.7
-##     ggplot2: 3.4.1
+##     ggplot2: 3.4.2
 ##     vegan: 2.6.4
-##     microbiome: 1.18.0
+##     microbiome: 1.22.0
 ##     ggpubr: 0.6.0
-##     viridis: 0.6.2
-##     decontam: 1.16.0
+##     viridis: 0.6.4
+##     decontam: 1.20.0
 ##     gridExtra: 2.3
 ##     ggpubr: 0.6.0
-##     lme4: 1.1.31
+##     lme4: 1.1.34
 ##     lmerTest: 3.1.3
 ##     writexl: 1.4.2
 ##     harrietr: 0.2.3
-##     Maaslin2: 1.10.0
+##     Maaslin2: 1.14.1
 ##     ggtext: 0.1.2
-##     ggpmisc: 0.5.2
+##     ggpmisc: 0.5.3
 ##     gridExtra: 2.3
 ##     gamm4: 0.2.6
 ##     reshape2: 1.4.4
-##     AMR: 2.0.0
+##     AMR: 2.1.0
 ## 
 ## Operating System: Darwin 
 ##     Library Path: /Library/Frameworks/R.framework/Resources/library 
@@ -3184,7 +3184,10 @@ sample_result &lt;- sample_result %&gt;% mutate(
 </ol>
 <p><strong><em>1. Loading phyloseq object</em></strong></p>
 <pre class="r"><code>phyloseq1 &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom&quot;)
-phyloseq2 &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.EstCount.biom&quot;)
+phyloseq2 &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.EstCount.biom&quot;)
+
+phyloseq1_rel &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.RelAb.biom&quot;)
+phyloseq2_rel &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.RelAb.biom&quot;)
 
 
 #Merging
@@ -3192,11 +3195,11 @@ phyloseq2 &lt;- microbiome::read_biom2phyloseq(&quot;/Users/minsikkim/Dropbox (P
 readstat1 &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt&quot;, sep = &quot;\t&quot;) %&gt;%
         rename(baylor_other_id = SampleID)
 #control data
-readstat2 &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/ReadStats.txt&quot;, sep = &quot;\t&quot;) %&gt;%
+readstat2 &lt;- read.csv(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/ReadStats.txt&quot;, sep = &quot;\t&quot;) %&gt;%
         rename(baylor_id = SampleID)
 
 baylor_ids &lt;- rbind(read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/3_Documentation/Communications/2022-06-22_baylor_shipping_host_depletion_lowinput/CMMR_MetadataCapture_20220622_LaiP-PQ00181_Host DNADepletion.xlsx&quot;, skip = 27),
-                    baylor_ids2 &lt;- read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx&quot;, skip = 27)
+                    baylor_ids2 &lt;- read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx&quot;, skip = 27)
 )</code></pre>
 <pre><code>## New names:
 ## New names:
@@ -3223,7 +3226,7 @@ sample_result &lt;- sample_result %&gt;%
         mutate(baylor_other_id = gsub(&quot;20220610&quot;, &quot;20220606&quot;, baylor_other_id)) # older extraction date used for baylor shipping log
         
 
-#Merging Readstat + metadata
+ #Merging Readstat + metadata
 sample_data1 &lt;- merge(readstat, sample_result, by = &quot;baylor_other_id&quot;) %&gt;%
         mutate(baylor_other_id2 = baylor_other_id) %&gt;%
         column_to_rownames(var = &quot;baylor_other_id2&quot;) %&gt;%
@@ -3232,7 +3235,11 @@ sample_data2 &lt;- merge(readstat, sample_result, by = &quot;baylor_other_id&quo
         mutate(baylor_id2 = baylor_id) %&gt;%
         column_to_rownames(var = &quot;baylor_id2&quot;) %&gt;%
         sample_data()
-phyloseq &lt;- merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1), merge_phyloseq(sample_data(sample_data2), phyloseq2))</code></pre>
+phyloseq &lt;- merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1), merge_phyloseq(sample_data(sample_data2), phyloseq2))
+
+phyloseq_rel &lt;- 
+        merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1_rel),
+                       merge_phyloseq(sample_data(sample_data2), phyloseq2_rel))</code></pre>
 <p><strong><em>2. Adding more data to the phyloseq -
 sampledata</em></strong></p>
 <pre class="r"><code>#Adding host DNA proportion of sequencing results
@@ -3249,11 +3256,55 @@ sample_data$lib_failed &lt;- sample_data$baylor_other_id %in% lib_fail_list</cod
 <p><strong><em>2. Adding more data to the phyloseq -
 picogreen</em></strong></p>
 <pre class="r"><code>#Adding host DNA proportion of sequencing results
-picogreen &lt;- rbind(read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx&quot;, sheet = 1, skip = 1),
-       read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx&quot;, sheet = 2, skip = 1)
-       ) %&gt;% rename(baylor_other_id = &quot;Sample&quot;, picogreen_ng_ul = &quot;Concentration (ng/ul)&quot;) %&gt;% select(c(&quot;baylor_other_id&quot;, 
-                                                                                                        &quot;picogreen_ng_ul&quot;))
-sample_data &lt;- merge(sample_data %&gt;% rownames_to_column(&quot;row.names&quot;), picogreen, all = T, by = &quot;baylor_other_id&quot;) %&gt;% subset(.,!is.na(.$row.names)) %&gt;% remove_rownames() %&gt;% column_to_rownames(&quot;row.names&quot;)
+picogreen_template_ng_ul &lt;- 
+        rbind(read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx&quot;,
+                         sheet = 1,
+                         skip = 2) %&gt;% select(c(&quot;Sample&quot;, &quot;Concentration (ng/ul)&quot;)), 
+                   read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx&quot;,
+                              sheet = 1) %&gt;%
+                      select(c(&quot;Sample&quot;, &quot;Concentration (ng/ul)&quot;))
+              ) %&gt;%
+        subset(., !is.na(.$Sample)) %&gt;% 
+        rename(sequencing_id = &quot;Sample&quot;, picogreen_template_ng_ul = &quot;Concentration (ng/ul)&quot;) %&gt;% 
+        select(c(&quot;sequencing_id&quot;, &quot;picogreen_template_ng_ul&quot;))</code></pre>
+<pre><code>## New names:
+## • `` -&gt; `...5`</code></pre>
+<pre class="r"><code>picogreen_library_ng_ul  &lt;- 
+        rbind(read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx&quot;, sheet = 1, skip = 2) %&gt;%
+                      select(c(&quot;Sample&quot;, &quot;Concentration (ng/ul)&quot;)),
+              read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/DAR_20230629_JJC_PQ00331 PICO data_NA_library_concentrations.xlsx&quot;,
+                         sheet = 2,
+                         skip = 2) %&gt;% select(c(&quot;Sample&quot;, &quot;Concentration (ng/ul)&quot;)), 
+                   read_excel(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230406_PQ00430_sicas2_nasal_host_depleted/DAR_20230629_JJC_PQ00430 PICO dataNA_library_concentrations.xlsx&quot;,
+                              sheet = 2) %&gt;%
+                      select(c(&quot;Sample&quot;, &quot;Concentration (ng/ul)&quot;))
+              ) %&gt;%
+        subset(., !is.na(.$Sample)) %&gt;% 
+        rename(sequencing_id = &quot;Sample&quot;, picogreen_library_ng_ul = &quot;Concentration (ng/ul)&quot;) %&gt;% 
+        select(c(&quot;sequencing_id&quot;, &quot;picogreen_library_ng_ul&quot;))
+
+picogreen &lt;- merge(picogreen_template_ng_ul,  picogreen_library_ng_ul, by = &quot;sequencing_id&quot;, all = T)
+
+sample_data &lt;- merge(sample_data %&gt;% rownames_to_column(&quot;sequencing_id&quot;), picogreen, all = T, by = &quot;sequencing_id&quot;) %&gt;%
+        subset(.,!is.na(.$baylor_id)) %&gt;% remove_rownames() %&gt;% column_to_rownames(&quot;sequencing_id&quot;)
+
+#modifiying negatives to zero
+        #substitute with zeros for negatives
+sample_data$picogreen_library_ng_ul &lt;- 
+        ifelse(sample_data$picogreen_library_ng_ul &lt;= 0,
+               123123123,
+               sample_data$picogreen_library_ng_ul)
+
+        #Putting half of minimum for the samples
+sample_data$picogreen_library_ng_ul &lt;- 
+        ifelse(sample_data$picogreen_library_ng_ul == 123123123,
+               min(sample_data$picogreen_library_ng_ul)/2,
+               sample_data$picogreen_library_ng_ul)
+
+
+sample_data$pg_lib_bac_ng_ul &lt;- 
+        (1-sample_data$sequencing_host_prop) * sample_data$picogreen_library_ng_ul
+
 
 
 #constructing phylose object
@@ -3278,6 +3329,8 @@ sample_data(phyloseq) &lt;- sample_data(phyloseq) %&gt;% data.frame(check.names 
 sample_data(phyloseq)$subject_id &lt;- ifelse(is.na(sample_data(phyloseq)$subject_id), as.character(sample_data(phyloseq)$sample_type), sample_data(phyloseq)$subject_id)
 sample_data(phyloseq)$subject_id &lt;- ifelse(sample_data(phyloseq)$subject_id == &quot;lab_member&quot;, as.character(sample_data(phyloseq)$original_sample),
                                            sample_data(phyloseq)$subject_id)</code></pre>
+<p>revising sample_data of phyloseq with relative abundance table</p>
+<pre class="r"><code>phyloseq_rel &lt;- merge_phyloseq(otu_table(phyloseq_rel), tax_table(phyloseq_rel), sample_data(phyloseq))</code></pre>
 <p>Adding functional data</p>
 <pre class="r"><code>#Loading phyloseq object
 setwd(&quot;/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed&quot;)
@@ -3286,8 +3339,10 @@ path_tax &lt;- read.csv(&quot;20221102_PQ00331_Host_Depletion/humann3/PathAbunda
         select(c(&quot;taxonomy&quot;, &quot;# Pathway&quot;)) %&gt;% rename(pathway = &quot;# Pathway&quot;, group = &quot;taxonomy&quot;)
 row.names(path_tax) &lt;- path_tax$pathway
 
-path_rpk2 &lt;- read.csv(&quot;20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F, row.names = &quot;# Pathway&quot;) %&gt;% select(-c(&quot;taxonomy&quot;))
-path_tax2 &lt;- read.csv(&quot;20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F) %&gt;%
+
+
+path_rpk2 &lt;- read.csv(&quot;20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F, row.names = &quot;# Pathway&quot;) %&gt;% select(-c(&quot;taxonomy&quot;))
+path_tax2 &lt;- read.csv(&quot;20230406_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/humann3/PathAbundance.RPK.metagenome.txt&quot;, sep = &quot;\t&quot;, check.names = F) %&gt;%
         select(c(&quot;taxonomy&quot;, &quot;# Pathway&quot;)) %&gt;% rename(pathway = &quot;# Pathway&quot;, group = &quot;taxonomy&quot;)
 row.names(path_tax2) &lt;- path_tax2$pathway
 
@@ -3303,9 +3358,10 @@ phyloseq_path_rpk &lt;- merge_phyloseq(phyloseq_path_rpk1, phyloseq_path_rpk2)</
 <pre class="r"><code>phy &lt;- list()
 sample_data &lt;- sample_data(phyloseq)
 sample_names(phyloseq) &lt;- sample_data(phyloseq)$baylor_other_id
+sample_names(phyloseq_rel) &lt;- sample_data(phyloseq_rel)$baylor_other_id
 sample_names(phyloseq_path_rpk) &lt;- sample_data(phyloseq_path_rpk)$baylor_other_id
 phy$phyloseq_count &lt;- phyloseq
-phy$phyloseq_rel &lt;- transform_sample_counts(phyloseq, function(x){x / sum(x)})
+phy$phyloseq_rel &lt;- phyloseq_rel
 phy$phyloseq_path_rpk &lt;-phyloseq_path_rpk
 
 
@@ -3315,9 +3371,12 @@ tax_table(phy$phyloseq_count) &lt;- cbind(tax_table(phy$phyloseq_count),
         data.frame %&gt;% 
         rename(&quot;gram_stain&quot; = &quot;V8&quot;) %&gt;% 
         mutate(gram_stain = case_when(Domain == &quot;k__Eukaryota&quot; ~ &quot;Fungi&quot;,
-                                      Species == &quot;s__Natronorubrum_sediminis&quot; ~ &quot;Archaea&quot;,
+                                      Species == &quot;s__Natronorubrum_sediminis&quot; ~ &quot;Gram-negative&quot;,
                                       Species == &quot;s__Methanobrevibacter_smithii&quot; ~ &quot;Gram-positive&quot;,
                                       .default = gram_stain)) %&gt;%
+        mutate(Species = case_when(Species == &quot;s__Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii&quot; ~ &quot;s__S._cerevisiae x S._kudriavzevii&quot;,
+                                      grepl(&quot;_group&quot;, Species) ~ gsub(&quot;_group&quot;, &quot;&quot;, Species),
+                                      .default = Species)) %&gt;%
         as.matrix()
 
 
@@ -3327,10 +3386,16 @@ tax_table(phy$phyloseq_rel) &lt;- cbind(tax_table(phy$phyloseq_rel),
         data.frame %&gt;% 
         rename(&quot;gram_stain&quot; = &quot;V8&quot;) %&gt;% 
         mutate(gram_stain = case_when(Domain == &quot;k__Eukaryota&quot; ~ &quot;Fungi&quot;,
-                                      Species == &quot;s__Natronorubrum_sediminis&quot; ~ &quot;Archaea&quot;,
+                                      Species == &quot;s__Natronorubrum_sediminis&quot; ~ &quot;Gram-negative&quot;,
                                       Species == &quot;s__Methanobrevibacter_smithii&quot; ~ &quot;Gram-positive&quot;,
                                       .default = gram_stain)) %&gt;%
+        mutate(Species = case_when(Species == &quot;s__Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii&quot; ~ &quot;s__S._cerevisiae x S._kudriavzevii&quot;,
+                                      grepl(&quot;_group&quot;, Species) ~ gsub(&quot;_group&quot;, &quot;&quot;, Species),
+                                      .default = Species)) %&gt;%
         as.matrix()
+
+taxa_names(phy$phyloseq_count) &lt;- tax_table(phy$phyloseq_count) %&gt;% data.frame %&gt;% .$Species %&gt;% gsub(&quot;s__&quot;, &quot;&quot;, .)
+taxa_names(phy$phyloseq_rel) &lt;- tax_table(phy$phyloseq_rel) %&gt;% data.frame %&gt;% .$Species %&gt;% gsub(&quot;s__&quot;, &quot;&quot;, .)
 
 sample_data(phy$phyloseq_rel)$gram_neg_prop &lt;- phy$phyloseq_rel %&gt;% 
         subset_taxa(gram_stain == &quot;Gram-negative&quot;) %&gt;% 
@@ -3383,31 +3448,31 @@ for (str_libraries in str_libraries) {
         cat()
     cat(&quot;\n&quot;)
 }</code></pre>
-<pre><code>## R Core Team (2022). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/. We have invested a lot of time and effort in creating R, please cite it when using it for data analysis. See also &#39;citation(&quot;pkgname&quot;)&#39; for citing R packages.
-## Wickham H, Bryan J (2023). readxl: Read Excel Files_. R package version 1.4.2, &lt;https://CRAN.R-project.org/package=readxl&gt;.
-## phyloseq: An R package for reproducible interactive analysis and graphics of microbiome census data. Paul J. McMurdie and Susan Holmes (2013) PLoS ONE 8(4):e61217.
-## Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019). &quot;Welcome to the tidyverse.&quot; Journal of Open Source Software_, *4*(43), 1686. doi:10.21105/joss.01686 &lt;https://doi.org/10.21105/joss.01686&gt;.
-## Rinker, T. W. &amp; Kurkiewicz, D. (2017). pacman: Package Management for R. version 0.5.0. Buffalo, New York. http://github.com/trinker/pacman
-## Garbett SP, Stephens J, Simonov K, Xie Y, Dong Z, Wickham H, Horner J, reikoch, Beasley W, O&#39;Connor B, Warnes GR, Quinn M, Kamvar ZN (2023). yaml: Methods to Convert R Data to YAML and Back_. R package version 2.3.7, &lt;https://CRAN.R-project.org/package=yaml&gt;. ATTENTION: This citation information has been auto-generated from the package DESCRIPTION file and may need manual editing, see &#39;help(&quot;citation&quot;)&#39;.
-## H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
-## Oksanen J, Simpson G, Blanchet F, Kindt R, Legendre P, Minchin P, O&#39;Hara R, Solymos P, Stevens M, Szoecs E, Wagner H, Barbour M, Bedward M, Bolker B, Borcard D, Carvalho G, Chirico M, De Caceres M, Durand S, Evangelista H, FitzJohn R, Friendly M, Furneaux B, Hannigan G, Hill M, Lahti L, McGlinn D, Ouellette M, Ribeiro Cunha E, Smith T, Stier A, Ter Braak C, Weedon J (2022). vegan: Community Ecology Package. R package version 2.6-4, &lt;https://CRAN.R-project.org/package=vegan&gt;.
-## Leo Lahti et al. microbiome R package. URL: http://microbiome.github.io
-## Kassambara A (2023). ggpubr: &#39;ggplot2&#39; Based Publication Ready Plots. R package version 0.6.0, &lt;https://CRAN.R-project.org/package=ggpubr&gt;.
-## Simon Garnier, Noam Ross, Robert Rudis, Antônio P. Camargo, Marco Sciaini, and Cédric Scherer (2021). Rvision - Colorblind-Friendly Color Maps for R. R package version 0.6.2.
-## Davis NM, Proctor D, Holmes SP, Relman DA, Callahan BJ (2017). &quot;Simple statistical identification and removal of contaminant sequences in marker-gene and metagenomics data.&quot; bioRxiv_, 221499. doi:10.1101/221499 &lt;https://doi.org/10.1101/221499&gt;.
-## Auguie B (2017). gridExtra: Miscellaneous Functions for &quot;Grid&quot; Graphics. R package version 2.3, &lt;https://CRAN.R-project.org/package=gridExtra&gt;.
-## Kassambara A (2023). ggpubr: &#39;ggplot2&#39; Based Publication Ready Plots. R package version 0.6.0, &lt;https://CRAN.R-project.org/package=ggpubr&gt;.
-## Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear Mixed-Effects Models Using lme4. Journal of Statistical Software, 67(1), 1-48. doi:10.18637/jss.v067.i01.
-## Kuznetsova A, Brockhoff PB, Christensen RHB (2017). &quot;lmerTest Package: Tests in Linear Mixed Effects Models.&quot; Journal of Statistical Software, *82*(13), 1-26. doi:10.18637/jss.v082.i13 &lt;https://doi.org/10.18637/jss.v082.i13&gt;.
-## Ooms J (2023). writexl: Export Data Frames to Excel &#39;xlsx&#39; Format_. R package version 1.4.2, &lt;https://CRAN.R-project.org/package=writexl&gt;.
-## Gonçalves da Silva A (2017). harrietr: Wrangle Phylogenetic Distance Matrices and Other Utilities. R package version 0.2.3, &lt;https://CRAN.R-project.org/package=harrietr&gt;.
-## Mallick H et al. (2020). Multivariable Association in Population-scale Meta-omics Studies, http://huttenhower.sph.harvard.edu/maaslin2. To cite the MaAsLin 2 software, please use: Mallick H, Rahnavard A, McIver LJ (2020). MaAsLin 2: Multivariable Association in Population-scale Meta-omics Studies. R/Bioconductor package, http://huttenhower.sph.harvard.edu/maaslin2.
-## Wilke C, Wiernik B (2022). ggtext: Improved Text Rendering Support for &#39;ggplot2&#39;. R package version 0.1.2, &lt;https://CRAN.R-project.org/package=ggtext&gt;.
-## Aphalo P (2022). ggpmisc: Miscellaneous Extensions to &#39;ggplot2&#39;_. R package version 0.5.2, &lt;https://CRAN.R-project.org/package=ggpmisc&gt;.
-## Auguie B (2017). gridExtra: Miscellaneous Functions for &quot;Grid&quot; Graphics. R package version 2.3, &lt;https://CRAN.R-project.org/package=gridExtra&gt;.
-## Wood S, Scheipl F (2020). gamm4: Generalized Additive Mixed Models using &#39;mgcv&#39; and &#39;lme4&#39;. R package version 0.2-6, &lt;https://CRAN.R-project.org/package=gamm4&gt;. ATTENTION: This citation information has been auto-generated from the package DESCRIPTION file and may need manual editing, see &#39;help(&quot;citation&quot;)&#39;.
-## Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/.
-## Berends MS, Luz CF, Friedrich AW, Sinha BNM, Albers CJ, Glasner C (2022). &quot;AMR: An R Package for Working with Antimicrobial Resistance Data.&quot; Journal of Statistical Software_, *104*(3), 1-31. doi:10.18637/jss.v104.i03 &lt;https://doi.org/10.18637/jss.v104.i03&gt;.</code></pre>
+<pre><code>## Computing. R Foundation for Statistical Computing, Vienna, Austria. &lt;https://www.R-project.org/&gt;. We have invested a lot of time and effort in creating R, please cite it when using it for data analysis. See also &#39;citation(&quot;pkgname&quot;)&#39; for citing R packages.
+## version 1.4.3, &lt;https://CRAN.R-project.org/package=readxl&gt;.
+## graphics of microbiome census data. Paul J. McMurdie and Susan Holmes (2013) PLoS ONE 8(4):e61217.
+## Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019). &quot;Welcome to the tidyverse.&quot; Journal of Open Source Software_, *4*(43), 1686. doi:10.21105/joss.01686 &lt;https://doi.org/10.21105/joss.01686&gt;.
+## R. version 0.5.0. Buffalo, New York. http://github.com/trinker/pacman
+## J, reikoch, Beasley W, O&#39;Connor B, Warnes GR, Quinn M, Kamvar ZN (2023). yaml: Methods to Convert R Data to YAML and Back_. R package version 2.3.7, &lt;https://CRAN.R-project.org/package=yaml&gt;. ATTENTION: This citation information has been auto-generated from the package DESCRIPTION file and may need manual editing, see &#39;help(&quot;citation&quot;)&#39;.
+## Springer-Verlag New York, 2016.
+## O&#39;Hara R, Solymos P, Stevens M, Szoecs E, Wagner H, Barbour M, Bedward M, Bolker B, Borcard D, Carvalho G, Chirico M, De Caceres M, Durand S, Evangelista H, FitzJohn R, Friendly M, Furneaux B, Hannigan G, Hill M, Lahti L, McGlinn D, Ouellette M, Ribeiro Cunha E, Smith T, Stier A, Ter Braak C, Weedon J (2022). vegan: Community Ecology Package. R package version 2.6-4, &lt;https://CRAN.R-project.org/package=vegan&gt;.
+## http://microbiome.github.io
+## Plots. R package version 0.6.0, &lt;https://CRAN.R-project.org/package=ggpubr&gt;.
+## Sciaini, and Cédric Scherer (2023). viridis(Lite) - Colorblind-Friendly Color Maps for R. viridis package version 0.6.4.
+## &quot;Simple statistical identification and removal of contaminant sequences in marker-gene and metagenomics data.&quot; bioRxiv_, 221499. doi:10.1101/221499 &lt;https://doi.org/10.1101/221499&gt;.
+## Graphics. R package version 2.3, &lt;https://CRAN.R-project.org/package=gridExtra&gt;.
+## Plots. R package version 0.6.0, &lt;https://CRAN.R-project.org/package=ggpubr&gt;.
+## Fitting Linear Mixed-Effects Models Using lme4. Journal of Statistical Software, 67(1), 1-48. doi:10.18637/jss.v067.i01.
+## Package: Tests in Linear Mixed Effects Models.&quot; Journal of Statistical Software, *82*(13), 1-26. doi:10.18637/jss.v082.i13 &lt;https://doi.org/10.18637/jss.v082.i13&gt;.
+## R package version 1.4.2, &lt;https://CRAN.R-project.org/package=writexl&gt;.
+## Matrices and Other Utilities. R package version 0.2.3, &lt;https://CRAN.R-project.org/package=harrietr&gt;.
+## Population-scale Meta-omics Studies, http://huttenhower.sph.harvard.edu/maaslin2. To cite the MaAsLin 2 software, please use: Mallick H, Rahnavard A, McIver LJ (2020). MaAsLin 2: Multivariable Association in Population-scale Meta-omics Studies. R/Bioconductor package, http://huttenhower.sph.harvard.edu/maaslin2.
+## for &#39;ggplot2&#39;. R package version 0.1.2, &lt;https://CRAN.R-project.org/package=ggtext&gt;.
+## package version 0.5.3, &lt;https://CRAN.R-project.org/package=ggpmisc&gt;.
+## Graphics. R package version 2.3, &lt;https://CRAN.R-project.org/package=gridExtra&gt;.
+## using &#39;mgcv&#39; and &#39;lme4&#39;. R package version 0.2-6, &lt;https://CRAN.R-project.org/package=gamm4&gt;. ATTENTION: This citation information has been auto-generated from the package DESCRIPTION file and may need manual editing, see &#39;help(&quot;citation&quot;)&#39;.
+## Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/.
+## (2022). &quot;AMR: An R Package for Working with Antimicrobial Resistance Data.&quot; Journal of Statistical Software_, *104*(3), 1-31. doi:10.18637/jss.v104.i03 &lt;https://doi.org/10.18637/jss.v104.i03&gt;.</code></pre>
 <pre class="r"><code>#===============================================================================</code></pre>
 </div>
 </div>

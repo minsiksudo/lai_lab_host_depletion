@@ -493,6 +493,8 @@ sample_data(phy$phyloseq_path_rpk)$gram_neg_prop <- phy$phyloseq_rel %>%
         otu_table() %>% 
         colSums(na.rm = F)
 
+
+
 ```
 
 ***4. Removing unnecessary metadata***

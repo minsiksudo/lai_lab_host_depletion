@@ -5926,8 +5926,11 @@ c <- horn_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.n
                "Degree of freedom" = "Df") %>% 
         dplyr::select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
-
-tableA2
+TableA2 <-  cbind(a, b, c) %>% 
+        kbl(format = "html", escape = 0) %>%
+        add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
+                kable_styling(full_width = 0, html_font = "sans")
+#Table A2
 
 
 ```

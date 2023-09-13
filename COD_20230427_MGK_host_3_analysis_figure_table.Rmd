@@ -1,5 +1,5 @@
 ---
-title: "COD_20230831_HOST_3_analysis_figure_table"
+title: "COD_20230831_HOST_4_analysis_figure_table_with_output"
 author: "Minsik Kim"
 date: "2023-08-31"
 output:
@@ -596,80 +596,95 @@ dev.off()
 
 ## Library failure {.tabset}
 
-### Library failure (all samples)
+### Library failure - OR (all samples)
+
+**Stratified OR cannot be calculated, as some samples showed 0 library failure.**
 
 Effect size, standard error (SE) and t-value at a statistical test on library prep failure rate using generalized linear mixed effect model. glm ( sequencing fail \~ sample_type + treatment + sample_type \*
 treatment + (1|subject_id) )
 
 ```{r warning=F, ''}
 
-tableS1 <- glmer(lib_failed ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame %>% dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL"))) %>%
-        summary %>% .$coefficients %>% data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`t value`) > 2 ~ "*", .default = " ")) %>% 
+gm1 <- glmer(lib_failed ~ sample_type + treatment + sample_type * treatment + (1|subject_id), data = sample_data %>% data.frame %>% dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL")))
+#Odd ratio calculation
+#https://stackoverflow.com/questions/26417005/odds-ratio-and-confidence-intervals-from-glmer-output
+
+gm1
+
+cc <- confint(gm1,parm="beta_")  ## slow (~ 11 seconds)
+ctab <- cbind(OR=fixef(gm1), cc)
+rtab <- exp(ctab)
+
+#Using
+#https://stackoverflow.com/questions/26417005/odds-ratio-and-confidence-intervals-from-glmer-output
+
+rtab
+
+
+tableA1 <- rtab %>%
+        data.frame(check.names = F) %>% 
+        round(3) %>%
+        mutate(` ` = case_when(`2.5 %` > 1 ~ "*", .default = " "),
+               `95% CI` = paste(`2.5 %`, `97.5 %`, sep = "-")) %>% 
         rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>% 
         column_to_rownames(var = "x") %>% 
-        rename("<i>t</i>-value" = "t value",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2),
-                                ")", 
-                                sep = ""),
-               "<i>t</i>-value" = round(`<i>t</i>-value`, 3)) %>% 
-        dplyr::select(c("Effect size (95% CI)", "<i>t</i>-value", " ")) %>% 
+        dplyr::select(c("OR", "95% CI", " ")) %>% 
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "sans")
 
-tableS1
-
-save_kable(tableS1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS1.html", self_contained = T)
+tableA1
 
 ```
-                                    
+
+### Library failure (ANOVA)
+
+```{r}
+gm1 %>% anova
+```
+
+                      
 ### Library failure (stratified)
 
 glm ( sequencing fail \~ treatment + subject_id )
 
 *--> Cannot run for Sputum (no failed sample). *
 
+For BAL 
+
 ```{r warning=F, ''}
 
-glmer(lib_failed ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% dplyr::filter(sample_type %in% c("BAL"))) %>%
-        summary %>% .$coefficients %>% data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`t value`) > 2 ~ "*", .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>% 
-        rename("<i>t</i>-value" = "t value",
-               SE = "Std. Error",
-               "Effect size" = "Estimate") %>%
-        mutate(across(is.numeric, round, digits=2)) %>% 
-        column_to_rownames(var = "x") %>%
-        kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "sans")
+glmer_libfail_bal <- glmer(lib_failed ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% dplyr::filter(sample_type %in% c("BAL")))
 
-
-glmer(lib_failed ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% dplyr::filter(sample_type %in% c("Nasal"))) %>%
-        summary %>% .$coefficients %>% data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`t value`) > 2 ~ "*", .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub(":", " * ", x)) %>% 
-        mutate(across(is.numeric, round, digits=2)) %>% mutate(x = gsub("sample_type|treatment", "", x)) %>% 
-        column_to_rownames(var = "x") %>% 
-        kbl(format = "html") %>% kable_styling(full_width = 0, html_font = "sans")
-
-### Library failure (Spt) - glm ( sequencing fail \~ treatment + subject_id ) - **Cannot run test; no failed sample **
-
-
+cc <- confint(glmer_libfail_bal,parm="beta_")  ## slow (~ 11 seconds)
+ctab_bal <- cbind(OR=fixef(glmer_libfail_bal), cc)
+exp(ctab_bal)
 
 ```
 
-### Library failure (OR)
+For nasal
 
-Both OR and RR cannot be calculated (no cases in untreated group, infinite or 1)
+```{r}
 
-```{r warning=F, ''}
-sample_data %>%
-        data.frame %>%
-        group_by(sample_type, treated, lib_failed) %>%
-        summarise(N = n())
+glmer_libfail_nasal <- glmer(lib_failed ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% dplyr::filter(sample_type %in% c("Nasal")))
+
+cc <- confint(glmer_libfail_nasal,parm="beta_")  ## slow (~ 11 seconds)
+ctab_ns <- cbind(OR=fixef(glmer_libfail_nasal), cc)
+exp(ctab_ns)
+
+
+```
+For sputum
+
+**There is no lib failed samples with sputum. Therefore we cannot run the analysis**
+
+```{r}
+
+glmer_libfail_sputum <- glmer(lib_failed ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% dplyr::filter(sample_type %in% c("Sputum")))
+
+#cc <- confint(glmer_libfail_sputum,parm="beta_")  ## slow (~ 11 seconds)
+#ctab_spt <- cbind(OR=fixef(glmer_libfail_sputum), cc)
+#exp(ctab_spt)
+
+
 ```
 
 ### {-}

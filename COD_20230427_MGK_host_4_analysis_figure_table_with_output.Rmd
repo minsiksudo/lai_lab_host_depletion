@@ -687,13 +687,17 @@ No treatment significantly affected for library failure for BAL.
 
 For nasal, GLMER result does not converge. As all the variables are categorical, we cannot rescale.
 
-```{r}
+```{r, include=FALSE, eval=FALSE}
 
-#glmer_libfail_nasal <- glmer(lib_failed ~ treatment + (1|subject_id),
-#                             data = sample_data %>%
-#                                     data.frame %>%
-#                                     dplyr::filter(sample_type %in% c("Nasal")),
-#                             family = "binomial") 
+glmer_libfail_ns <- glmer(lib_failed ~ treatment + (1|subject_id),
+                             data = sample_data %>%
+                                     data.frame %>%
+                                     dplyr::filter(sample_type %in% c("Nasal")),
+                             family = "binomial") 
+ 
+
+glmer_libfail_ns %>% summary
+
 
 ```
 
@@ -732,52 +736,43 @@ lmer_host_ratio_all %>% anova()
 
 **HostZERO and Molysius was effect to to all QIAamp was effective for Nasal swab and Sputum**
 
-
-**Table S1. ** Effect size, standard error (SE) and p-value at a statistical test on host DNA ratio using linear mixed effect model with treatment as fixed effect and subject as random effect using r package lmer::lmer( Host DNA % ~ treatment + (1|subject_id) ). Stratified analyses were conducted for each sample type as an interaction term of sample type and treatment was significant at an ANOVA test (p-value < 0.001) using a model, LMER (Host DNA % ~ sample type + treatment + sample type `*` treatment  + (1|subject_id) ). The baseline of categorical variable is untreated, and statistical significances were noted with `*`: p-value < 0.05 and `***`: p-value < 0.001.
-
-**HostZERO and Molysius was effect to to all QIAamp was effective for Nasal swab and Sputum**
-
-Stratified (nasal)
+Stratified (BAL)
 
 ```{r warning=F}
-lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), 
-                    data = sample_data %>%
-                            data.frame %>%
-                            mutate(total_read = phyloseq_unfiltered$phyloseq_count %>%
-                            otu_table %>%
-                            colSums()) %>%
-                            subset(., .$sample_type %in% c("BAL"))) %>%
-        summary()
-```
-
-Stratified (nasal)
-
-```{r}
-
-lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) %>% 
-        summary()
-```
-
-Stratified (sputum)
-
-```{r}
-lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) %>% 
-        summary() 
-
-```
-
-Merged table
-
-```{r warning=F}
-
-
 hr_lmer_bal <- lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), 
                     data = sample_data %>%
                             data.frame %>%
                             mutate(total_read = phyloseq_unfiltered$phyloseq_count %>%
                             otu_table %>%
                             colSums()) %>%
-                            subset(., .$sample_type %in% c("BAL"))) %>%
+                            subset(., .$sample_type %in% c("BAL")))
+
+hr_lmer_bal %>%
+        summary()
+```
+
+Stratified (nasal)
+
+```{r}
+
+hr_lmer_ns <- lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal")))
+
+hr_lmer_ns %>% summary
+```
+
+Stratified (sputum)
+
+```{r}
+hr_lmer_spt <- lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum")))
+
+hr_lmer_spt %>% summary
+```
+
+Merged table
+
+```{r warning=F}
+
+hr_lmer_bal_kbl <- hr_lmer_bal %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -785,22 +780,85 @@ hr_lmer_bal <- lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id),
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              hr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
+
+hr_lmer_ns_kbl <- hr_lmer_ns %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              hr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
-hr_lmer_ns <- lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) %>% 
+
+
+
+hr_lmer_spt_kbl <- hr_lmer_spt %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -808,47 +866,42 @@ hr_lmer_ns <- lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), data
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("ns_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = ), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = ),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = ),
-                                ")", 
-                                sep = ""),
-               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
-
-
-hr_lmer_spt <- lmer(sequencing_host_prop * 100 ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) %>% 
-        summary() %>%
-        .$coefficients %>%
-        data.frame(check.names = F) %>%
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
+               t_value = "t value") %>%
+        merge(., 
+              hr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("spt_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-                rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-       dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
+        
 
 
-tables1 <- cbind(hr_lmer_bal, hr_lmer_ns, hr_lmer_spt) %>%
+tables1 <- cbind(hr_lmer_bal_kbl, hr_lmer_ns_kbl, hr_lmer_spt_kbl) %>%
     kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
@@ -904,32 +957,44 @@ Raw results, BAL, nasal and Sputum, respectively
 
 ```{r warning=F}
 
-lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id),
+fr_lmer_bal <- lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id),
                     data = sample_data %>%
                                 data.frame %>%
                                 mutate(total_read = phyloseq_unfiltered$phyloseq_count %>%
                                 otu_table %>%
                                 colSums()) %>%
-             subset(., .$sample_type %in% c("BAL"))) %>% 
+             subset(., .$sample_type %in% c("BAL")))
+
+
+fr_lmer_bal %>% 
         summary()
 
-lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id),
+
+fr_lmer_ns <- lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id),
                     data = sample_data %>%
                                 data.frame %>%
                                 mutate(total_read = phyloseq_unfiltered$phyloseq_count %>%
                                 otu_table %>%
                                 colSums()) %>%
-             subset(., .$sample_type %in% c("Nasal"))) %>% 
+             subset(., .$sample_type %in% c("Nasal")))
+
+
+fr_lmer_ns %>% 
         summary()
 
-lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id),
+
+fr_lmer_spt <- lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id),
                     data = sample_data %>%
                                 data.frame %>%
                                 mutate(total_read = phyloseq_unfiltered$phyloseq_count %>%
                                 otu_table %>%
                                 colSums()) %>%
-             subset(., .$sample_type %in% c("Sputum"))) %>% 
+             subset(., .$sample_type %in% c("Sputum"))) 
+
+
+fr_lmer_spt %>% 
         summary()
+
 
 ```
 
@@ -937,13 +1002,7 @@ Tidified output
 
 ```{r warning=F}
 
-fr_lmer_bal <- lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id),
-                    data = sample_data %>%
-                                data.frame %>%
-                                mutate(total_read = phyloseq_unfiltered$phyloseq_count %>%
-                                otu_table %>%
-                                colSums()) %>%
-             subset(., .$sample_type %in% c("BAL"))) %>% 
+fr_lmer_bal_kbl <- fr_lmer_bal %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -951,22 +1010,40 @@ fr_lmer_bal <- lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id),
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              fr_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-       dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
-fr_lmer_ns <- lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) %>% 
+fr_lmer_ns_kbl <- fr_lmer_ns %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -974,47 +1051,83 @@ fr_lmer_ns <- lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id), data
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("ns_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = ), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = ),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = ),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              fr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-       dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
 
-fr_lmer_spt <- lmer(log10(Final_reads/1000000) ~ treatment + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) %>% 
+fr_lmer_spt_kbl <- fr_lmer_spt %>%
         summary() %>%
         .$coefficients %>%
-        data.frame(check.names = F) %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              fr_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("spt_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-                rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-       dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
 
-tables2 <- cbind(fr_lmer_bal, fr_lmer_ns, fr_lmer_spt) %>%
+tables2 <- cbind(fr_lmer_bal_kbl, fr_lmer_ns_kbl, fr_lmer_spt_kbl) %>%
     kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
@@ -1568,7 +1681,7 @@ alpha_diversity <- function(data) {
 }
 #sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
 sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
-sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
+sample_data(phyloseq$phyloseq_count) <-sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
 sample_data(phyloseq$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpk))  
 
 sample_data(phyloseq_tv) <- sample_data(alpha_diversity(phyloseq_tv))  
@@ -1687,6 +1800,17 @@ table1
 
 
 save_kable(table1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table1.html", self_contained = T)
+
+
+```
+
+
+
+```{r}
+
+mock_otu <- subset_samples(phyloseq$phyloseq_count, sample_type =="Mock") %>% otu_table() %>% data.frame()
+
+mock_otu_nonzero <- mock_otu[rowSums(mock_otu[])>0,]
 
 
 ```
@@ -2764,8 +2888,11 @@ Raw results - Mock
 
 ```{r}
 ##Mock
-lm(gram_neg_prop ~ treatment,
-     data = sample_data(phyloseq$phyloseq_rel) %>% data.frame %>% subset(., .$sample_type %in% c("Mock"))) %>%
+gram_neg_prop_mock <- 
+        lm(gram_neg_prop ~ treatment,
+     data = sample_data(phyloseq$phyloseq_rel) %>% data.frame %>% subset(., .$sample_type %in% c("Mock"))) 
+
+gram_neg_prop_mock %>%
         summary
 ```
 
@@ -2773,8 +2900,12 @@ BAL
 
 ```{r}
 ##BAL
+gram_neg_prop_bal <- 
 lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) %>%
+     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) 
+
+
+gram_neg_prop_bal %>%
         summary
 ```
 
@@ -2783,20 +2914,25 @@ Nasal
 ```{r}
 
 ##Nasal
+gram_neg_prop_ns <- 
 lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) %>%
-        summary
+     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) 
 
+
+gram_neg_prop_ns %>%
+        summary
 ```
 
 Sputum
 
 ```{r}
 ##Sputum
+gram_neg_prop_spt <- 
 lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) %>%
-        summary
+     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) 
 
+gram_neg_prop_spt %>%
+        summary
 ```
 
 
@@ -2805,97 +2941,179 @@ Tidy summarized table
 
 ```{r}
 
-tableS5_mock <- 
-lm(gram_neg_prop ~ treatment,
-     data = sample_data(phyloseq$phyloseq_rel) %>% data.frame %>% subset(., .$sample_type %in% c("Mock"))) %>%
-        summary %>% .$coefficients %>% data.frame(check.names = F) %>%
+gram_neg_prop_mock_kbl <- gram_neg_prop_mock %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%  
+                               .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              gram_neg_prop_mock %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) 
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
-
-tableS5_bal <- lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) %>%
-        summary %>% .$coefficients %>% data.frame(check.names = F) %>%
+gram_neg_prop_ns_kbl  <- gram_neg_prop_ns %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%  
+                               .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              gram_neg_prop_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) 
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
-tableS5_ns <- lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) %>%
-        summary %>% .$coefficients %>% data.frame(check.names = F) %>%
+
+gram_neg_prop_spt_kbl <- gram_neg_prop_spt %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%  
+                               .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              gram_neg_prop_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) 
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
 
-tableS5_spt <- lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) %>%
-        summary %>% .$coefficients %>% data.frame(check.names = F) %>%
+
+gram_neg_prop_bal_kbl <- gram_neg_prop_bal %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%  
+                               .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              gram_neg_prop_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) 
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
 
-
-
-tableS3 <- cbind(tableS5_mock, tableS5_bal, tableS5_ns, tableS5_spt) %>%
+tableS3 <- cbind(gram_neg_prop_mock_kbl, gram_neg_prop_bal_kbl, gram_neg_prop_ns_kbl, gram_neg_prop_spt_kbl) %>%
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "sans") %>% 
         add_header_above(c(" " = 1, "Mock" = 3, "BAL" = 3, "Nasal swab" = 3, "Sputum" = 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans") 
@@ -2971,9 +3189,9 @@ dat_text <- data.frame(
           "Sputum", "Sputum", "Sputum", "Sputum", "Sputum"),
   treatment     = c(
           #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp", 
-          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp",
-          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp",
-          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
+          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
+          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
   S.obs = c(
           #50, 30, 35, 33, 31,
           30, 35, 50, 52, 50,
@@ -2985,7 +3203,7 @@ dat_text <- data.frame(
 
 dat_text$sample_type <- factor(dat_text$sample_type, levels = c("BAL", "Nasal", "Sputum"
                                                                 ))
-dat_text$treatment <- factor(dat_text$treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"))
+dat_text$treatment <- factor(dat_text$treatment, levels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))
 
 
 f3a <- f3a + geom_text(
@@ -2996,7 +3214,9 @@ f3a <- f3a + geom_text(
 
 
 f5S_mock <- ggplot(subset(sample_data(phyloseq$phyloseq_count) %>% 
-                             data.frame, sample_data(phyloseq$phyloseq_count)$sample_type %in% c("Mock")),
+                             data.frame,
+                          sample_data(phyloseq$phyloseq_count)$sample_type %in%
+                                  c("Mock")),
                    aes(x = treatment, y = S.obs)) +
         geom_jitter(aes(color = treatment), position = position_jitter(0.2), size = 1.2) +
         stat_summary(aes(color = treatment),
@@ -3028,10 +3248,10 @@ dat_text <- data.frame(
           #"Sputum", "Sputum", "Sputum", "Sputum", "Sputum"
           ),
   treatment = c(
-          "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"#, 
-          #"lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp",
-          #"lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp",
-          #"lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"
+          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"#, 
+          #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
+          #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
+          #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"
           ),
   S.obs = c(
           50, 30, 35, 33, 31
@@ -3046,7 +3266,7 @@ dat_text <- data.frame(
 dat_text$sample_type <- factor(dat_text$sample_type, levels = c("Mock"#, 
                                                                 #"BAL", "Nasal", "Sputum"
                                                                 ))
-dat_text$treatment <- factor(dat_text$treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"))
+dat_text$treatment <- factor(dat_text$treatment, levels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))
 
 
 f5S_mock <- f5S_mock + geom_text(
@@ -3154,6 +3374,9 @@ path_horn_dist_long_within_sampleid_from_control <- bind_rows(path_horn_dist_lon
 #Here, sample id is the same as subject id.
 path_horn_dist_long_within_sampleid_from_control$subject_id <- path_horn_dist_long_within_sampleid_from_control$sample_id_1
 
+path_horn_dist_long_within_sampleid_from_control$treatment <-
+        factor(path_horn_dist_long_within_sampleid_from_control$treatment,
+               levels = c("Untreated", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
 
 #Making figure of beta diversity distances
 
@@ -3201,7 +3424,8 @@ f3b2 <- rbind(cbind("Sputum",
                        sample_type = factor(sample_type,
                                           levels = c("BAL", "Nasal", "Sputum"))
                        ) %>%
-                subset(treatment %in% c("Untreated", "lyPMA", "Benzonase",
+                subset(treatment %in% c(#"Untreated", 
+                                        "lyPMA", "Benzonase",
                                       "HostZERO", "MolYsis", "QIAamp"))
 } %>%
         ggplot(aes(x = mean, y = treatment, col = treatment)) +
@@ -3209,10 +3433,12 @@ f3b2 <- rbind(cbind("Sputum",
         geom_linerange(aes(xmin=`2.5%`, xmax=`97.5%`)) +
         facet_wrap(~sample_type, nrow = 4) +
         scale_y_discrete(limits=rev) +
-        scale_color_manual(values = c("#e31a1c","#fb9a99","#33a02c",
+        scale_color_manual(values = c(#"#e31a1c",
+                                      "#fb9a99","#33a02c",
                                       "#b2df8a","#1f78b4","#a6cee3"),
                            name = "Treatment",
-                           breaks = c("Untreated", "lyPMA", "Benzonase",
+                           breaks = c(#"Untreated", 
+                                      "lyPMA", "Benzonase",
                                       "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         xlab("Distance from untreated") +
         ylab("Treatment group") +
@@ -3279,18 +3505,25 @@ f5S_mock_mh <- path_horn_dist_long_within_sampleid_from_control %>%
         summarise(mean = mean(dist, na.rm = TRUE),
             sd = sd(dist, na.rm = TRUE),
             n = n()) %>%
+        subset(., .$treatment != "Untreated") %>%
   mutate(se = sd / sqrt(n),
          lower.ci = mean - qt(1 - (0.05 / 2), n - 1) * se,
          upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se,
-         treatment = factor(treatment, levels = c("Untreated", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
-                            labels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))) %>%#,
+         treatment = factor(treatment, levels = c(#"Untreated",
+                                                  "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
+                            labels = c(#"Untreated",
+                                       "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))) %>%
+        #,
          #text = paste(sprintf("%.2f", round(mean, digits = 2)), " [", sprintf("%.2f", round(lower.ci, digits = 2)), ", ", sprintf("%.2f", round(upper.ci, digits = 2)), "]", sep = "")) %>%
         ggplot(aes(x = mean, y = treatment, col = treatment)) +
         geom_point(aes(x=mean), shape=15, size=3) +
         geom_linerange(aes(xmin=lower.ci, xmax=upper.ci)) +
         facet_wrap(~sample_type, nrow = 4) +
         scale_y_discrete(limits=rev) +
-        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_color_manual(values = c(#"#e31a1c", 
+                                      "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", 
+                           labels = c(#"Untreated",
+                                      "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         xlab("Distance from untreated") +
         ylab("Treatment group") +
         theme_classic (base_size = 12, base_family = "sans") + 
@@ -3323,8 +3556,6 @@ fig3
 #          ncol = 1) # alpha diversity plots
 
 dev.off()
-
-
 ```
 
 
@@ -3439,7 +3670,7 @@ sr_lmer_spt <- lmer(S.obs ~ treatment + (1|subject_id),
                             subset(., .$sample_type %in% c("Sputum")))
 sr_lmer_spt %>% summary()
         
-
+sr_lmer_spt %>% confint()
 
 ```
 
@@ -3447,7 +3678,7 @@ Tidy summarized table
 
 ```{r}
 
-sr_lmer_mock <- sr_lmer_mock %>%
+sr_lmer_mock_kbl <-  sr_lmer_mock %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -3455,23 +3686,41 @@ sr_lmer_mock <- sr_lmer_mock %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_mock %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
 
-sr_lmer_bal <- sr_lmer_bal %>% 
+sr_lmer_bal_kbl <-  sr_lmer_bal %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -3479,22 +3728,40 @@ sr_lmer_bal <- sr_lmer_bal %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
-sr_lmer_ns <- sr_lmer_ns %>% 
+sr_lmer_ns_kbl <-  sr_lmer_ns %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -3502,49 +3769,90 @@ sr_lmer_ns <- sr_lmer_ns %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("ns_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = ), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = ),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = ),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
 
-sr_lmer_spt <- sr_lmer_spt %>% 
+sr_lmer_spt_kbl <-  sr_lmer_spt %>%
         summary() %>%
         .$coefficients %>%
-        data.frame(check.names = F) %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("spt_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-                rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
 
-tables4 <- cbind(sr_lmer_mock, sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
+tables4 <- cbind(#sr_lmer_mock_kbl,
+                 sr_lmer_bal_kbl,
+                 sr_lmer_ns_kbl,
+                 sr_lmer_spt_kbl) %>%
     kbl(format = "html", escape = 0) %>%
-        add_header_above(c(" " = 1, "Mock" = 3, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
+        add_header_above(c(" " = 1,
+                           #"Mock" = 3,
+                           "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 
 tables4
@@ -3573,12 +3881,12 @@ sr_lmer_bal <- lmer(S.obs ~ treatment + bal_log_centered_final_reads + (1|subjec
         mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
+               t_value = "t value") %>%
         mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
                                 " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                round(Estimate - 1.96 * abs(t_value), 1) %>% format(nsmall = 1),
                                 ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                round(Estimate + 1.96 * abs(t_value), 1) %>% format(nsmall = 1),
                                 ")", 
                                 sep = ""),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
@@ -3596,12 +3904,12 @@ sr_lmer_ns <- lmer(S.obs ~ treatment + ns_log_centered_final_reads + (1|subject_
         mutate(x = gsub("ns_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
+               t_value = "t value") %>%
         mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = ), 
                                 " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = ),
+                                round(Estimate - 1.96 * abs(t_value), 1) %>% format(nsmall = ),
                                 ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = ),
+                                round(Estimate + 1.96 * abs(t_value), 1) %>% format(nsmall = ),
                                 ")", 
                                 sep = ""),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
@@ -3620,12 +3928,12 @@ sr_lmer_spt <- lmer(S.obs ~ treatment + spt_log_centered_final_reads + (1|subjec
         mutate(x = gsub("spt_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
                 rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
+               t_value = "t value") %>%
         mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
                                 " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                round(Estimate - 1.96 * abs(t_value), 1) %>% format(nsmall = 1),
                                 ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                round(Estimate + 1.96 * abs(t_value), 1) %>% format(nsmall = 1),
                                 ")", 
                                 sep = ""),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
@@ -3878,9 +4186,11 @@ lmer(dist ~ treatment * sample_type + (1|subject_id),
 Stratified analysis - BAL
 
 ```{r}
-lmer(dist ~ treatment + (1|subject_id),
+mh_lmer_bal <- lmer(dist ~ treatment + (1|subject_id),
      data = path_horn_dist_long_within_sampleid_from_control %>%
-             subset(sample_type == "BAL")) %>% 
+             subset(sample_type == "BAL")) 
+
+mh_lmer_bal %>% 
         summary
 ```
 
@@ -3888,9 +4198,11 @@ lmer(dist ~ treatment + (1|subject_id),
 Stratified analysis - Nasal
 
 ```{r}
-lmer(dist ~ treatment + (1|subject_id),
+mh_lmer_ns <- lmer(dist ~ treatment + (1|subject_id),
      data = path_horn_dist_long_within_sampleid_from_control %>%
-             subset(sample_type == "Nasal")) %>% 
+             subset(sample_type == "Nasal")) 
+
+mh_lmer_ns %>% 
         summary
 
 ```
@@ -3900,9 +4212,11 @@ lmer(dist ~ treatment + (1|subject_id),
 Stratified analysis - Sputum
 
 ```{r}
-lmer(dist ~ treatment + (1|subject_id),
+mh_lmer_spt <- lmer(dist ~ treatment + (1|subject_id),
      data = path_horn_dist_long_within_sampleid_from_control %>%
-             subset(sample_type == "Sputum")) %>% 
+             subset(sample_type == "Sputum")) 
+
+mh_lmer_spt %>% 
         summary
 
 ```
@@ -3910,100 +4224,134 @@ lmer(dist ~ treatment + (1|subject_id),
 Tidy, summarized-stratified analysis
 
 ```{r}
-a <- lmer(dist ~ treatment + (1|subject_id),
-     data = path_horn_dist_long_within_sampleid_from_control %>%
-             subset(sample_type == "BAL")) %>% 
-        summary %>%
-        .$ coefficients %>% 
+mh_lmer_bal_kbl <-  mh_lmer_bal %>%
+        summary() %>%
+        .$coefficients %>%
         data.frame(check.names = F) %>% 
-        rownames_to_column('row.names') %>% 
-        mutate(row.names = gsub("host_zero", "HostZERO", row.names)) %>% 
-        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
-        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
-        mutate(row.names = gsub("molysis", "MolYsis", row.names)) %>% 
-        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
-        mutate(across(is.numeric, round, digits=3)) %>% 
-        mutate(`row.names` = gsub("treatment|sample_type", "", `row.names`)) %>% 
-        column_to_rownames("row.names") %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              mh_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) 
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
-b <- lmer(dist ~ treatment + (1|subject_id),
-     data = path_horn_dist_long_within_sampleid_from_control %>%
-             subset(sample_type == "Nasal")) %>% 
-        summary %>%
-        .$ coefficients %>% 
+
+mh_lmer_ns_kbl <-  mh_lmer_ns %>%
+        summary() %>%
+        .$coefficients %>%
         data.frame(check.names = F) %>% 
-        rownames_to_column('row.names') %>% 
-        mutate(row.names = gsub("host_zero", "HostZERO", row.names)) %>% 
-        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
-        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
-        mutate(row.names = gsub("molysis", "MolYsis", row.names)) %>% 
-        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
-        mutate(across(is.numeric, round, digits=3)) %>% 
-        mutate(`row.names` = gsub("treatment|sample_type", "", `row.names`)) %>% 
-        column_to_rownames("row.names") %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              mh_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) 
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
-c <- lmer(dist ~ treatment + (1|subject_id),
-     data = path_horn_dist_long_within_sampleid_from_control %>%
-             subset(sample_type == "Sputum")) %>% 
-        summary %>%
-        .$ coefficients %>% 
+
+mh_lmer_spt_kbl <-  mh_lmer_spt %>%
+        summary() %>%
+        .$coefficients %>%
         data.frame(check.names = F) %>% 
-        rownames_to_column('row.names') %>% 
-        mutate(row.names = gsub("host_zero", "HostZERO", row.names)) %>% 
-        mutate(row.names = gsub("benzonase", "Benzonase", row.names)) %>% 
-        mutate(row.names = gsub("lypma", "lyPMA", row.names)) %>% 
-        mutate(row.names = gsub("molysis", "MolYsis", row.names)) %>% 
-        mutate(row.names = gsub("qiaamp", "QIAamp", row.names)) %>% 
-        mutate(across(is.numeric, round, digits=3)) %>% 
-        mutate(`row.names` = gsub("treatment|sample_type", "", `row.names`)) %>% 
-        column_to_rownames("row.names") %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                                            abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                                            abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 2) %>% format(nsmall = 2), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 2) %>% format(nsmall = 2),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              mh_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
-tableS6 <- cbind(a, b, c) %>% 
+
+
+tableS6 <- cbind(mh_lmer_bal_kbl, mh_lmer_ns_kbl, mh_lmer_spt_kbl) %>% 
         kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
@@ -4026,7 +4374,7 @@ figS6 <- ordinate(subset_samples(phyloseq_rel_nz, sample_type != "Neg." & sample
         #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
                            name = "Treatment",
-                           breaks = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+                           breaks = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
                            labels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
         geom_point(size = 3) +
@@ -4117,7 +4465,7 @@ tax_table(phyloseq_control_rel_contam) %>%
         ggtitle("Contaminants in Zymo mock (denominator is total microbes in samples)") +
         theme(legend.text = element_markdown()) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")),
                     scales= "free_x", nrow=1)
 
 #Manipulating phyloseq - only top 10 
@@ -4142,7 +4490,7 @@ tax_table(phyloseq_control_rel_contam) %>%
         ggtitle("Contaminants in Zymo mock (denominator is total comtaminant)") +
         theme(legend.text = element_markdown()) +
         guides(fill=guide_legend(title="Top 20 species")) +
-        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")),
                     scales= "free_x", nrow=1)
 
 ```
@@ -5200,12 +5548,12 @@ lmer(S.obs ~ sample_type * treatment + (1|subject_id), data = sample_data %>% da
         rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
         column_to_rownames(var = "x") %>%  
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
+               t_value = "t value") %>%
         mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
                                 " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
+                                round(Estimate - 1.96 * abs(t_value), 1) %>% format(nsmall = 1),
                                 ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
+                                round(Estimate + 1.96 * abs(t_value), 1) %>% format(nsmall = 1),
                                 ")", 
                                 sep = ""),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
@@ -5225,22 +5573,23 @@ Association was not adjusted with sequencing depth.
 Raw result - Mock
 
 ```{r}
-sr_lmer_mock <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Mock"))) 
-sr_lmer_mock %>% summary
+pfr_lmer_mock <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Mock"))) 
+pfr_lmer_mock %>% summary
 ```
 
 Raw result - BAL
 
 ```{r}
-sr_lmer_bal <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) 
-sr_lmer_bal %>% summary
+pfr_lmer_bal <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) 
+
+pfr_lmer_bal %>% summary
 ```
 
 Raw result - BAL
 
 ```{r}
-sr_lmer_ns <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) 
-sr_lmer_ns %>% summary
+pfr_lmer_ns <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) 
+pfr_lmer_ns %>% summary
 ```
 
 
@@ -5248,8 +5597,8 @@ sr_lmer_ns %>% summary
 Raw result - BAL
 
 ```{r}
-sr_lmer_spt <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) 
-sr_lmer_spt %>% summary
+pfr_lmer_spt <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) 
+pfr_lmer_spt %>% summary
 ```
 
 
@@ -5257,30 +5606,7 @@ Tidy table
 
 ```{r}
 
-sr_lmer_mock <- sr_lmer_mock %>% 
-        summary() %>%
-        .$coefficients %>%
-        data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%  
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 0) %>% format(nsmall = 0), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 0) %>% format(nsmall = 0),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 0) %>% format(nsmall = 0),
-                                ")", 
-                                sep = ""),
-               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
-        
-
-sr_lmer_bal <- sr_lmer_bal %>% 
+pfr_lmer_mock_kbl <- pfr_lmer_mock %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -5288,21 +5614,41 @@ sr_lmer_bal <- sr_lmer_bal %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%  
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 0) %>% format(nsmall = 0), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 0) %>% format(nsmall = 0),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 0) %>% format(nsmall = 0),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              pfr_lmer_mock %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
-sr_lmer_ns <- sr_lmer_ns %>% 
+
+pfr_lmer_bal_kbl <- pfr_lmer_bal %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -5310,46 +5656,125 @@ sr_lmer_ns <- sr_lmer_ns %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%  
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 0) %>% format(nsmall = 0), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 0) %>% format(nsmall = 0),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 0) %>% format(nsmall = 0),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              pfr_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
-sr_lmer_spt <- sr_lmer_spt %>% 
+pfr_lmer_ns_kbl <- pfr_lmer_ns %>%
         summary() %>%
         .$coefficients %>%
-        data.frame(check.names = F) %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("sample_type|treatment", "", x))  %>% mutate(x = gsub(":", " * ", x)) %>% 
-        column_to_rownames(var = "x") %>%  
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 0) %>% format(nsmall = 0), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 0) %>% format(nsmall = 0),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 0) %>% format(nsmall = 0),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              pfr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
+        
+pfr_lmer_spt_kbl <-  pfr_lmer_spt %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              pfr_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
 
 
-tables8 <- cbind(sr_lmer_mock, sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
+tables8 <- cbind(pfr_lmer_bal_kbl, pfr_lmer_ns_kbl, pfr_lmer_spt_kbl) %>%
     kbl(format = "html", escape = 0) %>%
-        add_header_above(c(" " = 1, "Mock" = 3, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
+        add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 
 tables8
@@ -5370,37 +5795,37 @@ Rwa result, with interaction term
 phyloseq_rel_nz <- transform_sample_counts(phyloseq$phyloseq_path_rpk, function(x) {x/sum(x)}) %>%
         subset_samples(S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))
 
-horn_perm_inter <- vegan::adonis2(distance(phyloseq_rel_nz, method="horn") ~ sample_type * treatment + subject_id,
+horn_perm_inter_fun <- vegan::adonis2(distance(phyloseq_rel_nz, method="horn") ~ sample_type * treatment + subject_id,
                                   data = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F), 
                                   strata = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
 
-horn_perm_ns <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_ns_fun <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                data = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>%
                                        sample_data %>% data.frame(check.names = F),
                                strata = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>% 
                                        sample_data %>% data.frame(check.names = F) %>% .$subject_id, permutations = 10000)
 
-horn_perm_bal  <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_bal_fun  <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp,
                                  data = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>% sample_data %>% data.frame(check.names = F),
                                  strata = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>%
                                          sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
 
-horn_perm_spt <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_spt_fun <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                 data = subset_samples(phyloseq_rel_nz, sample_type == "Sputum") %>% sample_data %>% data.frame(check.names = F),
                                 strata = subset_samples(phyloseq_rel_nz, sample_type == "Sputum")
                                 %>% sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
 
 
-horn_perm_inter
+horn_perm_inter_fun
 ```
 
 Tidy table of PERMANOVA result
 
 ```{r}
-horn_perm_inter %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
+horn_perm_inter_fun %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "treatment" ~ 'Treatment',
                                      row.names == "subject_id" ~ 'Subject',
@@ -5433,26 +5858,26 @@ horn_perm_inter %>% data.frame(check.names = F) %>% rownames_to_column("row.name
 Raw result - BAL
 
 ```{r}
-horn_perm_bal
+horn_perm_bal_fun
 ```
 
 
 Raw result - Nasal
 
 ```{r}
-horn_perm_ns
+horn_perm_ns_fun
 ```
 
 Raw result - Sputum
 
 ```{r}
-horn_perm_spt
+horn_perm_spt_fun
 ```
 Tidy table
 
 ```{r}
 
-a <- horn_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+a <- horn_perm_bal_fun %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
                                      row.names == "benzonase" ~ 'Benzonase',
                                      row.names == "host_zero" ~ 'HostZERO',
@@ -5472,7 +5897,7 @@ a <- horn_perm_bal %>% data.frame(check.names = F) %>% rownames_to_column('row.n
                "Degree of freedom" = "Df") %>% 
         dplyr::select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
-b <- horn_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+b <- horn_perm_ns_fun %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
                                      row.names == "benzonase" ~ 'Benzonase',
                                      row.names == "host_zero" ~ 'HostZERO',
@@ -5492,7 +5917,7 @@ b <- horn_perm_ns %>% data.frame(check.names = F) %>% rownames_to_column('row.na
                "Degree of freedom" = "Df") %>% 
         dplyr::select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
-c <- horn_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
+c <- horn_perm_spt_fun %>% data.frame(check.names = F) %>% rownames_to_column('row.names') %>% 
         mutate(row.names = case_when(row.names == "lypma" ~ 'lyPMA',
                                      row.names == "benzonase" ~ 'Benzonase',
                                      row.names == "host_zero" ~ 'HostZERO',
@@ -5643,7 +6068,7 @@ rename_function_gruop <- function(list_maaslin_result){
                 merge(., taxa_df, by = "feature") %>% 
                 dplyr::select(-c("feature")) %>%
                 rename(feature = "group") %>%
-                dplyr::select(c("feature", "Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"))
+                dplyr::select(c("feature", "Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))
         list_maaslin_result
         
 }
@@ -6321,7 +6746,7 @@ Tidy table of LMER for decontaminated species richness
 
 ```{r}
 
-sr_lmer_bal_decontam <- sr_lmer_bal_decontam %>% 
+sr_lmer_bal_decontam_kbl <- sr_lmer_bal_decontam %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -6329,22 +6754,40 @@ sr_lmer_bal_decontam <- sr_lmer_bal_decontam %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_bal_decontam %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
-sr_lmer_ns_decontam <- sr_lmer_ns_decontam %>% 
+sr_lmer_ns_decontam_kbl  <- sr_lmer_ns_decontam %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -6352,50 +6795,87 @@ sr_lmer_ns_decontam <- sr_lmer_ns_decontam %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("ns_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = ), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = ),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = ),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_ns_decontam %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
+        
 
-
-sr_lmer_spt_decontam <- sr_lmer_spt_decontam %>% 
+sr_lmer_spt_decontam_kbl <- sr_lmer_spt_decontam %>%
         summary() %>%
         .$coefficients %>%
-        data.frame(check.names = F) %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_spt_decontam %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("spt_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-                rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
+        
 
 
 ```
 
 ```{r}
-sr_lmer_bal_tv <- sr_lmer_bal_tv %>% 
+sr_lmer_bal_tv_kbl <- sr_lmer_bal_tv %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -6403,22 +6883,40 @@ sr_lmer_bal_tv <- sr_lmer_bal_tv %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_bal_tv %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
-sr_lmer_ns_tv <- sr_lmer_ns_tv %>% 
+sr_lmer_ns_tv_kbl  <- sr_lmer_ns_tv %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -6426,50 +6924,86 @@ sr_lmer_ns_tv <- sr_lmer_ns_tv %>%
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("ns_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = ), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = ),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = ),
-                                ")", 
-                                sep = ""),
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_ns_tv %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
+        
 
-
-sr_lmer_spt_tv <- sr_lmer_spt_tv %>% 
+sr_lmer_spt_tv_kbl <- sr_lmer_spt_tv %>%
         summary() %>%
         .$coefficients %>%
-        data.frame(check.names = F) %>%
+        data.frame(check.names = F) %>% 
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
                                .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              sr_lmer_spt_tv %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        mutate(x = gsub("spt_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-                rename("<i>p</i>-value" = "Pr(>|t|)",
-               SE = "Std. Error") %>%
-        mutate("Effect size (95% CI)" = paste(round(Estimate, 1) %>% format(nsmall = 1), 
-                                " (", 
-                                round(Estimate - 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ", ",
-                                round(Estimate + 1.96 * SE, 1) %>% format(nsmall = 1),
-                                ")", 
-                                sep = ""),
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),]
         
 
 
 tableA1 <- cbind(
-        cbind(sr_lmer_bal_decontam, sr_lmer_ns_decontam, sr_lmer_spt_decontam),
-        cbind(sr_lmer_bal_tv, sr_lmer_ns_tv, sr_lmer_spt_tv) %>% remove_rownames()) %>%
+        cbind(sr_lmer_bal_decontam_kbl, sr_lmer_ns_decontam_kbl, sr_lmer_spt_decontam_kbl),
+        cbind(sr_lmer_bal_tv_kbl, sr_lmer_ns_tv_kbl, sr_lmer_spt_tv_kbl) %>% remove_rownames()) %>%
     kbl(format = "html", escape = 0) %>%
         add_header_above(c(" "= 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         add_header_above(c(" " = 1, "Decontaminated data 1" = 9, "Decontaminated data 2"= 9)) %>% 
@@ -6770,7 +7304,7 @@ figd2a <- ordinate(subset_samples(phyloseq_rel_nz, sample_type != "Neg." & sampl
         #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
                            name = "Treatment",
-                           breaks = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+                           breaks = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
                            labels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
         geom_point(size = 3) +
@@ -6789,7 +7323,7 @@ figd2b <- ordinate(subset_samples(phyloseq_decontam$phyloseq_rel, sample_type !=
         #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
                            name = "Treatment",
-                           breaks = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+                           breaks = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
                            labels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
         geom_point(size = 3) +
@@ -6807,7 +7341,7 @@ figd2c <- ordinate(subset_samples(phyloseq_tv, sample_type != "Neg." & sample_ty
         #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
                            name = "Treatment",
-                           breaks = c("Untreated","lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp"),
+                           breaks = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
                            labels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
         geom_point(size = 3) +
@@ -6892,8 +7426,45 @@ phyloseq$phyloseq_count %>%
 
 **MolYsis for BAL, QIAamp for nasal sab, and HostZERO for sputum. **
 
+
 ```{r}
-                               
+
+
+
+summary_host_ratio <- rbind(
+        paste(hr_lmer_bal$coefficients$`Effect size (95% CI)`,
+                            hr_lmer_bal_kbl$` `,
+                            sep = ""), 
+        paste(hr_lmer_bal_kbl$`Effect size (95% CI)`,
+                            hr_lmer_bal_kbl$` `,
+                            sep = ""), 
+        paste(hr_lmer_bal_kbl$`Effect size (95% CI)`,
+                            hr_lmer_bal_kbl$` `,
+                            sep = ""), 
+
+        
+
+
+        
+
+summary_final_reads
+
+summary_species_richness
+
+summary_function_richness
+
+summary_bias
+
+summary_gram_negative
+
+summary_comment
+
+
+
+```
+
+```{r}
+
 summary_bal <- matrix(nrow=5,ncol=0) %>% data.frame() %>% 
         rownames_to_column("Sample type") %>% mutate(`Sample type` = "BAL",
                                            Method = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),

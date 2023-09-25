@@ -1,7 +1,7 @@
 ---
 title: "COD_20230831_HOST_3_analysis_figure_table"
 author: "Minsik Kim"
-date: "2023-08-31"
+date: "2023-09-25"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -38,7 +38,7 @@ YAML_header <-
 '---
 title: "Host-DNA depletion analysis"
 author: "Minsik Kim"
-date: "2032.08.31"
+date: "2032.09.25"
 output:
     rmdformats::downcute:
         downcute_theme: "chaos"
@@ -46,7 +46,7 @@ output:
         fig_width: 6
         fig_height: 6
 ---'
-seed <- "20230427"
+seed <- "20230925"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -402,7 +402,11 @@ tinyvamp_qiaamp <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Proj
 
 sample_data_tv <- phyloseq_unfiltered$phyloseq_rel %>%
         subset_samples(sample_type %in% c("BAL", "Nasal", "Sputum")) %>%
-        sample_data %>% data.frame() %>% mutate("names"= paste(.$original_sample, .$treatment, sep = "_")) %>%
+        sample_data %>% data.frame() %>%
+        mutate(treatment = case_when(treatment == "MolYsis" ~ "Molysis",
+                                     treatment == "HostZERO" ~ "Host zero",
+                                     .default = treatment)) %>%
+        mutate("names"= paste(.$original_sample, .$treatment, sep = "_")) %>%
         remove_rownames() %>% column_to_rownames("names") %>% sample_data()
 
 phyloseq_tv <- merge_phyloseq(
@@ -3869,7 +3873,7 @@ Sequencing depth adjusted effect size, standard error (SE) and p-value of a stat
 
 ```{r}
 
-sr_lmer_bal <- lmer(S.obs ~ treatment + bal_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL") & S.obs != 0)) %>% 
+sr_lmer_bal_w_depth <- lmer(S.obs ~ treatment + bal_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL") & S.obs != 0)) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -3892,7 +3896,7 @@ sr_lmer_bal <- lmer(S.obs ~ treatment + bal_log_centered_final_reads + (1|subjec
                "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
         dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
         
-sr_lmer_ns <- lmer(S.obs ~ treatment + ns_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) %>% 
+sr_lmer_ns_w_depth <- lmer(S.obs ~ treatment + ns_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -3916,7 +3920,7 @@ sr_lmer_ns <- lmer(S.obs ~ treatment + ns_log_centered_final_reads + (1|subject_
         dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
 
 
-sr_lmer_spt <- lmer(S.obs ~ treatment + spt_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) %>% 
+sr_lmer_spt_w_depth <- lmer(S.obs ~ treatment + spt_log_centered_final_reads + (1|subject_id), data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) %>% 
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>%
@@ -3940,7 +3944,7 @@ sr_lmer_spt <- lmer(S.obs ~ treatment + spt_log_centered_final_reads + (1|subjec
         dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " "))
         
 
-cbind(sr_lmer_bal, sr_lmer_ns, sr_lmer_spt) %>%
+cbind(sr_lmer_bal_w_depth, sr_lmer_ns_w_depth, sr_lmer_spt_w_depth) %>%
     kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
@@ -7424,179 +7428,801 @@ phyloseq$phyloseq_count %>%
 
 **Table 3**. Summary table of sequencing issues, significant effects linear mixed effect model (species richness ~ treatment + (1|subject)), changes in microbial beta diversity and significant effects of linear mixed effect model (function richness ~ treatment + (1|subject)). Linear mixed effect models were stratified by sample type and employed data after prevalence and abundance filtering.
 
-**MolYsis for BAL, QIAamp for nasal sab, and HostZERO for sputum. **
+**MolYsis for BAL, QIAamp for nasal swab, and HostZERO for sputum. **
 
 
 ```{r}
 
-
+summary_host_ratio
 
 summary_host_ratio <- rbind(
-        paste(hr_lmer_bal$coefficients$`Effect size (95% CI)`,
-                            hr_lmer_bal_kbl$` `,
-                            sep = ""), 
-        paste(hr_lmer_bal_kbl$`Effect size (95% CI)`,
-                            hr_lmer_bal_kbl$` `,
-                            sep = ""), 
-        paste(hr_lmer_bal_kbl$`Effect size (95% CI)`,
-                            hr_lmer_bal_kbl$` `,
-                            sep = ""), 
-
+        hr_lmer_bal %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              hr_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("% Host" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("% Host")),
+        
+        hr_lmer_ns %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              hr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("% Host" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("% Host")) ,
+        
+ hr_lmer_spt %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              hr_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("% Host" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%  
+         column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("% Host")) 
+)
         
 
-
+summary_final_reads <- 
+        rbind(
+        fr_lmer_bal %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              fr_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("log<sub>10</sub>(Final reads)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("log<sub>10</sub>(Final reads)")),
+        
+        fr_lmer_ns %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              fr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("log<sub>10</sub>(Final reads)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("log<sub>10</sub>(Final reads)")) ,
+        
+ fr_lmer_spt %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              fr_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("log<sub>10</sub>(Final reads)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%  
+         column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("log<sub>10</sub>(Final reads)")) 
+)
         
 
-summary_final_reads
+summary_species_richness <-
+        rbind(
+        sr_lmer_bal %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              sr_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Species richness" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Species richness")),
+        
+        sr_lmer_ns %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              sr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Species richness" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Species richness")) ,
+        
+ sr_lmer_spt %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              sr_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Species richness" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%  
+         column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Species richness")) 
+)
+        
 
-summary_species_richness
+summary_function_richness <-
+        rbind(
+        pfr_lmer_bal %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              pfr_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Function richness" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Function richness")),
+        
+        pfr_lmer_ns %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              pfr_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Function richness" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Function richness")) ,
+        
+ pfr_lmer_spt %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              pfr_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Function richness" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%  
+         column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Function richness")) 
+)
+        
 
-summary_function_richness
+summary_bias <-
+        rbind(
+        
+ mh_lmer_bal %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              mh_lmer_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Bias (Morisita-Horn)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = ""),
+                "Row.names" = case_when(`Row.names` == "benzonase" ~ "Benzonase",
+                                      `Row.names` == "host_zero" ~ "HostZERO",
+                                      `Row.names` == "lypma" ~ "lyPMA",
+                                      `Row.names` == "molysis" ~ "MolYsis",
+                                      `Row.names` == "qiaamp" ~ "QIAamp",
+                                      .default = `Row.names`)
+                ) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Bias (Morisita-Horn)")),
+        
+        
+ mh_lmer_ns %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              mh_lmer_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Bias (Morisita-Horn)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = ""),
+                "Row.names" = case_when(`Row.names` == "benzonase" ~ "Benzonase",
+                                      `Row.names` == "host_zero" ~ "HostZERO",
+                                      `Row.names` == "lypma" ~ "lyPMA",
+                                      `Row.names` == "molysis" ~ "MolYsis",
+                                      `Row.names` == "qiaamp" ~ "QIAamp",
+                                      .default = `Row.names`)
+                ) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Bias (Morisita-Horn)")),
+        
+ 
+ mh_lmer_spt %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              mh_lmer_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("Bias (Morisita-Horn)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = ""),
+                "Row.names" = case_when(`Row.names` == "benzonase" ~ "Benzonase",
+                                      `Row.names` == "host_zero" ~ "HostZERO",
+                                      `Row.names` == "lypma" ~ "lyPMA",
+                                      `Row.names` == "molysis" ~ "MolYsis",
+                                      `Row.names` == "qiaamp" ~ "QIAamp",
+                                      .default = `Row.names`)
+                ) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("Bias (Morisita-Horn)"))
+ 
+)
+        
 
-summary_bias
+summary_gram_negative <-
+        rbind(
+        gram_neg_prop_bal %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              gram_neg_prop_bal %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("% gram negative" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("% gram negative")),
+        
+        gram_neg_prop_ns %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              gram_neg_prop_ns %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("% gram negative" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%
+                column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("% gram negative")) ,
+        
+ gram_neg_prop_spt %>%
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        merge(., 
+              gram_neg_prop_spt %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
+         mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
+         mutate("% gram negative" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             " ",
+                             conf, 
+                             ` `,
+                             sep = "")) %>%  
+         column_to_rownames("Row.names") %>%
+        .[c("(Intercept)",
+                  "lyPMA",
+                  "Benzonase",
+                  "HostZERO",
+                  "MolYsis",
+                  "QIAamp"),] %>%
+         dplyr::select(c("% gram negative")) 
+)
+        
 
-summary_gram_negative
+summary_comment <- 
+        c("", "Low efficiency", "Low efficiency", 
+          "No incrased richness", "Optimal", "Low efficiency",
+          
+          "","No incrased richness", "Low efficiency",
+          "High rate of library prep failure", "High bias", "Optimal",
+          
+          "", "Low efficiency", "Low efficiency",
+          "Optimal<sup>1</sup>", "High bias<sup>2</sup>", "High bias")
 
-summary_comment
 
 
-
-```
-
-```{r}
-
-summary_bal <- matrix(nrow=5,ncol=0) %>% data.frame() %>% 
-        rownames_to_column("Sample type") %>% mutate(`Sample type` = "BAL",
-                                           Method = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                                           `%Host DNA` = c("-3.1",
-                                                           "-1.1",
-                                                           "-18.3*",
-                                                           "-17.7*",
-                                                           "-6.3"),
-                                           `log10(Final reads)` = c("0.4",
-                                                           "0.8*",
-                                                           "1.0**",
-                                                           "1.0**",
-                                                           "1.0**"),
-                                           `Species richness` = c("1.8",
-                                                           "5.2",
-                                                           "8.4",
-                                                           "18.4**",
-                                                           "9.0"),
-                                           `Function Richness` = c("59",
-                                                           "126*",
-                                                           "165**",
-                                                           "190***",
-                                                           "130*"),
-                                           `Bias (Morishita-Horn)` = c("0.32*",
-                                                           "0.11",
-                                                           "0.27",
-                                                           "0.20",
-                                                           "0.25"),
-                                           `% gram negative` = c("6.42",
-                                                           "15.33",
-                                                           "8.61",
-                                                           "-0.86",
-                                                           "7.31"),
-                                           `Comment` = c("Low efficiency",
-                                                           "Low efficiency",
-                                                           "No incrased richness",
-                                                           "Optimal",
-                                                           "")) 
-                                           
-summary_ns <- matrix(nrow=5,ncol=0) %>% data.frame() %>% 
-        rownames_to_column("Sample type") %>% mutate(`Sample type` = "Nasal swab",
-                                           Method = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                                           `%Host DNA` = c("-27.7*",
-                                                           "-20.0",
-                                                           "-73.6***",
-                                                           "-50.6***",
-                                                           "-75.4***"),
-                                           `log10(Final reads)` = c("-0.5*",
-                                                           "0.1",
-                                                           "0.9**",
-                                                           "0.2",
-                                                           "1.1***"),
-                                           `Species richness` = c("-4.5",
-                                                           "-0.1",
-                                                           "10.3***",
-                                                           "6.3*",
-                                                           "7.5**"),
-                                           `Function Richness` = c("9",
-                                                           "23",
-                                                           "66***",
-                                                           "64**",
-                                                           "66***"),
-                                           `Bias (Morishita-Horn)` = c("0.17*",
-                                                           "0.16*",
-                                                           "0.05",
-                                                           "0.22**",
-                                                           "0.13"),
-                                           `% gram negative` = c("19.41**",
-                                                           "1.89",
-                                                           "0.03",
-                                                           "2.28",
-                                                           "0.13"),
-                                           `Comment` = c("No incrased richness",
-                                                           "Low efficiency",
-                                                           "High rate of library prep failure",
-                                                           "High rate of library prep failure",
-                                                           "Optimal")) 
-                                           
-
-summary_spt <- matrix(nrow=5,ncol=0) %>% data.frame() %>% 
-        rownames_to_column("Sample type") %>% mutate(`Sample type` = "Sputum",
-                                           Method = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                                           `%Host DNA` = c("-3.8",
-                                                           "-6.3",
-                                                           "-45.5***",
-                                                           "-69.6***",
-                                                           "-18.7**"),
-                                           `log10(Final reads)` = c("0.5**",
-                                                           "0.8***",
-                                                           "1.7***",
-                                                           "2.0***",
-                                                           "1.4***"),
-                                           `Species richness` = c("36.8**",
-                                                           "65.8***",
-                                                           "101.8***",
-                                                           "111.4***",
-                                                           "84.2***"),
-                                           `Function Richness` = c("80*",
-                                                           "86**",
-                                                           "137***",
-                                                           "142***",
-                                                           "116***"),
-                                           `Bias (Morishita-Horn)` = c("0.35**",
-                                                           "0.52***",
-                                                           "0.61***",
-                                                           "0.60***",
-                                                           "0.62***"),
-                                           `% gram negative` = c("-40.92***",
-                                                           "-52.49***",
-                                                           "-59.87***",
-                                                           "-59.87***",
-                                                           "-60.59***"),
-                                           `Comment` = c("Low efficiency",
-                                                           "Low efficiency",
-                                                           "Optimal<sup>1</sup>",
-                                                           "High bias<sup>2</sup>",
-                                                           "High bias")
-                                           )
-                                           
-
-table3 <- rbind(summary_bal, summary_ns, summary_spt) %>% 
+table3 <- cbind(`Sample type` = c("", "BAL", "", "", "", "",
+        "", "Nasal swabs", "", "", "", "",
+        "", "Sputum", "", "", "", ""),
+      `Treatment` = c("", "lyPMA", "Benzonase", "HostZero", "MolYsis", "QIAamp", 
+        "", "lyPMA", "Benzonase", "HostZero", "MolYsis", "QIAamp", 
+        "", "lyPMA", "Benzonase", "HostZero", "MolYsis", "QIAamp"),
+      summary_host_ratio,
+      summary_final_reads,
+      summary_species_richness,
+      summary_function_richness,
+      summary_bias,
+      summary_gram_negative,
+      Comment = summary_comment
+      ) %>% 
+        subset(., .$Treatment != "") %>%
+        remove_rownames() %>%
         kbl(format = "html", escape = 0) %>%
         add_footnote(c("No bias measured at PERMANOVA",
                        "Higher bias measured at PERMANOVA"), notation = "number") %>%
-        kbl(format = "html", escape = 0) %>%
         kable_styling(full_width = 0, html_font = "sans")
-table3
+
 save_kable(table3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table3.html", self_contained = T)
 
+table3
 
 ```
-
 
 Done.
 

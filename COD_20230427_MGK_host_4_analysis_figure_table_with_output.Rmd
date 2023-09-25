@@ -3972,23 +3972,23 @@ Degree of freedom, effect size (residual, R2) and p-value of permutational ANOVA
 
 
 ```{r}
-
+set.seed(seed)
 horn_perm_all <- vegan::adonis2(distance(phyloseq_rel_nz, method="horn") ~ sample_type * treatment + subject_id,
                                   data = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F),
                                   permutations = 10000)
-
+set.seed(seed)
 horn_perm_ns <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                data = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>%
                                        sample_data %>% data.frame(check.names = F),
                                strata = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>% 
                                        sample_data %>% data.frame(check.names = F) %>% .$subject_id, permutations = 10000)
-
+set.seed(seed)
 horn_perm_bal  <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp,
                                  data = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>% sample_data %>% data.frame(check.names = F),
                                  strata = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>%
                                          sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
-
+set.seed(seed)
 horn_perm_spt <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                 data = subset_samples(phyloseq_rel_nz, sample_type == "Sputum") %>% sample_data %>% data.frame(check.names = F),
                                 strata = subset_samples(phyloseq_rel_nz, sample_type == "Sputum")
@@ -4557,12 +4557,12 @@ med.fit <- lmer(log10(Final_reads) ~ lypma + (1|subject_id),
 
 out.fit <- lmer(S.obs ~ lypma * log10(Final_reads) + sample_type + (1|subject_id), 
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$lypma == 1))
-
+set.seed(seed)
 med.out.lypma <- mediate(model.m = med.fit,
                    model.y = out.fit,
                      treat = "lypma",
                      mediator = "log10(Final_reads)",
-                     sims = 1000)
+                     sims = 10000)
 
 out.sum <- summary(med.out.lypma)
 
@@ -4586,11 +4586,12 @@ med.fit <- lmer(log10(Final_reads) ~ benzonase + (1|subject_id),
 out.fit <- lmer(S.obs ~ benzonase * log10(Final_reads) +  sample_type + (1|subject_id), 
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$benzonase == 1))
 
+set.seed(seed)
 med.out.benzonase <- mediate(model.m = med.fit,
                    model.y = out.fit,
                      treat = "benzonase",
                      mediator = "log10(Final_reads)",
-                     sims = 1000)
+                     sims = 10000)
 
 out.sum <- summary(med.out.benzonase)
 
@@ -4613,12 +4614,12 @@ med.fit <- lmer(log10(Final_reads) ~ host_zero + (1|subject_id),
 
 out.fit <- lmer(S.obs ~ host_zero * log10(Final_reads) +  sample_type + (1|subject_id), 
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$host_zero == 1))
-
+set.seed(seed)
 med.out.hostzero <- mediate(model.m = med.fit,
                    model.y = out.fit,
                      treat = "host_zero",
                      mediator = "log10(Final_reads)",
-                     sims = 1000)
+                     sims = 10000)
 
 out.sum <- summary(med.out.hostzero)
 
@@ -4642,12 +4643,12 @@ med.fit <- lmer(log10(Final_reads) ~ molysis + (1|subject_id),
 
 out.fit <- lmer(S.obs ~ molysis * log10(Final_reads) +  sample_type + (1|subject_id), 
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$molysis == 1))
-
+set.seed(seed)
 med.out.molysis <- mediate(model.m = med.fit,
                    model.y = out.fit,
                      treat = "molysis",
                      mediator = "log10(Final_reads)",
-                     sims = 1000)
+                     sims = 10000)
 
 out.sum <- summary(med.out.molysis)
 
@@ -5800,23 +5801,24 @@ Rwa result, with interaction term
 phyloseq_rel_nz <- transform_sample_counts(phyloseq$phyloseq_path_rpk, function(x) {x/sum(x)}) %>%
         subset_samples(S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))
 
+set.seed(seed)
 horn_perm_inter_fun <- vegan::adonis2(distance(phyloseq_rel_nz, method="horn") ~ sample_type * treatment + subject_id,
                                   data = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F), 
                                   strata = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
-
+set.seed(seed)
 horn_perm_ns_fun <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                data = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>%
                                        sample_data %>% data.frame(check.names = F),
                                strata = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>% 
                                        sample_data %>% data.frame(check.names = F) %>% .$subject_id, permutations = 10000)
-
+set.seed(seed)
 horn_perm_bal_fun  <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp,
                                  data = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>% sample_data %>% data.frame(check.names = F),
                                  strata = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>%
                                          sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
-
+set.seed(seed)
 horn_perm_spt_fun <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                 data = subset_samples(phyloseq_rel_nz, sample_type == "Sputum") %>% sample_data %>% data.frame(check.names = F),
                                 strata = subset_samples(phyloseq_rel_nz, sample_type == "Sputum")

@@ -4671,11 +4671,12 @@ med.fit <- lmer(log10(Final_reads) ~ qiaamp + (1|subject_id),
 out.fit <- lmer(S.obs ~ qiaamp * log10(Final_reads) +  sample_type + (1|subject_id), 
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
 
+set.seed(seed)
 med.out_qiaamp <- mediate(model.m = med.fit,
                    model.y = out.fit,
                      treat = "qiaamp",
                      mediator = "log10(Final_reads)",
-                     sims = 1000)
+                     sims = 10000)
 
 out.sum <- summary(med.out_qiaamp)
 

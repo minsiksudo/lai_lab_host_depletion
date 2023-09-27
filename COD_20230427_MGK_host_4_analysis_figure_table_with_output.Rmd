@@ -444,7 +444,13 @@ sample_data(phyloseq_tv)$treatment <-
                                        "Host zero" ~
                                        "HostZERO", 
                                .default = treatment)) %>%
-        .$treatment
+        .$treatment %>%
+        factor(., levels = c("Untreated", 
+                             "lyPMA",
+                             "Benzonase",
+                             "HostZERO",
+                             "MolYsis",
+                             "QIAamp"))
 ```
 
 
@@ -7163,20 +7169,9 @@ sr_lmer_bal_tv_kbl <- sr_lmer_bal_tv %>%
               by = 0
               ) %>%
                         column_to_rownames("Row.names") %>%
-        
         rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
         mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
         column_to_rownames(var = "x") %>% 
-        
-        rownames_to_column("treatment") %>%
-        mutate(treatment = case_when(treatment == "(Intercept)" ~ "Untreated",
-                                             treatment == "lypma" ~ "lyPMA",
-                                             treatment == "Benzonase" ~ "Benzonase",
-                                             treatment == "Host zero" ~ "HostZERO",
-                                             treatment == "Molysis" ~ "MolYsis",
-                                             treatment == "treatmentqiaamp" ~ "QIAamp"
-                                             )) %>%
-        column_to_rownames("treatment") %>% 
         mutate("Effect size (95% CI)" = 
                        paste(round(Estimate, digits = 1) %>%
                                      format(nsmall = 1),

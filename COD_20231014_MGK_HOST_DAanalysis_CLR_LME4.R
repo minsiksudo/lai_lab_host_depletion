@@ -11,7 +11,7 @@ library(lme4)
 # Loading data ------------------------------------------------------------
 
 
-phyloseq <- readRDS("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+phyloseq <- readRDS("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 # Adding alpha diversity indices ------------------------------------------
 
@@ -295,15 +295,18 @@ physeq0_clr_all <- phyloseq$phyloseq_count_filtered %>%
                 
 # CLR transformation was conducted after stratifying the data by sample type
 
-phyloseq$phyloseq_count_filtered
-                
-physeq0_clr_spt <- subset_samples(phyloseq$phyloseq_count_filtered, sample_type == "Sputum") %>%
+
+
+physeq0_clr_spt <- subset_samples(phyloseq$phyloseq_count_filtered, sample_type == "Sputum") %>% 
+        prune_taxa(taxa_sums(.) > 0, .) %>%
         microbiome::transform(., 'clr')
 
 physeq0_clr_bal <- subset_samples(phyloseq$phyloseq_count_filtered, sample_type == "BAL") %>%
+        prune_taxa(taxa_sums(.) > 0, .) %>%
         microbiome::transform(., 'clr')
 
 physeq0_clr_ns <- subset_samples(phyloseq$phyloseq_count_filtered, sample_type == "Nasal") %>%
+        prune_taxa(taxa_sums(.) > 0, .) %>%
         microbiome::transform(., 'clr')
 
 #Sanity check
@@ -319,29 +322,25 @@ physeq0_clr_ns <- subset_samples(phyloseq$phyloseq_count_filtered, sample_type =
 
 # LME4 for CLR normalized data --------------------------------------------
 
-
-        
 #Running LME4 for each taxa
 
-lmer_taxa <- data.frame()
+#BAL
 
-for(i in 1:203) {
+
+lmer_taxa_bal <- data.frame()
+
+a <- physeq0_clr_bal %>% taxa_sums() %>% length()
+
+for(i in 1:a) {
         #Creating a data frame that includes CLR transformed data of i-th bug.
-        
-                #making differnt otu tables for each sample type
+        #making differnt otu tables for each sample type
         otu_table_bal <- physeq0_clr_bal %>% otu_table
-        otu_table_ns <- physeq0_clr_ns %>% otu_table
-        otu_table_spt <- physeq0_clr_spt %>% otu_table
         
-                #tax table for different sample type
+        #tax table for different sample type
         taxa_data_bal <- otu_table_bal[i] %>% t %>% data.frame()
-        taxa_data_ns <- otu_table_ns[i] %>% t %>% data.frame()
-        taxa_data_spt <- otu_table_spt[i] %>% t %>% data.frame()
         
         #Making a merged dataframe having sample data and CLR transformed output
         lme_data_bal <- merge(taxa_data_bal, sample_data(physeq0_clr_bal), by = 0) %>% column_to_rownames("Row.names")
-        lme_data_ns <- merge(taxa_data_ns, sample_data(physeq0_clr_ns), by = 0) %>% column_to_rownames("Row.names")
-        lme_data_spt <- merge(taxa_data_spt, sample_data(physeq0_clr_spt), by = 0) %>% column_to_rownames("Row.names")
         
         #generating a character of formula.
         #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
@@ -349,61 +348,134 @@ for(i in 1:203) {
         
         #BAL stratified analysis
         BAL_result <- lme4::lmer(formula = lme4_formula,
-                   data = lme_data_bal) %>% 
+                                 data = lme_data_bal) %>% 
                 lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest
                 summary %>%
                 .$coefficients %>%
                 data.frame(check.names = F) %>% 
-                mutate(taxa = names(taxa_data_bal),
+                mutate(feature = names(taxa_data_bal),
                        sample_type = "BAL") %>% 
                 rownames_to_column("metadata")  %>%
                 subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
         
+        #row binding all the associations of i-th taxa to one data frame
+        lmer_taxa_bal <- rbind(lmer_taxa_bal,
+                           BAL_result) %>% 
+                remove_rownames()
         
-        #Nasal stratified analysis
+}
+
+#Nasal
+
+lmer_taxa_ns <- data.frame()
+
+b <- physeq0_clr_ns %>% taxa_sums() %>% length()
+
+
+for(i in 1:b) {
+        #Creating a data frame that includes CLR transformed data of i-th bug.
+        #making differnt otu tables for each sample type
+        otu_table_ns <- physeq0_clr_ns %>% otu_table
+        
+        #tax table for different sample type
+        taxa_data_ns <- otu_table_ns[i] %>% t %>% data.frame()
+        
+        #Making a merged dataframe having sample data and CLR transformed output
+        lme_data_ns <- merge(taxa_data_ns, sample_data(physeq0_clr_ns), by = 0) %>% column_to_rownames("Row.names")
+        
+        #generating a character of formula.
+        #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
+        lme4_formula <- paste(names(taxa_data_ns), "~", "lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
+        
+        #BAL stratified analysis
         Nasal_result <- lme4::lmer(formula = lme4_formula,
-                   data = lme_data_ns) %>% 
-                lmerTest::as_lmerModLmerTest() %>%
+                                 data = lme_data_ns) %>% 
+                lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest
                 summary %>%
                 .$coefficients %>%
                 data.frame(check.names = F) %>% 
-                mutate(taxa = names(taxa_data_bal),
+                mutate(feature = names(taxa_data_ns),
                        sample_type = "Nasal") %>% 
                 rownames_to_column("metadata")  %>%
                 subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
         
-        #BAL stratified analysis
+        #row binding all the associations of i-th taxa to one data frame
+        lmer_taxa_ns <- rbind(lmer_taxa_ns,
+                           Nasal_result) %>% 
+                remove_rownames()
+        
+
+}
+
+lmer_taxa_spt <- data.frame()
+
+c <- physeq0_clr_spt %>% taxa_sums() %>% length()
+
+
+for(i in 1:c) {
+        #Creating a data frame that includes CLR transformed data of i-th bug.
+        
+        #making differnt otu tables for each sample type
+        otu_table_spt <- physeq0_clr_spt %>% otu_table
+        
+                #tax table for different sample type
+        taxa_data_spt <- otu_table_spt[i] %>% t %>% data.frame()
+        
+        #Making a merged dataframe having sample data and CLR transformed output
+        lme_data_spt <- merge(taxa_data_spt, sample_data(physeq0_clr_spt), by = 0) %>% column_to_rownames("Row.names")
+        
+        #generating a character of formula.
+        #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
+        lme4_formula <- paste(names(taxa_data_spt), "~", "lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
+        
+        #stratified analysis
         Sputum_result <- lme4::lmer(formula = lme4_formula,
                                    data = lme_data_spt) %>% 
                 lmerTest::as_lmerModLmerTest() %>%
                 summary %>%
                 .$coefficients %>%
                 data.frame(check.names = F) %>% 
-                mutate(taxa = names(taxa_data_bal),
+                mutate(feature = names(taxa_data_spt),
                        sample_type = "Sputum") %>% 
                 rownames_to_column("metadata")  %>%
                 subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
         
         #row binding all the associations of i-th taxa to one data frame
-        lmer_taxa <- rbind(lmer_taxa,
-                           rbind(BAL_result, Nasal_result, Sputum_result) %>% remove_rownames()
-        )
+        lmer_taxa_spt <- rbind(lmer_taxa_spt,
+                           Sputum_result) %>% 
+                remove_rownames()
+        
         
 }
 
-
-
 #Calculating q-value
-lmer_taxa <- lmer_taxa %>% 
-        mutate(q_val = qvalue::qvalue(`Pr(>|t|)`)$qvalue)
 
-#save file
+lmer_taxa_bal <- lmer_taxa_bal %>% subset(., .$sample_type == "BAL") %>%
+        mutate(qval = qvalue::qvalue(`Pr(>|t|)`)$qvalue,
+               p_bh = p.adjust(p = `Pr(>|t|)`, method = "BH"))  
 
-write.csv(lmer_taxa, "data/DAT_20231016_MGK_lmer_CLR_taxa.csv")
+lmer_taxa_ns <-  lmer_taxa_ns %>% subset(., .$sample_type == "Nasal") %>%
+        mutate(qval = qvalue::qvalue(`Pr(>|t|)`)$qvalue,
+               p_bh = p.adjust(p = `Pr(>|t|)`, method = "BH"))  
 
-sig_bal <- lmer_taxa %>% subset(., .$q_val < 0.1 & .$sample_type == "BAL")
-sig_ns <- lmer_taxa %>% subset(., .$q_val < 0.1 & .$sample_type == "Nasal")
-sig_spt <- lmer_taxa %>% subset(., .$q_val < 0.1 & .$sample_type == "Sputum")
+lmer_taxa_spt <-  lmer_taxa_spt %>% subset(., .$sample_type == "Sputum") %>%
+        mutate(qval = qvalue::qvalue(`Pr(>|t|)`)$qvalue,
+               p_bh = p.adjust(p = `Pr(>|t|)`, method = "BH"))  
+
+
+
+
+
+lmer_taxa_bal %>% subset(., .$q_val < 0.1 )
+
+lmer_taxa_ns %>% subset(., .$q_val < 0.1 ) %>% .$feature %>% table
+
+lmer_taxa_spt %>% subset(., .$q_val < 0.1 ) %>% .$feature %>% table
+lmer_taxa_spt %>% subset(., .$q_val < 0.1 ) 
+
+lmer_taxa_ns %>% subset(., .$feature == "Staphylococcus_aureus" & .$metadata == "lypma" & .$sample_type == "Nasal") 
+maaslin_ns %>% subset(., .$feature == "Staphylococcus_aureus" & .$metadata == "lypma") 
+
 # In this thread, MaAsLin showed different result with a CLR transformed data tested with GLM.
 # https://forum.biobakery.org/t/different-results-running-glm-and-maaslin2-using-same-methods-transformations/1327/3
 
@@ -423,7 +495,7 @@ capture.output(
                                  otu_table %>% t %>% data.frame(),
                          input_metadata = subset_samples(phyloseq$phyloseq_count_filtered, sample_type == "BAL") %>% 
                                  sample_data %>% data.frame(check.names = F), 
-                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                         output = "/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw", 
                          fixed_effects = c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                          transform = "NONE", 
                          # CLR does the normalization and transformation at once.
@@ -434,8 +506,8 @@ capture.output(
                          plot_heatmap = F,
                          plot_scatter = F))
 
-maaslin_bal <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
-maaslin_bal_transformed_otu <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/features/filtered_data_norm_transformed.tsv",
+maaslin_bal <- read.csv("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/all_results.tsv", sep = "\t")
+maaslin_bal_transformed_otu <- read.csv("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/features/filtered_data_norm_transformed.tsv",
                                        sep = "\t")
 
 #feature ~ lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)
@@ -447,7 +519,7 @@ capture.output(
                                  otu_table %>% t %>% data.frame(),
                          input_metadata = subset_samples(phyloseq$phyloseq_count_filtered, sample_type == "Nasal") %>% 
                                  sample_data %>% data.frame(check.names = F), 
-                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                         output = "/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw", 
                          fixed_effects = c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                          transform = "NONE", 
                          # CLR does the normalization and transformation at once.
@@ -457,8 +529,8 @@ capture.output(
                          plot_heatmap = F,
                          plot_scatter = F))
 
-maaslin_ns <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
-maaslin_ns_transformed_otu <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/features/filtered_data_norm_transformed.tsv",
+maaslin_ns <- read.csv("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/all_results.tsv", sep = "\t")
+maaslin_ns_transformed_otu <- read.csv("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/features/filtered_data_norm_transformed.tsv",
                                         sep = "\t")
 
 
@@ -470,7 +542,7 @@ capture.output(
                                  otu_table %>% t %>% data.frame(),
                          input_metadata = subset_samples(phyloseq$phyloseq_count_filtered, sample_type == "Sputum") %>% 
                                  sample_data %>% data.frame(check.names = F), 
-                         output = "/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output", 
+                         output = "/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw", 
                          fixed_effects = c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"), 
                          transform = "NONE", 
                          # CLR does the normalization and transformation at once.
@@ -480,8 +552,8 @@ capture.output(
                          plot_heatmap = F,
                          plot_scatter = F))
 
-maaslin_sputum <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/all_results.tsv", sep = "\t")
-maaslin_spt_transformed_otu <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/features/filtered_data_norm_transformed.tsv",
+maaslin_sputum <- read.csv("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/all_results.tsv", sep = "\t")
+maaslin_spt_transformed_otu <- read.csv("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/features/filtered_data_norm_transformed.tsv",
                                         sep = "\t")
 
 
@@ -496,7 +568,7 @@ maaslin_bal %>% subset(., .$qval <0.1) %>% .$feature %>% unique
 #Associations are different....Why?
 #Maaslin may use different CLR calculation with microbiome::transform().
         #Maaslin2 normalization
-        maaslin_spt_transformed_otu <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_host_dna_depletion/Data/maaslin_output/features/filtered_data_norm_transformed.tsv",
+        maaslin_spt_transformed_otu <- read.csv("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/features/filtered_data_norm_transformed.tsv",
                  sep = "\t")
         #microbiome normalization - count
         clr_spt_transformed_otu <- otu_table(physeq0_clr_spt) %>% t %>% data.frame()
@@ -644,11 +716,17 @@ maaslin_bal %>% subset(., .$qval <0.1) %>% .$feature %>% unique
         
 #Still showing slightly higher q-value than maaslin.
         
-        lmer_maaslin_ns %>% subset(., .$q_val < 0.1) %>% .$taxa %>% table
+        maaslin_ns %>% subset(., .$qval < 0.1) %>% .$feature %>% table
         lmer_maaslin_bal %>% subset(., .$q_val < 0.1) %>% .$taxa %>% table
+        
+        maaslin_ns %>% subset(., .$qval < 0.1) %>% .$feature %>% table
+        lmer_maaslin_ns %>% subset(., .$q_val < 0.1) %>% .$taxa %>% table
+        
+        maaslin_sputum %>% subset(., .$qval < 0.1) %>% .$feature %>% table
         lmer_maaslin_spt %>% subset(., .$q_val < 0.1) %>% .$taxa %>% table
         
         
+#They are quite similar!
         
 
 # Amy's transform ---------------------------------------------------------

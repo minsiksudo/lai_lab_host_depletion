@@ -30,7 +30,7 @@ editor_options:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
 path_library <- "/Library/Frameworks/R.framework/Resources/library"
 str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car", "mediation", "lemon")
         
@@ -322,7 +322,7 @@ Aim 4. Does host depletion increase the risk of contamination?
 ```{r warning=F, message=FALSE, "Data loading"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
-phyloseq_unfiltered <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+phyloseq_unfiltered <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 #sample data loading
 sample_data <- sample_data(phyloseq_unfiltered$phyloseq_count)
@@ -335,7 +335,7 @@ sample_data <- sample_data(phyloseq_unfiltered$phyloseq_count)
 #Metagenote description was made as below
 sample_data %>% 
         data.frame(check.names = F) %>% 
-        select(c("baylor_id", "baylor_other_id", "sample_type", "treated")) %>%
+        dplyr::select(c("baylor_id", "baylor_other_id", "sample_type", "treated")) %>%
         mutate(nephele_description =
           case_when(
                   sample_type == "Mock" &
@@ -379,26 +379,26 @@ sample_data %>%
 #loading tidy phyloseq object
 
 
-tinyvamp_untreated <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/untreated_p_hats_all_v3.RDS") %>%
+tinyvamp_untreated <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/untreated_p_hats_all_v3.RDS") %>%
         t()
 
-tinyvamp_lypma <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/lypma_p_hats_all_v3.RDS") %>%
+tinyvamp_lypma <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/lypma_p_hats_all_v3.RDS") %>%
         t()
 
-tinyvamp_benzonase <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/benzonase_p_hats_all_v3.RDS") %>%
+tinyvamp_benzonase <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/benzonase_p_hats_all_v3.RDS") %>%
         t()
 
-tinyvamp_host_zero <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/hostzero_p_hats_all_v3.RDS") %>%
+tinyvamp_host_zero <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/hostzero_p_hats_all_v3.RDS") %>%
         t()
 
-tinyvamp_molysis <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/molysis_p_hats_all_v3.RDS") %>% 
+tinyvamp_molysis <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/molysis_p_hats_all_v3.RDS") %>% 
         t()
 
-tinyvamp_qiaamp <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/qiaamp_p_hats_all_v3.RDS") %>% 
+tinyvamp_qiaamp <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/20230807_amy/qiaamp_p_hats_all_v3.RDS") %>% 
         t()
 
         
-#tinyvamp_benzonase <- read_rds("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/benzonase_p_hats.RDS")
+#tinyvamp_benzonase <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/HOST_tinyvamp_decontaminated_Amy_Willis/benzonase_p_hats.RDS")
 
 sample_data_tv <- phyloseq_unfiltered$phyloseq_rel %>%
         subset_samples(sample_type %in% c("BAL", "Nasal", "Sputum")) %>%
@@ -573,7 +573,7 @@ figureS2
 
 
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS1.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS1.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 170, # The height of the plot in inches
     units = "mm",
@@ -633,7 +633,7 @@ figS1 <- ggarrange(figS1_final_reads, figS1_total_reads, ncol = 2, common.legend
 
 figS1
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 90, # The height of the plot in inches
     units = "mm",
@@ -954,7 +954,7 @@ tables1 <- cbind(hr_lmer_bal_kbl, hr_lmer_ns_kbl, hr_lmer_spt_kbl) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 tables1
-save_kable(tables1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS1.html", self_contained = T)
+save_kable(tables1, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS1.html", self_contained = T)
 
 
 ```
@@ -1181,7 +1181,7 @@ tables2 <- cbind(fr_lmer_bal_kbl, fr_lmer_ns_kbl, fr_lmer_spt_kbl) %>%
         kable_styling(full_width = 0, html_font = "sans")
 tables2
 
-save_kable(tables2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS2.html", self_contained = T)
+save_kable(tables2, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS2.html", self_contained = T)
 
 ```
 ### {-}
@@ -1292,7 +1292,7 @@ figS3 <- ggarrange(f3a, f3b, f3c, f3d, common.legend = T, align = "hv")
 figS3
 
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS3.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS3.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 170, # The height of the plot in inches
     units = "mm",
@@ -1372,7 +1372,7 @@ figS4 <- ggarrange(figS4a, figS4b, common.legend = T, ncol = 1, align = "hv")
 
 figS4
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS4.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS4.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height =180, # The height of the plot in inches
     units = "mm",
@@ -1507,7 +1507,7 @@ tableS3 <- merged_contaminants %>%
 tableS3
 
 
-save_kable(tableS3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS10.html", self_contained = T)
+save_kable(tableS3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS10.html", self_contained = T)
 ```
 
 ### {-}
@@ -1752,7 +1752,7 @@ sample_data <- sample_data(phyloseq$phyloseq_count)
 ```{r}
 sample_data(phyloseq$phyloseq_rel) %>% 
         data.frame() %>%
-        select(c("S.obs", "data_shannon", "data_invsimpson")) 
+        dplyr::select(c("S.obs", "data_shannon", "data_invsimpson")) 
 ```
 
 
@@ -1852,7 +1852,7 @@ table1 <- sample_data(phyloseq$phyloseq_count) %>% data.frame() %>%
 table1 
 
 
-save_kable(table1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table1.html", self_contained = T)
+save_kable(table1, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table1.html", self_contained = T)
 
 
 ```
@@ -2227,7 +2227,7 @@ annotate_figure(fig2,
 
           
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 160, # The height of the plot in inches
     units = "mm",
@@ -2253,7 +2253,7 @@ dev.off()
 
 ```
 
-** 3 Candidat and 2 Staphylococcus --> can be used for a reason why we should be doing shotgun sequencigy (species level)
+** 3 Candidat and 2 Staphylococcus --> can be used for a reason why we should be doing shotgun sequencing (species level)
 
 Dolosgranulum - repored present in nose
 Malassezia - fungi
@@ -2888,7 +2888,7 @@ annotate_figure(figS5,
 
 
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS6.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS6.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 200, # The height of the plot in inches
     units = "mm",
@@ -3182,7 +3182,7 @@ tableS3 <- cbind(gram_neg_prop_mock_kbl, gram_neg_prop_bal_kbl, gram_neg_prop_ns
 
 tableS3
 
-save_kable(tableS3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS5.html", self_contained = T)
+save_kable(tableS3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS5.html", self_contained = T)
 
 
 ```
@@ -3505,7 +3505,7 @@ f3b2 <- rbind(cbind("Sputum",
                            breaks = c(#"Untreated", 
                                       "lyPMA", "Benzonase",
                                       "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        xlab("Distance from untreated") +
+        xlab("Morisita-Horn index from untreated") +
         ylab("Treatment group") +
         theme_classic (base_size = 12, base_family = "sans") + 
         theme(plot.tag = element_text(size = 15),
@@ -3589,7 +3589,7 @@ f5S_mock_mh <- horn_dist_long_within_sampleid_from_control %>%
                                       "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", 
                            labels = c(#"Untreated",
                                       "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        xlab("Distance from untreated") +
+        xlab("Morisita-Horn index from untreated") +
         ylab("Treatment group") +
         theme_classic (base_size = 12, base_family = "sans") + 
         theme(plot.tag = element_text(size = 15),
@@ -3608,7 +3608,7 @@ fig3 <- ggarrange(f3a, f3b2, ncol = 1, common.legend = T, align = "hv")
 
 fig3
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 220, # The height of the plot in inches
     units = "mm",
@@ -3922,7 +3922,7 @@ tables4 <- cbind(#sr_lmer_mock_kbl,
 
 tables4
 
-save_kable(tables4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS3.html", self_contained = T)
+save_kable(tables4, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS3.html", self_contained = T)
 
 ```
 
@@ -4012,7 +4012,7 @@ cbind(sr_lmer_bal_w_depth, sr_lmer_ns_w_depth, sr_lmer_spt_w_depth) %>%
 
 
 
-#save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS7.html", self_contained = T)
+#save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS7.html", self_contained = T)
 
 
 
@@ -4197,7 +4197,7 @@ tableS5 <- cbind(a, b, c) %>%
         kable_styling(full_width = 0, html_font = "sans")
 
 
-save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS6.html", self_contained = T)
+save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS6.html", self_contained = T)
 
 
 tableS5
@@ -4447,7 +4447,7 @@ tableS6 <- cbind(mh_lmer_bal_kbl, mh_lmer_ns_kbl, mh_lmer_spt_kbl) %>%
         kable_styling(full_width = 0, html_font = "sans")
 
 
-save_kable(tableS6, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS7.html", self_contained = T)
+save_kable(tableS6, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS7.html", self_contained = T)
 
 tableS6
 
@@ -4476,7 +4476,7 @@ figS6 <- ordinate(subset_samples(phyloseq_rel_nz, sample_type != "Neg." & sample
 
 figS6
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS7.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS7.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 90, # The height of the plot in inches
     units = "mm",
@@ -4622,8 +4622,9 @@ f5S_mock_filtered <- ggplot(subset(sample_data(phyloseq_control_rel_10zymo) %>%
               axis.text.x = element_blank(),
               axis.ticks.x = element_blank(),
               legend.position = "top") +
+        ylim(c(0, 10)) +
         facet_wrap(~sample_type, nrow = 1) + 
-        guides(col = guide_legend(nrow = 1)) 
+        guides(col = guide_legend(nrow = 1))
 
 
 phyloseq_control_rel_10zymo <- transform_sample_counts(phyloseq_control_rel_10zymo,
@@ -4671,6 +4672,67 @@ barplot_mock_microbe_zymo_filtered <- phyloseq_control_rel_10zymo %>%
 
 ```
 
+# LMER test on species richness of mock - zymo species only
+
+```{r}
+
+phyloseq_control_rel_10zymo
+
+
+sr_lmer_mock_zymo10 <- lm(S.obs ~ treatment,
+                    data = sample_data(phyloseq_control_rel_10zymo) %>% 
+                            data.frame %>% 
+                            subset(., .$sample_type %in% c("Mock") & S.obs != 0))
+
+sr_lmer_mock_zymo10 %>% summary() 
+
+```
+
+# Species richness of mock - zymo species only - figure
+
+```{r}
+
+dat_text <- data.frame(
+  label = c(
+          "", "***", "***", "", ""#, #label for Mock
+          #"", "", "", "*", "", #label for BAL
+          #"", "", "***", "*", "**", 
+          #"**", "***", "***", "***", "***"
+          ),
+  sample_type = c(
+          "Mock", "Mock", "Mock", "Mock", "Mock"#, 
+          #"BAL", "BAL", "BAL", "BAL", "BAL", 
+          #"Nasal", "Nasal", "Nasal", "Nasal", "Nasal", 
+          #"Sputum", "Sputum", "Sputum", "Sputum", "Sputum"
+          ),
+  treatment = c(
+          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"#, 
+          #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
+          #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
+          #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"
+          ),
+  S.obs = c(
+          9, 8.5, 7.5, 9, 9
+          #30, 35, 50, 52, 50,
+          #30, 30, 30, 35, 30,
+          #100, 120, 147, 140, 125
+          )
+)
+
+
+
+dat_text$sample_type <- factor(dat_text$sample_type, levels = c("Mock"#, 
+                                                                #"BAL", "Nasal", "Sputum"
+                                                                ))
+dat_text$treatment <- factor(dat_text$treatment, levels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))
+
+
+f5S_mock_filtered <- f5S_mock_filtered + geom_text(
+  data    = dat_text,
+  mapping = aes(x = treatment, y = S.obs, label = label)
+)
+f5S_mock_filtered
+```
 
 
 # Mock community figure
@@ -4683,26 +4745,30 @@ Alpha and beta diversity indices were calculated for mock community samples and 
 
 ggarrange(barplot_mock_microbe_zymo_filtered,
           barplot_mock_gramproportion,
-          f5S_mock,
+          f5S_mock_filtered,
+          f5S_mock_mh,
+          align = "hv",
+          heights = c(2,2,3,2),
+          widths = c(1, 1, 0.8,1),
+          ncol=1, nrow=4)
+
+
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS5.png",   # The directory you want to save the file in
+    width = 190, # The width of the plot in inches
+    height = 200, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+
+ggarrange(barplot_mock_microbe_zymo_filtered,
+          barplot_mock_gramproportion,
+          f5S_mock_filtered,
           f5S_mock_mh,
           align = "hv",
           heights = c(2,2,3,2),
           ncol=1, nrow=4)
 
-
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS5.png",   # The directory you want to save the file in
-    width = 180, # The width of the plot in inches
-    height = 180, # The height of the plot in inches
-    units = "mm",
-    res = 600
-) #fixing multiple page issue
-
-ggarrange(barplot_mock_microbe_zymo_filtered,
-          barplot_mock_gramproportion,
-          f5S_mock,
-          f5S_mock_mh,
-          align = "hv",
-          ncol=1, nrow=4)
 
 dev.off()
 
@@ -4753,7 +4819,7 @@ detach_package(lmerTest)
 sample_data_respiratory <- subset(phyloseq_rel_nz %>% sample_data %>% data.frame, sample_data$sample_type == "Sputum" | sample_data$sample_type == "BAL" | sample_data$sample_type == "Nasal")
 
 
-med.fit <- lmer(log10(Final_reads) ~ lypma + (1|subject_id),
+med.fit <- lmer(log10(Final_reads) ~ lypma +  sample_type + (1|subject_id),
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$lypma == 1))
 
 out.fit <- lmer(S.obs ~ lypma * log10(Final_reads) + sample_type + (1|subject_id), 
@@ -4781,7 +4847,7 @@ final.out.lypma <- data.frame(`Indirect est.`=out.sum$d.avg,
 ## benzonase
 
 
-med.fit <- lmer(log10(Final_reads) ~ benzonase + (1|subject_id),
+med.fit <- lmer(log10(Final_reads) ~ benzonase + sample_type + (1|subject_id),
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$benzonase == 1))
 
 out.fit <- lmer(S.obs ~ benzonase * log10(Final_reads) +  sample_type + (1|subject_id), 
@@ -4810,7 +4876,7 @@ final.out.benzonase <- data.frame(`Indirect est.`=out.sum$d.avg,
 ## host zero
 
 
-med.fit <- lmer(log10(Final_reads) ~ host_zero + (1|subject_id),
+med.fit <- lmer(log10(Final_reads) ~ host_zero +  sample_type + (1|subject_id),
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$host_zero == 1))
 
 out.fit <- lmer(S.obs ~ host_zero * log10(Final_reads) +  sample_type + (1|subject_id), 
@@ -4839,7 +4905,7 @@ final.out.host_zero <- data.frame(`Indirect est.`=out.sum$d.avg,
 ## molysis
 
 
-med.fit <- lmer(log10(Final_reads) ~ molysis + (1|subject_id),
+med.fit <- lmer(log10(Final_reads) ~ molysis +  sample_type + (1|subject_id),
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$molysis == 1))
 
 out.fit <- lmer(S.obs ~ molysis * log10(Final_reads) +  sample_type + (1|subject_id), 
@@ -4867,10 +4933,10 @@ final.out.molysis <- data.frame(`Indirect est.`=out.sum$d.avg,
 ## qiaamp
 
 
-med.fit <- lmer(log10(Final_reads) ~ qiaamp + (1|subject_id),
+med.fit <- lmer(log10(Final_reads) ~ qiaamp +  sample_type + (1|subject_id),
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
 
-out.fit <- lmer(S.obs ~ qiaamp * log10(Final_reads) +  sample_type + (1|subject_id), 
+out.fit <- lmer(S.obs ~ qiaamp * log10(Final_reads) + sample_type + (1|subject_id), 
                 data = subset(sample_data_respiratory, sample_data_respiratory$control == 1 | sample_data_respiratory$qiaamp == 1))
 
 set.seed(seed)
@@ -4945,7 +5011,7 @@ table2 <- rbind(final.out.lypma,
 mutate(Treatment = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"), .before = "Indirect est.") %>%
         kbl(format = "html") %>%
         kable_styling(full_width = 0, html_font = "sans")
-save_kable(table2, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS4.html", self_contained = T)
+save_kable(table2, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS4.html", self_contained = T)
 table2
 
 ```
@@ -4970,13 +5036,14 @@ table2
 ### Factors affecting DA taxa (main text)
 
 ```{r, warning=FALSE, message=FALSE}
+setwd("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 
-filt_maaslin_all <- read.csv("data/filt_maaslin_all.csv")
-filt_maaslin_interaction <- read.csv("data/filt_maaslin_interaction.csv")
-filt_fit_data_bal <- read.csv("data/filt_fit_data_bal.csv")
-filt_fit_data_spt <- read.csv("data/filt_fit_data_spt.csv")
-filt_fit_data_ns <- read.csv("data/filt_fit_data_ns.csv")
-filt_fit_data_pos <- read.csv("data/filt_fit_data_pos.csv")
+filt_maaslin_all <- read.csv("data/da_lmer_filt_maaslin_all.csv")
+#filt_maaslin_interaction <- read.csv("data/da_lmer_filt_maaslin_interaction.csv")
+filt_fit_data_bal <- read.csv("data/da_lmer_filt_fit_data_bal.csv")
+filt_fit_data_spt <- read.csv("data/da_lmer_filt_fit_data_spt.csv")
+filt_fit_data_ns <- read.csv("data/da_lmer_filt_fit_data_ns.csv")
+#filt_fit_data_pos <- read.csv("data/da_lmer_filt_fit_data_pos.csv")
 
 ```
 
@@ -5012,22 +5079,22 @@ These calculations were made to write the details in the main text
 
 ```{r}
 cat("Factors affecting DA taxa (q<0.1)")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$coef) > 1) %>% .$metadata %>% table
+filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) > 1) %>% .$metadata %>% table
 
 cat("Number of positive & significant changes")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., .$coef > 0) %>% .$feature %>% unique
+filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate > 0) %>% .$feature %>% unique
 
 cat("Number of negative & significant changes")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., .$coef < 0) %>% .$feature %>% unique
+filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate < 0) %>% .$feature %>% unique
 
 cat("BAL highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_bal %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$coef) >1 ) %>% .$metadata %>% table
+filt_fit_data_bal %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 cat("Sputum highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$coef) >1 ) %>% .$metadata %>% table
+filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 cat("NS highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_ns %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$coef) >1 ) %>% .$metadata %>% table
+filt_fit_data_ns %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 ```
 
@@ -5075,16 +5142,16 @@ make_sig_table <- function(data) {
 
 
 
-filt_fit_data_pos <- make_sig_table(filt_fit_data_pos)
+#filt_fit_data_pos <- make_sig_table(filt_fit_data_pos)
 filt_fit_data_bal <- make_sig_table(filt_fit_data_bal)
 filt_fit_data_ns <- make_sig_table(filt_fit_data_ns)
 filt_fit_data_spt <- make_sig_table(filt_fit_data_spt)
 
-filt_pos_sig <- subset_taxa(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock"),
-                                       taxa_names(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock")) %in% filt_fit_data_pos$data$feature)
+#filt_pos_sig <- subset_taxa(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock"),
+#                                       taxa_names(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock")) %in% filt_fit_data_pos$data$feature)
 
-filt_fit_data_pos$rel <- cbind(filt_pos_sig %>% otu_table %>% t, filt_pos_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>%  data.frame(check.names = F) %>% 
-        .[row.names(filt_fit_data_pos$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
+#filt_fit_data_pos$rel <- cbind(filt_pos_sig %>% otu_table %>% t, filt_pos_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% species_italic() %>%  data.frame(check.names = F) %>% 
+#        .[row.names(filt_fit_data_pos$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
 filt_spt_sig <- subset_taxa(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Sputum"), taxa_names(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Sputum")) %in% filt_fit_data_spt$data$feature)
 
@@ -5111,19 +5178,19 @@ filt_fit_data_bal$rel <- cbind(filt_bal_sig %>% otu_table %>% t, filt_bal_sig %>
 ```{r}
 
 #Volcano plot
-filt_maaslin_all
-figS7 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
+
+figS7 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = Estimate, col = metadata)) +
         theme_classic(base_family = "sans") +
         #labs(tag = "A") +
         geom_point(size = 2, alpha = 0.3, stroke = 0) +
-        xlab("MaAslin coefficient") +
+        xlab("Change estimate of CLR transformed count") +
         ylab("-log<sub>10</sub>(*q*-value)") +
-        ylim(c(-1, 35)) +
+        #ylim(c(-1, 35)) +
         geom_hline(yintercept = 1, col = "gray") +
         geom_vline(xintercept = 0, col = "gray") +
         annotate(family = "sans",
                  geom='richtext',
-                 x=0, y=80,
+                 x=0, y=20,
                  label = "<i>q</i>-value = 0.1, fold-change = 0") +
         theme(legend.position = "top", axis.title.y = ggtext::element_markdown(), legend.text = element_markdown()) +
         scale_color_manual(values = c("#a65628",
@@ -5150,7 +5217,7 @@ figS7 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata
         guides(col = guide_legend(title = "Factors", title.position = "top", nrow = 1))
 
 figS7
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS8.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS8.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 90, # The height of the plot in inches/
     units = "mm",
@@ -5170,70 +5237,6 @@ dev.off()
 
 ```{r}
 
-f5a <- merge(filt_fit_data_pos$rel %>%
-              gather(treatment,
-                     value,
-                     Untreated:QIAamp,
-                     factor_key=TRUE),
-      filt_fit_data_pos$data_italic %>%
-              rownames_to_column("feature") %>%
-              gather(treatment,
-                     qval,
-                     lyPMA:QIAamp,
-                     factor_key=TRUE),
-      by.x = c('feature', 'treatment'),
-      by.y = c('feature', 'treatment'),
-      all = T) %>%
-        
-        merge(filt_fit_data_pos$data_sig %>%
-              rownames_to_column("feature") %>%
-              gather(treatment,
-                     sig,
-                     lyPMA:QIAamp,
-                     factor_key=TRUE),
-              by.x = c('feature', 'treatment'),
-              by.y = c('feature', 'treatment'),
-              all = T) %>%
-        mutate(sig = case_when(sig < 0.1 ~ "< 0.1",
-                               .default = "> 0.1"),
-               feature = case_when(feature =="*Saccharomyces cerevisiae x Saccharomyces kudriavzevii*" ~ "*Saccharomyces cerevisiae*",
-                               .default = feature)) %>%
-#Baloon plot
-        ggballoonplot(size = "value", y = "feature", x= "treatment", fill = "sig") +
-        
-        theme_classic(base_family = "sans") +
-        #colors for qvalues
-        gradient_fill(c("#006d2c", "#edf8fb")) +
-        xlab("Experimental group") +
-        ylab("Species") +
-        labs(tag = "A") +
-        ggtitle("Mock community") +
-        theme(panel.grid.major = element_line(colour = "grey"),
-              legend.position = "top",
-              axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
-              #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 8),
-              plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
-        #Adding significance asterisks
-        scale_fill_manual(values = c("red", "grey"), aes(y = feature,
-                      x = treatment,
-                      label = sig)) +
-        guides(fill = guide_legend(title = c(expression(paste(italic("q"),
-                                                       "-value",
-                                                       sep = ""))),
-                                   title.position = "top"),
-               size = guide_legend(title = "Relative abundance",
-                                   title.position = "top",
-                                   order = 1,
-                                   nrow = 1),
-               ) + 
-        scale_x_discrete(labels=c("control" = "Untreated",
-                                  "lypma" = "lyPMA",
-                                  "benzonase" = "Benzonase",
-                                  "host_zero" = "Host-zero",
-                                  "molysis" = "MolYsis",
-                                  "qiaamp" = "QIAamp")
-                         )
 #ffff33 qia
 
 f5b <- merge(filt_fit_data_bal$rel %>%
@@ -5441,7 +5444,7 @@ fig4 <- ggarrange(f5c %>% lemon::g_legend() %>% as_ggplot,
 
 fig4
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS9.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS9.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 220, # The height of the plot in inches
     units = "mm",
@@ -5465,14 +5468,14 @@ dev.off()
 
 ```{r, warning=FALSE, message=FALSE}
 
-tableS7 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$coef) > 1) %>% subset(., .$metadata != "sample_type" & .$metadata != "log10.Final_reads") %>% dplyr::select(c("feature", "metadata", "coef", "qval")) %>%
+tableS7 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 2) %>% subset(., .$metadata != "sample_type" & .$metadata != "log10.Final_reads") %>% dplyr::select(c("feature", "metadata", "Estimate", "qval")) %>%
         mutate(feature = paste("<i>", gsub("_", " ", feature), sep = "") %>%
                        gsub(" sp", "</i> sp.", .) %>% gsub(" group", "", .)) %>%
         mutate(feature = case_when(!grepl("</i>", feature) ~ paste(feature, "</i>", sep = ""),
                                    .default = feature))%>% 
         rename(Taxa = "feature",
                      Treatment = "metadata",
-                     "log<sub>2</sub>(fold-change)" = "coef",
+                     "Change estimate of CLR transformed count" = "Estimate",
                      `<i>q<i/>-value` = "qval") %>%
         mutate(Treatment = case_when(Treatment == "lypma" ~ "lyPMA",
                          Treatment == "host_zero" ~ "HostZERO",
@@ -5480,7 +5483,7 @@ tableS7 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$coef) > 1) %>% su
                          Treatment == "molysis" ~ "MolYsis",
                          Treatment == "qiaamp" ~ "QIAamp",
                          .default = Treatment),
-               "log<sub>2</sub>(fold-change)" = round(`log<sub>2</sub>(fold-change)`, 3),
+               "Change estimate of CLR transformed count" = round(`Change estimate of CLR transformed count`, 3),
                `<i>q<i/>-value` = round(`<i>q<i/>-value`, 3)) %>%
         remove_rownames() %>% 
         kbl(format = "html", escape = FALSE) %>%
@@ -5488,7 +5491,7 @@ tableS7 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$coef) > 1) %>% su
 
 tableS7
 
-save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS8.html", self_contained = T)
+save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS8.html", self_contained = T)
 
 ```
 
@@ -5736,7 +5739,7 @@ f4b2 <- f3b2 <- rbind(cbind("Sputum",
                            breaks = c(#"Untreated", 
                                       "lyPMA", "Benzonase",
                                       "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        xlab("Distance from untreated") +
+        xlab("Morisita-Horn index from untreated") +
         ylab("Treatment group") +
         theme_classic (base_size = 12, base_family = "sans") + 
         theme(plot.tag = element_text(size = 15),
@@ -5760,7 +5763,7 @@ figS8 <- ggarrange(f4a, f4b2, ncol = 1, common.legend = T, align = "hv") +
 
 figS8
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS10.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS10.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 170, # The height of the plot in inches
     units = "mm",
@@ -6045,7 +6048,7 @@ tables8
 
 
 
-save_kable(tables8, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS9.html", self_contained = T)
+save_kable(tables8, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS9.html", self_contained = T)
 
 
 ```
@@ -6236,11 +6239,11 @@ tables9
 
 ```{r}
 
-f_maaslin_all <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/filt_f_maaslin_all.csv")
-f_fit_data_bal <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/filt_f_fit_data_bal.csv")
-f_fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/filt_f_fit_data_spt.csv")
-f_fit_data_ns <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/filt_f_fit_data_ns.csv")
-f_fit_data_pos <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/filt_f_fit_data_pos.csv")
+f_maaslin_all <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_maaslin_all.csv")
+f_fit_data_bal <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_fit_data_bal.csv")
+f_fit_data_spt <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_fit_data_spt.csv")
+f_fit_data_ns <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_fit_data_ns.csv")
+#f_fit_data_pos <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_fit_data_pos.csv")
 
 
 ```
@@ -6266,15 +6269,15 @@ make_sig_table <- function(data) {
   return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
 }
 
-f_fit_data_pos <- make_sig_table(f_fit_data_pos)
+#f_fit_data_pos <- make_sig_table(f_fit_data_pos)
 f_fit_data_bal <- make_sig_table(f_fit_data_bal)
 f_fit_data_ns <- make_sig_table(f_fit_data_ns)
 f_fit_data_spt <- make_sig_table(f_fit_data_spt)
 
-f_pos_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Mock"),
-                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Mock")) %in% f_fit_data_pos$data$feature)
-f_fit_data_pos$rel <- cbind(f_pos_sig %>% otu_table %>% t, f_pos_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% data.frame(check.names = F) %>% 
-        .[row.names(f_fit_data_pos$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
+#f_pos_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Mock"),
+#                                       taxa_names(subset_samples(phyloseq_rel_nz, sample_type == "Mock")) %in% f_fit_data_pos$data$feature)
+#f_fit_data_pos$rel <- cbind(f_pos_sig %>% otu_table %>% t, f_pos_sig %>% sample_data) %>% group_by(treatment) %>% summarise_if(is.numeric, mean, na.rm = TRUE) %>% .[, 1:21] %>% column_to_rownames(., "treatment") %>% t () %>% data.frame(check.names = F) %>% 
+#        .[row.names(f_fit_data_pos$data_italic),] %>%  mutate_all(~na_if(., 0)) %>% rownames_to_column("feature")
 
 
 f_spt_sig <- subset_taxa(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"),
@@ -6339,7 +6342,7 @@ rename_function_gruop <- function(list_maaslin_result){
 }
 
 
-f_fit_data_pos <- rename_function_gruop(f_fit_data_pos)
+#f_fit_data_pos <- rename_function_gruop(f_fit_data_pos)
 f_fit_data_bal <- rename_function_gruop(f_fit_data_bal)
 f_fit_data_ns <- rename_function_gruop(f_fit_data_ns)
 f_fit_data_spt <- rename_function_gruop(f_fit_data_spt)
@@ -6361,17 +6364,17 @@ Fig. S11. Volcano plot of differential abundance of function by each treatment w
 
 #Volcano plot
 
-figS9 <- ggplot(f_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) +
+figS9 <- ggplot(f_maaslin_all, aes(y = -log10(qval), x = Estimate, col = metadata)) +
         theme_classic(base_family = "sans") +
         #labs(tag = "A") +
         geom_point(size = 2, alpha = 0.3, stroke = 0) +
-        xlab("MaAslin coefficient") +
+        xlab("Change estimate of CLR transformed count") +
         ylab("-log<sub>10</sub>(*q*-value)") +
         geom_hline(yintercept = 1, col = "gray") +
         geom_vline(xintercept = 0, col = "gray") +
         annotate(family = "sans",
                  geom='richtext',
-                 x=0, y=80,
+                 x=0, y=10,
                  label = "<i>q</i>-value = 0.1, fold-change = 0") +
         theme(legend.position = "top", axis.title.y = ggtext::element_markdown()) +
         scale_color_manual(values = c("#a65628",
@@ -6398,7 +6401,7 @@ figS9 <- ggplot(f_maaslin_all, aes(y = -log10(qval), x = coef, col = metadata)) 
         guides(col = guide_legend(title = "Factors", title.position = "top", nrow = 2))
 
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS11.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS11.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 90, # The height of the plot in inches
     units = "mm",
@@ -6422,69 +6425,7 @@ figS9
 ```{r}
 
 
-f5a <- merge(f_fit_data_pos$rel %>%
-              gather(treatment,
-                     value,
-                     Untreated:QIAamp,
-                     factor_key=TRUE),
-      f_fit_data_pos$data_italic %>%
-              rownames_to_column("feature") %>%
-              gather(treatment,
-                     qval,
-                     lyPMA:QIAamp,
-                     factor_key=TRUE),
-      by.x = c('feature', 'treatment'),
-      by.y = c('feature', 'treatment'),
-      all = T) %>%
-        
-        merge(f_fit_data_pos$data_sig %>%
-              rownames_to_column("feature") %>%
-              gather(treatment,
-                     sig,
-                     lyPMA:QIAamp,
-                     factor_key=TRUE),
-              by.x = c('feature', 'treatment'),
-              by.y = c('feature', 'treatment'),
-              all = T) %>%
-        mutate(sig = case_when(sig < 0.1 ~ "< 0.1",
-                               .default = "> 0.1"),
-               value = value * 1000000) %>%
-#Baloon plot
-        ggballoonplot(size = "value", y = "feature", x= "treatment", fill = "sig") +
-        
-        theme_classic(base_family = "sans") +
-        #colors for qvalues
-        gradient_fill(c("#006d2c", "#edf8fb")) +
-        xlab("Experimental group") +
-        ylab("Function") +
-        labs(tag = "A") +
-        theme(panel.grid.major = element_line(colour = "grey"),
-              legend.position = "top",
-                axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
-              #Element markdown for taxa name italicizing
-              axis.text.y = ggtext::element_markdown(size = 7),
-              axis.title.x = element_text(margin = margin(t = 20)))  +
-        #Adding significance asterisks
-        scale_fill_manual(values = c("grey", "red"), aes(y = feature,
-                      x = treatment,
-                      label = sig)) +
-        guides(fill = guide_legend(title = c(expression(paste(italic("q"),
-                                                       "-value",
-                                                       sep = ""))),
-                                   title.position = "top",
-                                   nrow = 2),
-               size = guide_legend(title = "Copies per million",
-                                   title.position = "top",
-                                   order = 1,
-                                   nrow = 1),
-               ) + 
-        scale_x_discrete(labels=c("control" = "Untreated",
-                                  "lypma" = "lyPMA",
-                                  "benzonase" = "Benzonase",
-                                  "host_zero" = "Host-zero",
-                                  "molysis" = "MolYsis",
-                                  "qiaamp" = "QIAamp")
-                         )
+
 #ffff33 qia
 
 f5b <- merge(f_fit_data_bal$rel %>%
@@ -6711,7 +6652,7 @@ annotate_figure(figS10,
 
 
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS12.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS12.png",   # The directory you want to save the file in
     width = 240, # The width of the plot in inches
     height = 220, # The height of the plot in inches
     units = "mm",
@@ -6796,7 +6737,7 @@ ggplot(., aes(x = Final_reads/1000000, y = S.obs, col = treatment)) +
 
 ggarrange(fig_rarefraction, fig_rarefraction_function, common.legend = T, ncol = 1)
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS13.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS13.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 180, # The height of the plot in inches
     units = "mm",
@@ -6907,7 +6848,7 @@ annotate_figure(figa1,
 
 
 
-png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS14.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS14.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 180, # The height of the plot in inches
     units = "mm",
@@ -7282,7 +7223,7 @@ tableA1 <- cbind(
 
 tableA1
 
-save_kable(tableA1, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS11.html", self_contained = T)
+save_kable(tableA1, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS11.html", self_contained = T)
 
 
 
@@ -8204,7 +8145,7 @@ table3 <- cbind(`Sample type` = c("", "BAL", "", "", "", "",
                        "Higher bias measured at PERMANOVA"), notation = "number") %>%
         kable_styling(full_width = 0, html_font = "sans")
 
-save_kable(table3, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table2.html", self_contained = T)
+save_kable(table3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table2.html", self_contained = T)
 
 table3
 

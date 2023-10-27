@@ -375,10 +375,18 @@ phyloseq$phyloseq_rel_filtered <- prune_taxa(subset(red_flag_taxa,
 
 ```
 
+### {-}
+
+
+
 ## Running MaAslin (as a comparison group) {.tabset}
 
-In this thread, MaAsLin showed different result with a CLR transformed data tested with GLM.
+### Description
+
+I am going to run MaAslin, but in this thread, MaAsLin showed different result with a CLR transformed data tested with GLM.
 https://forum.biobakery.org/t/different-results-running-glm-and-maaslin2-using-same-methods-transformations/1327/3
+
+
 
 ### MaAslin with CLR (BAL)
 
@@ -472,6 +480,10 @@ maaslin_spt_transformed_otu <- read.csv("/Users/minsikkim/Dropbox/Project_SICAS2
 
 ## CLR normalization {.tabset}
 
+### Description
+
+CLR transform was conducted with microbiome package
+
 ### CLR  - microboime
 
 ```{r}
@@ -521,8 +533,12 @@ physeq0_clr_ns <- subset_samples(phyloseq$phyloseq_count_filtered, sample_type =
 
 ```
 
+### {-}
 
-### Amy's function for CLR normalization
+
+## Other transformation methods {.tabset}
+
+### Amy's function for CLR normalization function
 
         
 ```{r}        
@@ -581,6 +597,8 @@ clr(c(0.2, 0.1, 0.7, 0), replace_zeros=0.05)
         #clr(c(0.2, 0.1, 0.7, 0))
         #clr(c(0.2, 0.1, 0.7, 0), replace_zeros=0.1)
         #clr(c(0.2, 0.1, 0.7, 0), replace_zeros=-0.1) # good
+
+### Amy's function to my data
 
 ```{r}        
 clr(otu_table(phyloseq$phyloseq_rel_filtered) %>% data.frame %>% .$lyPMA_pos_1,
@@ -647,10 +665,11 @@ It seems like CLR-transformed data may result in changes from 0-0 reads.
 maaslin_bal_transformed_otu$feature == physeq0_clr_bal %>% otu_table %>% t %>% data.frame()  %>% row.names()
 
 
-plot(x = maaslin_bal_transformed_otu$Actinomyces_naeslundii,
-     y = physeq0_clr_bal %>% otu_table %>% t %>% data.frame() %>% .$Actinomyces_naeslundii, 
+plot(x = maaslin_bal_transformed_otu$Cupriavidus_sp,
+     y = physeq0_clr_bal %>% otu_table %>% t %>% data.frame() %>% .$Cupriavidus_sp, 
      xlab = "maaslin:: normalized CLR value",
-     ylab = "microbiome:: normalized CLR value")
+     ylab = "microbiome:: normalized CLR value",
+     main = "Cupriavidus CLR transformation")
 
 ```
 
@@ -739,7 +758,266 @@ plot(x = maaslin_bal_transformed_otu$Actinomyces_naeslundii,
 
 ```
 
-### LME4 for CLR normalized data (zero-filtered)
+
+# MaAslin - LMER (with zeros) comparison
+
+```{r}
+      
+
+#Comparing lme4 otuput with maaslin output
+
+        #with BAL
+maaslin_bal %>% subset(., .$qval <0.1) %>% .$feature %>% unique
+lmer_taxa_withzeros %>% subset(., .$q_val < 0.1 & .$sample_type == "BAL") %>% .$taxa %>% unique
+
+```
+
+
+# Maaslin may use different CLR calculation with microbiome::transform().
+
+```{r}
+#Maaslin2 normalization
+
+  #microbiome normalization - count
+        clr_spt_transformed_otu <- otu_table(physeq0_clr_spt) %>% t %>% data.frame()
+        #microbiome normalization - relative abundance
+        clr_spt_transformed_otu_rel <- physeq0_clr_all_rel %>% otu_table %>% t %>% data.frame()
+        
+        #both normalization - for read counts and relative abundances with microbiome package - showed the same output.
+        #Maaslin showed slightly different data.
+```
+
+# Running LMER for maaslin transfomred output
+
+```{r}
+
+# Masslin normalization for LMER ------------------------------------------
+
+        
+
+# LMER on maaslin transformed data
+        lmer_maaslin_bal <- data.frame()
+        
+        for(i in 1:54) {
+                #Creating a data frame that includes CLR transformed data of i-th bug.
+                
+                #making differnt otu tables for each sample type
+                otu_table_bal <- maaslin_bal_transformed_otu %>% column_to_rownames("feature")
+                
+                #tax table for different sample type
+                taxa_data_bal <- otu_table_bal[i] %>% data.frame()
+                
+                #Making a merged dataframe having sample data and CLR transformed output
+                lme_data_bal <- merge(taxa_data_bal, sample_data(physeq0_clr_bal), by = 0) %>% column_to_rownames("Row.names")
+                
+                #generating a character of formula.
+                #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
+                lme4_formula <- paste(names(taxa_data_bal), "~", "lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
+                
+                #BAL stratified analysis
+                BAL_result <- lme4::lmer(formula = lme4_formula,
+                                         data = lme_data_bal) %>% 
+                        lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest
+                        summary %>%
+                        .$coefficients %>%
+                        data.frame(check.names = F) %>% 
+                        mutate(taxa = names(taxa_data_bal),
+                               sample_type = "BAL") %>% 
+                        rownames_to_column("metadata")  %>%
+                        subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
+                
+                
+                #row binding all the associations of i-th taxa to one data frame
+                lmer_maaslin_bal <- rbind(lmer_maaslin_bal,
+                                   BAL_result %>% remove_rownames()
+                )
+                
+        }
+        
+        lmer_maaslin_ns <- data.frame()
+        
+        for(i in 1:29) {
+                #Creating a data frame that includes CLR transformed data of i-th bug.
+                
+                #making differnt otu tables for each sample type
+                otu_table_ns <- maaslin_ns_transformed_otu %>% column_to_rownames("feature")
+                
+                #tax table for different sample type
+                taxa_data_ns <- otu_table_ns[i] %>% data.frame()
+                
+                #Making a merged dataframe having sample data and CLR transformed output
+                lme_data_ns <- merge(taxa_data_ns, sample_data(physeq0_clr_ns), by = 0) %>% column_to_rownames("Row.names")
+                
+                #generating a character of formula.
+                #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
+                lme4_formula <- paste(names(taxa_data_ns), "~", "lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
+                
+                #BAL stratified analysis
+                NS_result <- lme4::lmer(formula = lme4_formula,
+                                         data = lme_data_ns) %>% 
+                        lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest
+                        summary %>%
+                        .$coefficients %>%
+                        data.frame(check.names = F) %>% 
+                        mutate(taxa = names(taxa_data_ns),
+                               sample_type = "Nasal") %>% 
+                        rownames_to_column("metadata")  %>%
+                        subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
+                
+                
+                #row binding all the associations of i-th taxa to one data frame
+                lmer_maaslin_ns <- rbind(lmer_maaslin_ns,
+                                          NS_result %>% remove_rownames()
+                )
+                
+        }
+        
+        lmer_maaslin_ns
+        
+        
+        
+        lmer_maaslin_spt <- data.frame()
+        
+        
+        for(i in 1:155) {
+                #Creating a data frame that includes CLR transformed data of i-th bug.
+                
+                #making differnt otu tables for each sample type
+                otu_table_spt <- maaslin_spt_transformed_otu %>% column_to_rownames("feature")
+                
+                #tax table for different sample type
+                taxa_data_spt <- otu_table_spt[i] %>% data.frame()
+                
+                #Making a merged dataframe having sample data and CLR transformed output
+                lme_data_spt <- merge(taxa_data_spt, sample_data(physeq0_clr_spt), by = 0) %>% column_to_rownames("Row.names")
+                
+                #generating a character of formula.
+                #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
+                lme4_formula <- paste(names(taxa_data_spt), "~", "lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
+                
+                #BAL stratified analysis
+                Sputum_result <- lme4::lmer(formula = lme4_formula,
+                                        data = lme_data_spt) %>% 
+                        lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest
+                        summary %>%
+                        .$coefficients %>%
+                        data.frame(check.names = F) %>% 
+                        mutate(taxa = names(taxa_data_spt),
+                               sample_type = "Sputum") %>% 
+                        rownames_to_column("metadata")  %>%
+                        subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
+                
+                
+                #row binding all the associations of i-th taxa to one data frame
+                lmer_maaslin_spt <- rbind(lmer_maaslin_spt,
+                                         Sputum_result %>% remove_rownames()
+                )
+                
+        }
+        
+
+```
+
+
+
+# MaAslin - LMER (with zeros) comparison - p & q values
+
+```{r}
+
+lmer_taxa_withzeros %>% subset(., .$taxa == "Staphylococcus_aureus" & .$metadata == "lypma" & .$sample_type == "Nasal") 
+```
+
+*q-value smaller than p-value!!* at LMER!
+
+```{r}
+maaslin_ns %>% subset(., .$feature == "Staphylococcus_aureus" & .$metadata == "lypma") 
+```
+
+q-val > p-val higher at MaAsLin
+
+```{r}
+lmer_maaslin_ns %>% 
+        mutate(qval = qvalue(`Pr(>|t|)`)$qval) %>% 
+        subset(., .$taxa == "Staphylococcus_aureus" & .$metadata == "lypma" & .$sample_type == "Nasal") 
+
+```
+
+q-val > p-val higher at LMER with MaAsLin transfored data.
+
+# Volcano plot
+
+```{r}
+
+lmer_taxa_withzeros %>% subset(., .$sample_type == "BAL")  %>% 
+        ggplot(., aes(x = Estimate, y = -log10(q_val))) +
+        geom_point() +
+        ggtitle("BAL LMER (with zeros) + CLR") +
+        geom_hline(yintercept = 1, col = "red")
+
+lmer_taxa_withzeros %>% subset(., .$sample_type == "Nasal")  %>% 
+        ggplot(., aes(x = Estimate, y = -log10(q_val))) +
+        geom_point() +
+        ggtitle("Nasal LMER (with zeros) + CLR") +
+        geom_hline(yintercept = 1, col = "red")
+
+
+
+```
+
+```{r}
+
+
+maaslin_bal %>% 
+        ggplot(., aes(x = coef, y = -log10(qval))) +
+        geom_point() +
+        ggtitle("BAL MaAslin CLR") +
+        geom_hline(yintercept = 1, col = "red")
+
+
+maaslin_ns %>% 
+        ggplot(., aes(x = coef, y = -log10(qval))) +
+        geom_point() +
+        ggtitle("Nasal MaAslin CLR") +
+        geom_hline(yintercept = 1, col = "red")
+
+
+```
+
+
+with LMER result, it has lower p-value but higher q-value??
+
+# Calculating q-values at stratified samples
+
+```{r}
+
+lmer_maaslin_bal_withzeros <- lmer_taxa_withzeros %>% 
+        subset(., .$sample_type == "BAL") %>% 
+                mutate(q_val = qvalue::qvalue(`Pr(>|t|)`)$qvalue)
+        
+lmer_maaslin_ns_withzeros <- lmer_taxa_withzeros %>% 
+        subset(., .$sample_type == "Nasal") %>% 
+                mutate(q_val = qvalue::qvalue(`Pr(>|t|)`)$qvalues)
+        
+        
+lmer_maaslin_spt_withzeros <- lmer_taxa_withzeros %>%
+        subset(., .$sample_type == "Sputum") %>%  
+                mutate(q_val = qvalue::qvalue(`Pr(>|t|)`)$qvalue)
+        
+
+        
+lmer_maaslin_ns_withzeros %>% subset(., .$taxa == "Staphylococcus_aureus" & .$metadata == "lypma" & .$sample_type == "Nasal") 
+maaslin_ns %>% subset(., .$feature == "Staphylococcus_aureus" & .$metadata == "lypma") 
+
+        
+```
+
+Even showing lower q-value than maaslin????
+
+*q-value smaller than p-value!!*
+
+# Maybe, q-value is dependent on total number of tests, and it affected the result?
+
+# LME4 for CLR normalized data (zero-filtered)
 
 ```{r}
 
@@ -904,217 +1182,67 @@ lmer_taxa_spt <-  lmer_taxa_spt %>% subset(., .$sample_type == "Sputum") %>%
 
 ```
 
-# MaAslin - LMER (with zeros) comparison
+
+# How was it with zero-removed samples?
 
 ```{r}
-      
-
-#Comparing lme4 otuput with maaslin output
-
-        #with BAL
-maaslin_bal %>% subset(., .$qval <0.1) %>% .$feature %>% unique
-lmer_taxa_withzeros %>% subset(., .$q_val < 0.1 & .$sample_type == "BAL") %>% .$taxa %>% unique
-
+lmer_taxa_ns %>% subset(., .$feature == "Staphylococcus_aureus" & .$metadata == "lypma" & .$sample_type == "Nasal") 
+        
 ```
 
-
-# Maaslin may use different CLR calculation with microbiome::transform().
-
-```{r}
-#Maaslin2 normalization
-
-  #microbiome normalization - count
-        clr_spt_transformed_otu <- otu_table(physeq0_clr_spt) %>% t %>% data.frame()
-        #microbiome normalization - relative abundance
-        clr_spt_transformed_otu_rel <- physeq0_clr_all_rel %>% otu_table %>% t %>% data.frame()
-        
-        #both normalization - for read counts and relative abundances with microbiome package - showed the same output.
-        #Maaslin showed slightly different data.
-
-
-# Masslin normalization for LMER ------------------------------------------
-
-        
-
-# LMER on maaslin transformed data
-        lmer_maaslin_bal <- data.frame()
-        
-        for(i in 1:54) {
-                #Creating a data frame that includes CLR transformed data of i-th bug.
-                
-                #making differnt otu tables for each sample type
-                otu_table_bal <- maaslin_bal_transformed_otu %>% column_to_rownames("feature")
-                
-                #tax table for different sample type
-                taxa_data_bal <- otu_table_bal[i] %>% data.frame()
-                
-                #Making a merged dataframe having sample data and CLR transformed output
-                lme_data_bal <- merge(taxa_data_bal, sample_data(physeq0_clr_bal), by = 0) %>% column_to_rownames("Row.names")
-                
-                #generating a character of formula.
-                #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
-                lme4_formula <- paste(names(taxa_data_bal), "~", "lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
-                
-                #BAL stratified analysis
-                BAL_result <- lme4::lmer(formula = lme4_formula,
-                                         data = lme_data_bal) %>% 
-                        lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest
-                        summary %>%
-                        .$coefficients %>%
-                        data.frame(check.names = F) %>% 
-                        mutate(taxa = names(taxa_data_bal),
-                               sample_type = "BAL") %>% 
-                        rownames_to_column("metadata")  %>%
-                        subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
-                
-                
-                #row binding all the associations of i-th taxa to one data frame
-                lmer_maaslin_bal <- rbind(lmer_maaslin_bal,
-                                   BAL_result %>% remove_rownames()
-                )
-                
-        }
-        
-        lmer_maaslin_ns <- data.frame()
-        
-        for(i in 1:29) {
-                #Creating a data frame that includes CLR transformed data of i-th bug.
-                
-                #making differnt otu tables for each sample type
-                otu_table_ns <- maaslin_ns_transformed_otu %>% column_to_rownames("feature")
-                
-                #tax table for different sample type
-                taxa_data_ns <- otu_table_ns[i] %>% data.frame()
-                
-                #Making a merged dataframe having sample data and CLR transformed output
-                lme_data_ns <- merge(taxa_data_ns, sample_data(physeq0_clr_ns), by = 0) %>% column_to_rownames("Row.names")
-                
-                #generating a character of formula.
-                #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
-                lme4_formula <- paste(names(taxa_data_ns), "~", "lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
-                
-                #BAL stratified analysis
-                NS_result <- lme4::lmer(formula = lme4_formula,
-                                         data = lme_data_ns) %>% 
-                        lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest
-                        summary %>%
-                        .$coefficients %>%
-                        data.frame(check.names = F) %>% 
-                        mutate(taxa = names(taxa_data_ns),
-                               sample_type = "Nasal") %>% 
-                        rownames_to_column("metadata")  %>%
-                        subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
-                
-                
-                #row binding all the associations of i-th taxa to one data frame
-                lmer_maaslin_ns <- rbind(lmer_maaslin_ns,
-                                          NS_result %>% remove_rownames()
-                )
-                
-        }
-        
-        lmer_maaslin_ns
-        
-        
-        
-        lmer_maaslin_spt <- data.frame()
-        
-        
-        for(i in 1:155) {
-                #Creating a data frame that includes CLR transformed data of i-th bug.
-                
-                #making differnt otu tables for each sample type
-                otu_table_spt <- maaslin_spt_transformed_otu %>% column_to_rownames("feature")
-                
-                #tax table for different sample type
-                taxa_data_spt <- otu_table_spt[i] %>% data.frame()
-                
-                #Making a merged dataframe having sample data and CLR transformed output
-                lme_data_spt <- merge(taxa_data_spt, sample_data(physeq0_clr_spt), by = 0) %>% column_to_rownames("Row.names")
-                
-                #generating a character of formula.
-                #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
-                lme4_formula <- paste(names(taxa_data_spt), "~", "lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
-                
-                #BAL stratified analysis
-                Sputum_result <- lme4::lmer(formula = lme4_formula,
-                                        data = lme_data_spt) %>% 
-                        lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest
-                        summary %>%
-                        .$coefficients %>%
-                        data.frame(check.names = F) %>% 
-                        mutate(taxa = names(taxa_data_spt),
-                               sample_type = "Sputum") %>% 
-                        rownames_to_column("metadata")  %>%
-                        subset(., .$metadata %in% c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
-                
-                
-                #row binding all the associations of i-th taxa to one data frame
-                lmer_maaslin_spt <- rbind(lmer_maaslin_spt,
-                                         Sputum_result %>% remove_rownames()
-                )
-                
-        }
-        
-        
-        maaslin_ns %>% subset(., .$qval < 0.1) %>% .$feature %>% table
-        lmer_maaslin_bal %>% subset(., .$q_val < 0.1) %>% .$taxa %>% table
-        
-        maaslin_ns %>% subset(., .$qval < 0.1) %>% .$feature %>% table
-        lmer_maaslin_ns %>% subset(., .$q_val < 0.1) %>% .$taxa %>% table
-        
-        maaslin_sputum %>% subset(., .$qval < 0.1) %>% .$feature %>% table
-        lmer_maaslin_spt %>% subset(., .$q_val < 0.1) %>% .$taxa %>% table
-        
-        
-#They are quite similar!
-        
-
-
-```
-
-
-
-# MaAslin - LMER (with zeros) comparison - p & q values
-
-```{R}
-
-lmer_taxa_withzeros %>% subset(., .$taxa == "Staphylococcus_aureus" & .$metadata == "lypma" & .$sample_type == "Nasal") 
-maaslin_ns %>% subset(., .$feature == "Staphylococcus_aureus" & .$metadata == "lypma") 
-
-
-```
-
-with LMER result, it has lower p-value but higher q-value??
-
-Calculating q-values at stratified samples
+Now, at least, qval way higher than p-value.
 
 ```{r}
 
-lmer_maaslin_bal <- lmer_taxa_withzeros %>% 
-        subset(., .$sample_type == "BAL") %>% 
-                mutate(q_val = qvalue::qvalue(`Pr(>|t|)`)$qvalue)
-        
-lmer_maaslin_ns <- lmer_taxa_withzeros %>% 
-        subset(., .$sample_type == "Nasal") %>% 
-                mutate(q_val = qvalue::qvalue(`Pr(>|t|)`)$qvalues)
-        
-        
-lmer_maaslin_spt <- lmer_taxa_withzeros %>%
-        subset(., .$sample_type == "Sputum") %>%  
-                mutate(q_val = qvalue::qvalue(`Pr(>|t|)`)$qvalue)
-        
 
-        
-lmer_maaslin_ns %>% subset(., .$taxa == "Staphylococcus_aureus" & .$metadata == "lypma" & .$sample_type == "Nasal") 
-maaslin_ns %>% subset(., .$feature == "Staphylococcus_aureus" & .$metadata == "lypma") 
+lmer_taxa_bal %>% 
+        ggplot(., aes(x = Estimate, y = -log10(qval))) +
+        geom_point() +
+        ggtitle("BAL LMER (zero-filtered) + CLR, 25 significant taxa") +
+        geom_hline(yintercept = 1, col = "red")
 
-        
+lmer_taxa_ns %>% 
+        ggplot(., aes(x = Estimate, y = -log10(qval))) +
+        geom_point() +
+        ggtitle("Nasal LMER (zero-filtered) + CLR, 25 significant taxa") +
+        geom_hline(yintercept = 1, col = "red")
+
+
+lmer_taxa_spt %>% 
+        ggplot(., aes(x = Estimate, y = -log10(qval))) +
+        geom_point() +
+        ggtitle("Sputum LMER (zero-filtered) + CLR, 25 significant taxa") +
+        geom_hline(yintercept = 1, col = "red")
+
 ```
 
-Even showing lower q-value than maaslin????
+# Volcano - MaAslin
+
+```{r}
+
+maaslin_bal %>% 
+        ggplot(., aes(x = coef, y = -log10(qval))) +
+        geom_point() +
+        ggtitle("MaAslin CLR") +
+        geom_hline(yintercept = 1, col = "red")
 
 
+maaslin_ns %>% 
+        ggplot(., aes(x = coef, y = -log10(qval))) +
+        geom_point() +
+        ggtitle("MaAslin CLR") +
+        geom_hline(yintercept = 1, col = "red")
+
+maaslin_sputum %>% 
+        ggplot(., aes(x = coef, y = -log10(qval))) +
+        geom_point() +
+        ggtitle("MaAslin CLR") +
+        geom_hline(yintercept = 1, col = "red")
+
+
+```
+
+Now LMER and MaAslin got similar!
 
 # Bibliography
 

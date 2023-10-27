@@ -322,7 +322,7 @@ Aim 4. Does host depletion increase the risk of contamination?
 ```{r warning=F, message=FALSE, "Data loading"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
-phyloseq_unfiltered <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+phyloseq_unfiltered <- read_rds("/Users/minsikkim/Dropbox (Personal)//Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 #sample data loading
 sample_data <- sample_data(phyloseq_unfiltered$phyloseq_count)
@@ -5183,7 +5183,7 @@ figS7 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = Estimate, col = meta
         theme_classic(base_family = "sans") +
         #labs(tag = "A") +
         geom_point(size = 2, alpha = 0.3, stroke = 0) +
-        xlab("Change estimate of CLR transformed count") +
+        xlab("Change estimate of CLR-normalized read counts") +
         ylab("-log<sub>10</sub>(*q*-value)") +
         #ylim(c(-1, 35)) +
         geom_hline(yintercept = 1, col = "gray") +
@@ -6368,7 +6368,7 @@ figS9 <- ggplot(f_maaslin_all, aes(y = -log10(qval), x = Estimate, col = metadat
         theme_classic(base_family = "sans") +
         #labs(tag = "A") +
         geom_point(size = 2, alpha = 0.3, stroke = 0) +
-        xlab("Change estimate of CLR transformed count") +
+        xlab("Change estimate of CLR-normalized CPM") +
         ylab("-log<sub>10</sub>(*q*-value)") +
         geom_hline(yintercept = 1, col = "gray") +
         geom_vline(xintercept = 0, col = "gray") +

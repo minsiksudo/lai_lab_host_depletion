@@ -322,7 +322,7 @@ Aim 4. Does host depletion increase the risk of contamination?
 ```{r warning=F, message=FALSE, "Data loading"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
-phyloseq_unfiltered <- read_rds("/Users/minsikkim/Dropbox (Personal)//Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+phyloseq_unfiltered <- read_rds("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 #sample data loading
 sample_data <- sample_data(phyloseq_unfiltered$phyloseq_count)
@@ -5047,10 +5047,27 @@ filt_fit_data_ns <- read.csv("data/da_lmer_filt_fit_data_ns.csv")
 
 ```
 
-### MaAsLin output (raw data)
+### MaAsLin output (merged all sample type)
 
 ```{r}
-filt_maaslin_all
+
+filt_maaslin_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table
+
+#Number of taxa significant for nasal swabs
+filt_fit_data_ns %>% subset(., .$qval < 0.1) %>% .$feature %>% unique %>% length
+
+#Number of taxa significant for each treatment at sputum
+filt_fit_data_spt %>% subset(., .$qval < 0.1) %>% group_by(metadata) %>% mutate(rank = order(feature)) %>% summarise(rank = max(rank))
+
+filt_maaslin_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table
+```
+
+### Statistics for main text
+
+```{r}
+
+filt_maaslin_all$metadata
+
 ```
 
 ### MaAsLin output (stratified)
@@ -5468,15 +5485,20 @@ dev.off()
 
 ```{r, warning=FALSE, message=FALSE}
 
-tableS7 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 2) %>% subset(., .$metadata != "sample_type" & .$metadata != "log10.Final_reads") %>% dplyr::select(c("feature", "metadata", "Estimate", "qval")) %>%
+tableS7 <- rbind (filt_fit_data_bal, filt_fit_data_ns, filt_fit_data_spt) %>%
+        .[order(.$qval),] %>%
+        subset(., .$qval < 0.1 & abs(.$Estimate) > 2) %>% 
+        .[1:40,] %>%
+        dplyr::select(c("feature", "sample_type", "metadata", "Estimate", "qval")) %>%
         mutate(feature = paste("<i>", gsub("_", " ", feature), sep = "") %>%
                        gsub(" sp", "</i> sp.", .) %>% gsub(" group", "", .)) %>%
         mutate(feature = case_when(!grepl("</i>", feature) ~ paste(feature, "</i>", sep = ""),
                                    .default = feature))%>% 
         rename(Taxa = "feature",
-                     Treatment = "metadata",
-                     "Change estimate of CLR transformed count" = "Estimate",
-                     `<i>q<i/>-value` = "qval") %>%
+               `Sample type` = "sample_type",
+               Treatment = "metadata",
+               "Change estimate of CLR transformed count" = "Estimate",
+               `<i>q<i/>-value` = "qval") %>%
         mutate(Treatment = case_when(Treatment == "lypma" ~ "lyPMA",
                          Treatment == "host_zero" ~ "HostZERO",
                          Treatment == "benzonase" ~ "Benzonase",
@@ -5484,7 +5506,7 @@ tableS7 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 2) %>
                          Treatment == "qiaamp" ~ "QIAamp",
                          .default = Treatment),
                "Change estimate of CLR transformed count" = round(`Change estimate of CLR transformed count`, 3),
-               `<i>q<i/>-value` = round(`<i>q<i/>-value`, 3)) %>%
+               `<i>q<i/>-value` = round(`<i>q<i/>-value`, 7) %>% sprintf("%.5f", .)) %>%
         remove_rownames() %>% 
         kbl(format = "html", escape = FALSE) %>%
         kable_styling(full_width = 0, html_font = "sans")

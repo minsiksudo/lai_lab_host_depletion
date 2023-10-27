@@ -1,0 +1,199 @@
+2023-10-22 21:00:06.934026 INFO::Writing function arguments to log file
+2023-10-22 21:00:06.934864 DEBUG::Function arguments
+2023-10-22 21:00:06.935286 DEBUG::Output folder: /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw
+2023-10-22 21:00:06.935692 DEBUG::Min Abundance: 0.000000
+2023-10-22 21:00:06.936089 DEBUG::Min Prevalence: 0.100000
+2023-10-22 21:00:06.936482 DEBUG::Normalization: CLR
+2023-10-22 21:00:06.936873 DEBUG::Transform: NONE
+2023-10-22 21:00:06.937267 DEBUG::Analysis method: LM
+2023-10-22 21:00:06.937664 DEBUG::Max significance: 0.250000
+2023-10-22 21:00:06.938068 DEBUG::Random effects: subject_id
+2023-10-22 21:00:06.938476 DEBUG::Fixed effects: lypma,benzonase,host_zero,molysis,qiaamp
+2023-10-22 21:00:06.938879 DEBUG::Correction method: BH
+2023-10-22 21:00:06.939274 DEBUG::Standardize: TRUE
+2023-10-22 21:00:06.939668 DEBUG::Cores: 1
+2023-10-22 21:00:06.940045 INFO::Verifying options selected are valid
+2023-10-22 21:00:06.940775 INFO::Determining format of input files
+2023-10-22 21:00:06.941482 INFO::Input format is data samples as rows and metadata samples as rows
+2023-10-22 21:00:06.943139 DEBUG::A total of 30 samples were found in both the data and metadata
+2023-10-22 21:00:06.943561 DEBUG::Reordering data/metadata to use same sample ordering
+2023-10-22 21:00:06.946052 INFO::Formula for random effects: expr ~ (1 | subject_id)
+2023-10-22 21:00:06.947013 INFO::Formula for fixed effects: expr ~  lypma + benzonase + host_zero + molysis + qiaamp
+2023-10-22 21:00:06.947838 INFO::Filter data based on min abundance and min prevalence
+2023-10-22 21:00:06.948536 INFO::Total samples in data: 30
+2023-10-22 21:00:06.94921 INFO::Min samples required with min abundance for a feature not to be filtered: 3.000000
+2023-10-22 21:00:06.951886 INFO::Total filtered features: 48
+2023-10-22 21:00:06.953177 INFO::Filtered feature names from abundance and prevalence filtering: Corynebacterium_accolens, Corynebacterium_pseudodiphtheriticum, Corynebacterium_pseudogenitalium, Corynebacterium_tuberculostearicum, Cutibacterium_granulosum, Propionibacterium_humerusii, Propionibacterium_namnetense, Prevotella_oris, Gemella_asaccharolytica, Dolosigranulum_pigrum, Anaerococcus_nagyae, Finegoldia_magna, Candida_albicans, Candida_dubliniensis, Malassezia_restricta, Alloprevotella_tannerae, Prevotella_sp_oral_taxon_306, Prevotella_veroralis, Tannerella_sp_oral_taxon_808, Bacillus_ginsengihumi, Listeria_floridensis, Agitococcus_lubricus, Lactobacillus_fermentum, Bacillus_intestinalis, Listeria_innocua, Listeria_monocytogenes, Staphylococcus_haemolyticus, Leptotrichia_sp_oral_taxon_498, Rickettsia_felis, Candida_orthopsilosis, Nannocystis_exedens, Campylobacter_concisus, Franconibacter_helveticus, Klebsiella_pneumoniae, Salmonella_enterica, Superficieibacter_electus, Pseudomonas_fluorescens, Saccharomyces_cerevisiae, S._cerevisiae.x.S._kudriavzevii, Saccharomyces_kudriavzevii, Cryptococcus_gattii_VGI, Cryptococcus_gattii_VGII, Cryptococcus_gattii_VGIII, Cryptococcus_neoformans, Listeria_marthii, Erwinia_persicina, Pseudomonas_formosensis, Pseudomonas_putida
+2023-10-22 21:00:06.957146 INFO::Total filtered features with variance filtering: 0
+2023-10-22 21:00:06.958017 INFO::Filtered feature names from variance filtering:
+2023-10-22 21:00:06.958694 INFO::Running selected normalization method: CLR
+2023-10-22 21:00:06.960868 INFO::Applying z-score to standardize continuous metadata
+2023-10-22 21:00:06.968831 INFO::Running selected transform method: NONE
+2023-10-22 21:00:06.96963 INFO::Running selected analysis method: LM
+2023-10-22 21:00:06.970816 INFO::Fitting model to feature number 1, Actinobaculum_sp_oral_taxon_183
+2023-10-22 21:00:07.013466 INFO::Fitting model to feature number 2, Actinomyces_georgiae
+2023-10-22 21:00:07.065722 INFO::Fitting model to feature number 3, Actinomyces_graevenitzii
+2023-10-22 21:00:07.284366 INFO::Fitting model to feature number 4, Actinomyces_hongkongensis
+2023-10-22 21:00:07.35672 INFO::Fitting model to feature number 5, Actinomyces_johnsonii
+2023-10-22 21:00:07.415735 INFO::Fitting model to feature number 6, Actinomyces_massiliensis
+2023-10-22 21:00:07.466976 INFO::Fitting model to feature number 7, Actinomyces_meyeri
+2023-10-22 21:00:07.528388 INFO::Fitting model to feature number 8, Actinomyces_naeslundii
+2023-10-22 21:00:07.582707 INFO::Fitting model to feature number 9, Actinomyces_odontolyticus
+2023-10-22 21:00:07.63674 INFO::Fitting model to feature number 10, Actinomyces_oris
+2023-10-22 21:00:07.694156 INFO::Fitting model to feature number 11, Actinomyces_sp_HMSC035G02
+2023-10-22 21:00:07.742282 INFO::Fitting model to feature number 12, Actinomyces_sp_HPA0247
+2023-10-22 21:00:07.800964 INFO::Fitting model to feature number 13, Actinomyces_sp_ICM47
+2023-10-22 21:00:07.855013 INFO::Fitting model to feature number 14, Actinomyces_sp_S6_Spd3
+2023-10-22 21:00:07.896808 INFO::Fitting model to feature number 15, Actinomyces_sp_oral_taxon_170
+2023-10-22 21:00:07.943822 INFO::Fitting model to feature number 16, Actinomyces_sp_oral_taxon_180
+2023-10-22 21:00:07.986091 INFO::Fitting model to feature number 17, Actinomyces_sp_oral_taxon_181
+2023-10-22 21:00:08.028133 INFO::Fitting model to feature number 18, Actinomyces_sp_oral_taxon_414
+2023-10-22 21:00:08.119049 INFO::Fitting model to feature number 19, Actinomyces_sp_oral_taxon_448
+2023-10-22 21:00:08.178654 INFO::Fitting model to feature number 20, Actinomyces_sp_oral_taxon_897
+2023-10-22 21:00:08.233554 INFO::Fitting model to feature number 21, Actinomyces_viscosus
+2023-10-22 21:00:08.327422 INFO::Fitting model to feature number 22, Aeriscardovia_aeriphila
+2023-10-22 21:00:08.376172 INFO::Fitting model to feature number 23, Alloscardovia_omnicolens
+2023-10-22 21:00:08.426163 INFO::Fitting model to feature number 24, Bifidobacterium_dentium
+2023-10-22 21:00:08.47892 INFO::Fitting model to feature number 25, Bifidobacterium_longum
+2023-10-22 21:00:08.529071 INFO::Fitting model to feature number 26, Scardovia_wiggsiae
+2023-10-22 21:00:08.601503 INFO::Fitting model to feature number 27, Corynebacterium_atypicum
+2023-10-22 21:00:08.647366 INFO::Fitting model to feature number 28, Corynebacterium_durum
+2023-10-22 21:00:08.699955 INFO::Fitting model to feature number 29, Corynebacterium_matruchotii
+2023-10-22 21:00:08.767643 INFO::Fitting model to feature number 30, Rothia_aeria
+2023-10-22 21:00:08.812512 INFO::Fitting model to feature number 31, Rothia_dentocariosa
+2023-10-22 21:00:08.854735 INFO::Fitting model to feature number 32, Rothia_mucilaginosa
+2023-10-22 21:00:08.900075 INFO::Fitting model to feature number 33, Cutibacterium_acnes
+2023-10-22 21:00:08.942359 INFO::Fitting model to feature number 34, Propionibacterium_acidifaciens
+2023-10-22 21:00:08.984995 INFO::Fitting model to feature number 35, Pseudopropionibacterium_propionicum
+2023-10-22 21:00:09.029822 INFO::Fitting model to feature number 36, Atopobium_deltae
+2023-10-22 21:00:09.117803 INFO::Fitting model to feature number 37, Atopobium_parvulum
+2023-10-22 21:00:09.179209 INFO::Fitting model to feature number 38, Atopobium_rimae
+2023-10-22 21:00:09.268914 INFO::Fitting model to feature number 39, Olsenella_profusa
+2023-10-22 21:00:09.321944 INFO::Fitting model to feature number 40, Olsenella_scatoligenes
+2023-10-22 21:00:09.37371 INFO::Fitting model to feature number 41, Olsenella_uli
+2023-10-22 21:00:09.431059 INFO::Fitting model to feature number 42, Collinsella_aerofaciens
+2023-10-22 21:00:09.486418 INFO::Fitting model to feature number 43, Collinsella_intestinalis
+2023-10-22 21:00:09.537395 INFO::Fitting model to feature number 44, Collinsella_stercoris
+2023-10-22 21:00:09.595086 INFO::Fitting model to feature number 45, Enorma_massiliensis
+2023-10-22 21:00:09.639299 INFO::Fitting model to feature number 46, X.Collinsella._massiliensis
+2023-10-22 21:00:09.697648 INFO::Fitting model to feature number 47, Asaccharobacter_celatus
+2023-10-22 21:00:09.753281 INFO::Fitting model to feature number 48, Denitrobacterium_detoxificans
+2023-10-22 21:00:09.796438 INFO::Fitting model to feature number 49, Enterorhabdus_caecimuris
+2023-10-22 21:00:09.843071 INFO::Fitting model to feature number 50, Slackia_exigua
+2023-10-22 21:00:09.885742 INFO::Fitting model to feature number 51, Slackia_isoflavoniconvertens
+2023-10-22 21:00:09.931555 INFO::Fitting model to feature number 52, Rubrobacter_radiotolerans
+2023-10-22 21:00:09.975035 INFO::Fitting model to feature number 53, Thermoleophilum_album
+2023-10-22 21:00:10.017752 INFO::Fitting model to feature number 54, Porphyromonas_endodontalis
+2023-10-22 21:00:10.0743 INFO::Fitting model to feature number 55, Porphyromonas_somerae
+2023-10-22 21:00:10.206131 INFO::Fitting model to feature number 56, Prevotella_histicola
+2023-10-22 21:00:10.261783 INFO::Fitting model to feature number 57, Prevotella_melaninogenica
+2023-10-22 21:00:10.315194 INFO::Fitting model to feature number 58, Kouleothrix_aurantiaca
+2023-10-22 21:00:10.368743 INFO::Fitting model to feature number 59, Hydrogenibacillus_schlegelii
+2023-10-22 21:00:10.429458 INFO::Fitting model to feature number 60, Gemella_bergeri
+2023-10-22 21:00:10.48286 INFO::Fitting model to feature number 61, Gemella_haemolysans
+2023-10-22 21:00:10.543878 INFO::Fitting model to feature number 62, Gemella_morbillorum
+2023-10-22 21:00:10.596923 INFO::Fitting model to feature number 63, Gemella_sanguinis
+2023-10-22 21:00:10.655563 INFO::Fitting model to feature number 64, Brochothrix_campestris
+2023-10-22 21:00:10.705463 INFO::Fitting model to feature number 65, Staphylococcus_argenteus
+2023-10-22 21:00:10.75216 INFO::Fitting model to feature number 66, Staphylococcus_aureus
+2023-10-22 21:00:10.803493 INFO::Fitting model to feature number 67, Staphylococcus_epidermidis
+2023-10-22 21:00:10.847643 INFO::Fitting model to feature number 68, Staphylococcus_schweitzeri
+2023-10-22 21:00:10.890697 INFO::Fitting model to feature number 69, Abiotrophia_defectiva
+2023-10-22 21:00:10.933246 INFO::Fitting model to feature number 70, Abiotrophia_sp_HMSC24B09
+2023-10-22 21:00:10.977815 INFO::Fitting model to feature number 71, Granulicatella_adiacens
+2023-10-22 21:00:11.04404 INFO::Fitting model to feature number 72, Granulicatella_elegans
+2023-10-22 21:00:11.088488 INFO::Fitting model to feature number 73, Enterococcus_faecalis
+2023-10-22 21:00:11.20313 INFO::Fitting model to feature number 74, Lactobacillus_rhamnosus
+2023-10-22 21:00:11.27025 INFO::Fitting model to feature number 75, Streptococcus_anginosus
+2023-10-22 21:00:11.325375 INFO::Fitting model to feature number 76, Streptococcus_australis
+2023-10-22 21:00:11.382813 INFO::Fitting model to feature number 77, Streptococcus_cristatus
+2023-10-22 21:00:11.44822 INFO::Fitting model to feature number 78, Streptococcus_gordonii
+2023-10-22 21:00:11.502614 INFO::Fitting model to feature number 79, Streptococcus_infantis
+2023-10-22 21:00:11.557091 INFO::Fitting model to feature number 80, Streptococcus_milleri
+2023-10-22 21:00:11.626899 INFO::Fitting model to feature number 81, Streptococcus_mitis
+2023-10-22 21:00:11.674085 INFO::Fitting model to feature number 82, Streptococcus_oralis
+2023-10-22 21:00:11.721875 INFO::Fitting model to feature number 83, Streptococcus_parasanguinis
+2023-10-22 21:00:11.764093 INFO::Fitting model to feature number 84, Streptococcus_peroris
+2023-10-22 21:00:11.806685 INFO::Fitting model to feature number 85, Streptococcus_pneumoniae
+2023-10-22 21:00:11.851522 INFO::Fitting model to feature number 86, Streptococcus_pseudopneumoniae
+2023-10-22 21:00:11.895259 INFO::Fitting model to feature number 87, Streptococcus_salivarius
+2023-10-22 21:00:11.940685 INFO::Fitting model to feature number 88, Streptococcus_sanguinis
+2023-10-22 21:00:11.999675 INFO::Fitting model to feature number 89, Streptococcus_sp_A12
+2023-10-22 21:00:12.042852 INFO::Fitting model to feature number 90, Streptococcus_sp_F0442
+2023-10-22 21:00:12.086025 INFO::Fitting model to feature number 91, Streptococcus_sp_HMSC034E03
+2023-10-22 21:00:12.197258 INFO::Fitting model to feature number 92, Streptococcus_sp_HMSC067H01
+2023-10-22 21:00:12.254769 INFO::Fitting model to feature number 93, Streptococcus_sp_HMSC071D03
+2023-10-22 21:00:12.311377 INFO::Fitting model to feature number 94, Streptococcus_sp_HPH0090
+2023-10-22 21:00:12.378614 INFO::Fitting model to feature number 95, Streptococcus_sp_M334
+2023-10-22 21:00:12.434581 INFO::Fitting model to feature number 96, Streptococcus_vestibularis
+2023-10-22 21:00:12.485971 INFO::Fitting model to feature number 97, Eubacterium_brachy
+2023-10-22 21:00:12.560358 INFO::Fitting model to feature number 98, Eubacterium_infirmum
+2023-10-22 21:00:12.612534 INFO::Fitting model to feature number 99, Eubacterium_nodatum
+2023-10-22 21:00:12.659137 INFO::Fitting model to feature number 100, Eubacterium_sulci
+2023-10-22 21:00:12.705664 INFO::Fitting model to feature number 101, Mogibacterium_diversum
+2023-10-22 21:00:12.751033 INFO::Fitting model to feature number 102, Mogibacterium_pumilum
+2023-10-22 21:00:12.795723 INFO::Fitting model to feature number 103, Mogibacterium_timidum
+2023-10-22 21:00:12.850606 INFO::Fitting model to feature number 104, Lachnoanaerobaculum_saburreum
+2023-10-22 21:00:12.894334 INFO::Fitting model to feature number 105, Oribacterium_parvum
+2023-10-22 21:00:12.949731 INFO::Fitting model to feature number 106, Oribacterium_sinus
+2023-10-22 21:00:12.988062 INFO::Fitting model to feature number 107, Oribacterium_sp_oral_taxon_078
+2023-10-22 21:00:13.037424 INFO::Fitting model to feature number 108, Stomatobaculum_longum
+2023-10-22 21:00:13.081615 INFO::Fitting model to feature number 109, Peptostreptococcus_stomatis
+2023-10-22 21:00:13.171276 INFO::Fitting model to feature number 110, Bulleidia_extructa
+2023-10-22 21:00:13.22172 INFO::Fitting model to feature number 111, Solobacterium_moorei
+2023-10-22 21:00:13.269087 INFO::Fitting model to feature number 112, Limnochorda_pilosa
+2023-10-22 21:00:13.315187 INFO::Fitting model to feature number 113, Veillonella_atypica
+2023-10-22 21:00:13.379881 INFO::Fitting model to feature number 114, Veillonella_dispar
+2023-10-22 21:00:13.427896 INFO::Fitting model to feature number 115, Veillonella_infantium
+2023-10-22 21:00:13.469404 INFO::Fitting model to feature number 116, Veillonella_parvula
+2023-10-22 21:00:13.51598 INFO::Fitting model to feature number 117, Veillonella_sp_T11011_6
+2023-10-22 21:00:13.556499 INFO::Fitting model to feature number 118, Parvimonas_micra
+2023-10-22 21:00:13.59336 INFO::Fitting model to feature number 119, Parvimonas_sp_oral_taxon_110
+2023-10-22 21:00:13.642155 INFO::Fitting model to feature number 120, Parvimonas_sp_oral_taxon_393
+2023-10-22 21:00:14.197351 INFO::Fitting model to feature number 121, Fusobacterium_nucleatum
+2023-10-22 21:00:14.249387 INFO::Fitting model to feature number 122, Leptotrichia_wadei
+2023-10-22 21:00:14.326237 INFO::Fitting model to feature number 123, Gemmata_obscuriglobus
+2023-10-22 21:00:14.384523 INFO::Fitting model to feature number 124, Paludisphaera_borealis
+2023-10-22 21:00:14.443193 INFO::Fitting model to feature number 125, Achromobacter_xylosoxidans
+2023-10-22 21:00:14.494009 INFO::Fitting model to feature number 126, Cupriavidus_sp
+2023-10-22 21:00:14.548435 INFO::Fitting model to feature number 127, Sutterella_parvirubra
+2023-10-22 21:00:14.599024 INFO::Fitting model to feature number 128, Anaerobiospirillum_thomasii
+2023-10-22 21:00:14.647157 INFO::Fitting model to feature number 129, Cardiobacterium_hominis
+2023-10-22 21:00:14.693567 INFO::Fitting model to feature number 130, Cardiobacterium_valvarum
+2023-10-22 21:00:14.747238 INFO::Fitting model to feature number 131, Alkalilimnicola_ehrlichii
+2023-10-22 21:00:14.790452 INFO::Fitting model to feature number 132, Escherichia_coli
+2023-10-22 21:00:14.854373 INFO::Fitting model to feature number 133, Thiohalorhabdus_denitrificans
+2023-10-22 21:00:14.908583 INFO::Fitting model to feature number 134, Pseudomonas_aeruginosa
+2023-10-22 21:00:14.964222 INFO::Fitting model to feature number 135, Acholeplasma_oculi
+2023-10-22 21:00:15.006787 INFO::Fitting model to feature number 136, Candida_parapsilosis
+2023-10-22 21:00:15.051631 INFO::Fitting model to feature number 137, Nakamurella_silvestris
+2023-10-22 21:00:15.094331 INFO::Fitting model to feature number 138, Prevotella_jejuni
+2023-10-22 21:00:15.224764 INFO::Fitting model to feature number 139, Prevotella_pallens
+2023-10-22 21:00:15.282301 INFO::Fitting model to feature number 140, Prevotella_salivae
+2023-10-22 21:00:15.336628 INFO::Fitting model to feature number 141, Tannerella_sp_oral_taxon_HOT_286
+2023-10-22 21:00:15.393051 INFO::Fitting model to feature number 142, Capnocytophaga_gingivalis
+2023-10-22 21:00:15.444982 INFO::Fitting model to feature number 143, Lactobacillus_gasseri
+2023-10-22 21:00:15.499756 INFO::Fitting model to feature number 144, Sharpea_azabuensis
+2023-10-22 21:00:15.551825 INFO::Fitting model to feature number 145, Streptococcus_mutans
+2023-10-22 21:00:15.604237 INFO::Fitting model to feature number 146, Oribacterium_asaccharolyticum
+2023-10-22 21:00:15.669671 INFO::Fitting model to feature number 147, Megasphaera_micronuciformis
+2023-10-22 21:00:15.723104 INFO::Fitting model to feature number 148, Neisseria_flavescens
+2023-10-22 21:00:15.772449 INFO::Fitting model to feature number 149, Neisseria_subflava
+2023-10-22 21:00:15.814973 INFO::Fitting model to feature number 150, Stenotrophomonas_maltophilia
+2023-10-22 21:00:15.857682 INFO::Fitting model to feature number 151, Stenotrophomonas_pavanii
+2023-10-22 21:00:15.901977 INFO::Fitting model to feature number 152, Stenotrophomonas_rhizophila
+2023-10-22 21:00:15.948227 INFO::Fitting model to feature number 153, Streptococcus_sobrinus
+2023-10-22 21:00:15.990602 INFO::Fitting model to feature number 154, Eggerthia_catenaformis
+2023-10-22 21:00:16.033656 INFO::Fitting model to feature number 155, Haemophilus_parainfluenzae
+2023-10-22 21:00:16.175154 INFO::Counting total values for each feature
+2023-10-22 21:00:16.207494 INFO::Writing filtered data to file /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/features/filtered_data.tsv
+2023-10-22 21:00:16.215048 INFO::Writing filtered, normalized data to file /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/features/filtered_data_norm.tsv
+2023-10-22 21:00:16.223938 INFO::Writing filtered, normalized, transformed data to file /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/features/filtered_data_norm_transformed.tsv
+2023-10-22 21:00:16.231462 WARNING::Deleting existing residuals file: /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/fits/residuals.rds
+2023-10-22 21:00:16.250866 INFO::Writing residuals to file /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/fits/residuals.rds
+2023-10-22 21:00:16.2541 WARNING::Deleting existing fitted file: /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/fits/fitted.rds
+2023-10-22 21:00:16.255597 INFO::Writing fitted values to file /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/fits/fitted.rds
+2023-10-22 21:00:16.258154 WARNING::Deleting existing ranef file: /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/fits/ranef.rds
+2023-10-22 21:00:16.259526 INFO::Writing extracted random effects to file /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/fits/ranef.rds
+2023-10-22 21:00:16.261348 INFO::Writing all results to file (ordered by increasing q-values): /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/all_results.tsv
+2023-10-22 21:00:16.286106 INFO::Writing the significant results (those which are less than or equal to the threshold of 0.250000 ) to file (ordered by increasing q-values): /Users/minsikkim/Dropbox/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/maaslin_raw/significant_results.tsv

@@ -1494,6 +1494,96 @@ isContaminant(phyloseq_decontam_spt, method="combined", neg = "is.neg", threshol
 
 ```
 
+
+### Decontam -stratified by treatment
+
+```{r}
+#Stratified by sample type
+
+prev_neg <- ((phyloseq_unfiltered$phyloseq_count %>% 
+          subset_samples(sample_type == "Neg.") %>%
+          otu_table %>% 
+          data.frame(.)) != 0) %>%
+        rowSums %>% data.frame %>% rename("Prevalence (negative controls)" = ".")
+
+prev_all <- ((phyloseq_unfiltered$phyloseq_count %>%
+          otu_table %>% 
+          data.frame(.)) != 0) %>%
+        rowSums %>% data.frame %>% rename("Prevalence (all)" = ".")
+
+
+sample_data(phyloseq_unfiltered$phyloseq_rel)$is.neg <- grepl("Neg", sample_data(phyloseq_unfiltered$phyloseq_rel)$sample_type)
+
+phyloseq_decontam_lypma <- phyloseq_unfiltered$phyloseq_rel %>% 
+        subset_samples(S.obs != 0) %>%
+        subset_samples(treatment == "Untreated" | treatment == "lyPMA")
+
+phyloseq_decontam_ben <- phyloseq_unfiltered$phyloseq_rel %>% 
+        subset_samples(S.obs != 0) %>%
+        subset_samples(treatment == "Untreated" | treatment == "Benzonase")
+
+phyloseq_decontam_hostzero <- phyloseq_unfiltered$phyloseq_rel %>% 
+        subset_samples(S.obs != 0) %>%
+        subset_samples(treatment == "Untreated" | treatment == "HostZero")
+
+phyloseq_decontam_molysis <- phyloseq_unfiltered$phyloseq_rel %>% 
+        subset_samples(S.obs != 0) %>%
+        subset_samples(treatment == "Untreated" | treatment == "MolYsis")
+
+phyloseq_decontam_qiaamp <- phyloseq_unfiltered$phyloseq_rel %>% 
+        subset_samples(S.obs != 0) %>%
+        subset_samples(treatment == "Untreated" | treatment == "QIAamp")
+
+
+contaminant_combined_lypma <- 
+data.frame("lyPMA", fix.empty.names = F, 
+        isContaminant(phyloseq_decontam_lypma, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
+)
+
+contaminant_combined_ben <- 
+data.frame("Benzonase", fix.empty.names = F, 
+        isContaminant(phyloseq_decontam_ben, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
+)
+
+
+contaminant_combined_hostzero <- 
+data.frame("HostZero", fix.empty.names = F, 
+        isContaminant(phyloseq_decontam_hostzero, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
+)
+
+
+contaminant_combined_molysis <- 
+data.frame("MolYsis", fix.empty.names = F, 
+        isContaminant(phyloseq_decontam_molysis, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
+)
+
+
+contaminant_combined_QIAamp <- 
+data.frame("QIAamp", fix.empty.names = F, 
+        isContaminant(phyloseq_decontam_qiaamp, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
+)
+
+contaminants <- rbind(contaminant_combined_lypma,
+                      contaminant_combined_ben, 
+                      contaminant_combined_hostzero,
+                      contaminant_combined_molysis,
+                      contaminant_combined_QIAamp
+                      )
+
+names(contaminants) <- c("Treatment", "Taxa")
+
+merged_contaminants_treatment <- merge(contaminants, prev_all %>% rownames_to_column("Taxa"), by = "Taxa") %>%
+        merge(., prev_neg %>% rownames_to_column("Taxa"), by = "Taxa") %>%
+       dplyr::select(c("Treatment", "Taxa", "Prevalence (all)", "Prevalence (negative controls)")) %>%
+        .[order(.$"Treatment", .$"Taxa"),] %>%
+        remove_rownames()
+
+
+
+```
+
+12 taxa identified as contaminants. 7 Taxa identified as contaminants (sample type stratified).
+
 ### Decontam summary
 
 Summary table of potential contaminants with all sample types and stratified sample types in all methods (prevalence, frequence, and combined)
@@ -3200,7 +3290,7 @@ save_kable(tableS3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_m
 ### Fig. 3 Alpha and beta diversity
 
 
-**Fig. 3.** Alpha and beta diversity by sample type and treatment method after removing potential contaminants and rare taxa. (A) Species richness with statistical test results (linear mixed effect model stratified by sample type), (B) Morisita-Horn index within subject between treatment, representing squares for median value and bars for 95% confidence intervals.  
+**Fig. 3.** Alpha and beta diversity by sample type and treatment method after removing potential contaminants and rare taxa. (A) Species richness with statistical test results (linear mixed effect model stratified by sample type), (B) Morisita-Horn dissimilarity within subject between treatment, representing squares for median value and bars for 95% confidence intervals.  
 
 - PSL comments (20230630): 
 		- Figure 3A: it is hard to see some of the boxplot colors due to the narrow interquartile range. Can you use stat_summary and geom = "pointrange" like what Maghini DG et al did for their Figure 3b or create dotplot + pointrange geom like their Figure 3c? I found some example code goodgling though you might want to show median + iqr rather than mean + sd
@@ -3505,7 +3595,7 @@ f3b2 <- rbind(cbind("Sputum",
                            breaks = c(#"Untreated", 
                                       "lyPMA", "Benzonase",
                                       "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        xlab("Morisita-Horn index from untreated") +
+        xlab("Morisita-Horn dissimilarity from untreated") +
         ylab("Treatment group") +
         theme_classic (base_size = 12, base_family = "sans") + 
         theme(plot.tag = element_text(size = 15),
@@ -3558,6 +3648,80 @@ f3b2 <- f3b2 + geom_text(
 )
 
 
+f3b2_box <- horn_dist_long_within_sampleid_from_control %>% 
+        mutate(across(sample_type, factor, levels=c(#"Mock", 
+                                                    "BAL", "Nasal","Sputum"
+                                                    ))) %>%
+        subset(., .$sample_type != "Neg.") %>% 
+        subset(., .$treatment != "Untreated") %>%
+  mutate(treatment = factor(treatment, levels = c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
+                            labels = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))) %>%
+        ggplot(aes(x = dist, y = treatment, col = treatment)) +
+        geom_boxplot(aes(x=dist)) +
+        #geom_linerange(aes(xmin=`2.5%`, xmax=`97.5%`)) +
+        facet_wrap(~sample_type, nrow = 4) +
+        scale_y_discrete(limits=rev) +
+        scale_color_manual(values = c(#"#e31a1c",
+                                      "#fb9a99","#33a02c",
+                                      "#b2df8a","#1f78b4","#a6cee3"),
+                           name = "Treatment",
+                           breaks = c(#"Untreated", 
+                                      "lyPMA", "Benzonase",
+                                      "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        xlab("Morisita-Horn dissimilarity from untreated") +
+        ylab("Treatment group") +
+        theme_classic (base_size = 12, base_family = "sans") + 
+        theme(plot.tag = element_text(size = 15),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              legend.position = "none") +
+        labs(tag = "B") +
+        geom_vline(xintercept = 0, col = "black", linetype="dotted") +
+        #coord_cartesian(xlim=c(-0.5, 1)) +
+        #geom_text(aes(x = 0, label = treatment), hjust = 0, nudge_x = -.55, size = 3, color = "black", family = "sans") +
+        #geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "sans") +
+        scale_x_continuous(breaks = c(-0.25, 0, 0.25, 0.5, 0.75),
+                           labels = c(-0.25, "0 (low bias)", 0.25, 0.5, "0.75 (high bias)"))
+
+
+dat_text <- data.frame(
+  label = c(
+          #"", "***", "***", "**", "***", #label for Mock
+          "*", "", "", "", "", #label for BAL
+          "*", "*", "", "**", "", 
+          "**", "***", "***", "***", "***"),
+  sample_type = c(
+          #"Mock", "Mock", "Mock", "Mock", "Mock", 
+          "BAL", "BAL", "BAL", "BAL", "BAL", 
+          "Nasal", "Nasal", "Nasal", "Nasal", "Nasal", 
+          "Sputum", "Sputum", "Sputum", "Sputum", "Sputum"),
+  treatment     = c(
+          #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp", 
+          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
+          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
+          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+  dist = c(
+          #50, 30, 35, 33, 31,
+          0.9, 0, 0, 0, 0,
+          0.48, 0.4, 0, 0.55, 0,
+          0.8, 0.82,1, 1.02, 0.98)
+)
+
+
+
+dat_text$sample_type <- factor(dat_text$sample_type, levels = c("BAL", "Nasal", "Sputum"
+                                                                ))
+dat_text$treatment <- factor(dat_text$treatment, levels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))
+
+
+f3b2_box <- f3b2_box + geom_text(
+  data    = dat_text,
+  mapping = aes(y = treatment, x = dist, label = label),
+  col = "black"
+)
+
+
+
 # Mock community's beta-diversity plot.
 ## This only includes positive control samples (Mock)
 
@@ -3589,7 +3753,7 @@ f5S_mock_mh <- horn_dist_long_within_sampleid_from_control %>%
                                       "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", 
                            labels = c(#"Untreated",
                                       "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        xlab("Morisita-Horn index from untreated") +
+        xlab("Morisita-Horn dissimilarity from untreated") +
         ylab("Treatment group") +
         theme_classic (base_size = 12, base_family = "sans") + 
         theme(plot.tag = element_text(size = 15),
@@ -3604,7 +3768,43 @@ f5S_mock_mh <- horn_dist_long_within_sampleid_from_control %>%
         scale_x_continuous(breaks = c(-0.5, 0, 0.5, 1, 1.5), labels = c(-0.5, "0 (low bias)", 0.5, 1, "1.5 (high bias)"))
 
 
-fig3 <- ggarrange(f3a, f3b2, ncol = 1, common.legend = T, align = "hv")
+
+f5S_mock_mh_box <- horn_dist_long_within_sampleid_from_control %>% 
+        mutate(across(sample_type, factor, levels=c("Mock"#, 
+                                                    #"BAL", "Nasal","Sputum"
+                                                    ))) %>%
+        subset(., .$sample_type != "Neg.") %>% 
+        subset(., .$treatment != "Untreated") %>%
+  mutate(treatment = factor(treatment, levels = c(#"Untreated",
+                                                  "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
+                            labels = c(#"Untreated",
+                                       "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))) %>%
+        #,
+         #text = paste(sprintf("%.2f", round(mean, digits = 2)), " [", sprintf("%.2f", round(lower.ci, digits = 2)), ", ", sprintf("%.2f", round(upper.ci, digits = 2)), "]", sep = "")) %>%
+        ggplot(aes(x = dist, y = treatment, col = treatment)) +
+        geom_boxplot() +
+        facet_wrap(~sample_type, nrow = 4) +
+        scale_y_discrete(limits=rev) +
+        scale_color_manual(values = c(#"#e31a1c", 
+                                      "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", 
+                           labels = c(#"Untreated",
+                                      "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        xlab("Morisita-Horn dissimilarity from untreated") +
+        ylab("Treatment group") +
+        theme_classic (base_size = 12, base_family = "sans") + 
+        theme(plot.tag = element_text(size = 15),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              legend.position = "none") +
+        labs(tag = "D") +
+        geom_vline(xintercept = 0, col = "black", linetype="dotted") +
+        #coord_cartesian(xlim=c(-0.5, 1)) +
+        #geom_text(aes(x = 0, label = treatment), hjust = 0, nudge_x = -.55, size = 3, color = "black", family = "sans") +
+        #geom_text(aes(x = 0, label = text), hjust = 0, nudge_x = -0.4, size = 3, color = "black", family = "sans") +
+        scale_x_continuous(breaks = c(-0.5, 0, 0.5, 1, 1.5), labels = c(-0.5, "0 (low bias)", 0.5, 1, "1.5 (high bias)"))
+
+
+fig3 <- ggarrange(f3a, f3b2_box, ncol = 1, common.legend = T, align = "hv")
 
 fig3
 
@@ -4022,13 +4222,13 @@ cbind(sr_lmer_bal_w_depth, sr_lmer_ns_w_depth, sr_lmer_spt_w_depth) %>%
 ### {-}
 
 
-## Beta diversity distances - Morisita Horn index {.tabset}
+## Beta diversity distances - Morisita Horn dissimilarity {.tabset}
 
 ### PERMANOVA - all samples 
 
 **This table is too redundant. Removed from the manuscript.**. 
 
-Degree of freedom, effect size (residual, R2) and p-value of permutational ANOVA for Morisita-Horn index with an interaction term and strata term (MH-index of species composition ~ sample type `*` treatment + subject + log10(final reads), strata = subject id). Statistical significances were noted with `***:` p-value < 0.001.
+Degree of freedom, effect size (residual, R2) and p-value of permutational ANOVA for Morisita-Horn dissimilarity with an interaction term and strata term (MH-index of species composition ~ sample type `*` treatment + subject + log10(final reads), strata = subject id). Statistical significances were noted with `***:` p-value < 0.001.
 
 
 
@@ -4207,7 +4407,7 @@ tableS5
 
 ### Table S7. LM on M-H distance 
 
-**Table S7.** Effect size, standard error (SE) and p-value of a statistical test for Morisita-Horn index from untreated to each treated within subject, stratified by sample type. Stratified analyses were conducted for each sample type as an interaction term of sample type and treatment was significant (p-value < 0.001) using a model, ANOVA(species richness ~ sample type + treatment + sample type * treatment). The tested was conducted with a linear mixed effect model LM(distance within subject by treatment ~ treatment + (1|subject)). The baseline of sample type is untreated (0 distance, untreated from untreated), and statistical significance were noted with `*: p-value < 0.05, **: p-value < 0.01 and ***: `p-value < 0.001.
+**Table S7.** Effect size, standard error (SE) and p-value of a statistical test for Morisita-Horn dissimilarity from untreated to each treated within subject, stratified by sample type. Stratified analyses were conducted for each sample type as an interaction term of sample type and treatment was significant (p-value < 0.001) using a model, ANOVA(species richness ~ sample type + treatment + sample type * treatment). The tested was conducted with a linear mixed effect model LM(distance within subject by treatment ~ treatment + (1|subject)). The baseline of sample type is untreated (0 distance, untreated from untreated), and statistical significance were noted with `*: p-value < 0.05, **: p-value < 0.01 and ***: `p-value < 0.001.
 
 ```{r}
 
@@ -4456,7 +4656,7 @@ tableS6
 
 ### Fig. S7 PCA figure
 
-**Fig. S7.** Principal coordinate analysis plot based on Morisita-Horn index of taxonomic sequencing results stratified by sample type.
+**Fig. S7.** Principal coordinate analysis plot based on Morisita-Horn dissimilarity of taxonomic sequencing results stratified by sample type.
 
 ```{r}
 figS6 <- ordinate(subset_samples(phyloseq_rel_nz, sample_type != "Neg." & sample_type != "Mock"), method = "PCoA", distance = "horn") %>%
@@ -4581,7 +4781,7 @@ The proportion of unexpected taxa was maintained throughout all the samples besi
 
 ```{r}
 phyloseq_control_rel_10zymo <- subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock")
-
+subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock") %>% taxa_names %>% .[c(grep("lacto", .))]
 
 zymo_speceis <- c("s__Pseudomonas_aeruginosa",
                   "s__Escherichia_coli", 
@@ -4746,7 +4946,7 @@ Alpha and beta diversity indices were calculated for mock community samples and 
 ggarrange(barplot_mock_microbe_zymo_filtered,
           barplot_mock_gramproportion,
           f5S_mock_filtered,
-          f5S_mock_mh,
+          f5S_mock_mh_box,
           align = "hv",
           heights = c(2,2,3,2),
           widths = c(1, 1, 0.8,1),
@@ -4760,14 +4960,15 @@ png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manu
     res = 600
 ) #fixing multiple page issue
 
-
 ggarrange(barplot_mock_microbe_zymo_filtered,
           barplot_mock_gramproportion,
           f5S_mock_filtered,
-          f5S_mock_mh,
+          f5S_mock_mh_box,
           align = "hv",
           heights = c(2,2,3,2),
+          widths = c(1, 1, 0.8,1),
           ncol=1, nrow=4)
+
 
 
 dev.off()
@@ -5508,7 +5709,7 @@ save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_m
 
 ### Fig. S10. Figure of alpha and beta 
 
-**Fig. S10.** Alpha and beta diversity by sample type and treatment method of predicted functions. (A) Species richness with statistical test results (linear mixed effect model stratified by sample type), (B) Morisita-Horn index within subject between treatment, representing squares for median value and bars for 95% confidence intervals.  
+**Fig. S10.** Alpha and beta diversity by sample type and treatment method of predicted functions. (A) Species richness with statistical test results (linear mixed effect model stratified by sample type), (B) Morisita-Horn dissimilarity within subject between treatment, representing squares for median value and bars for 95% confidence intervals.  
 
 ```{r warning=FALSE, "Function richness"}
 
@@ -5680,56 +5881,16 @@ path_horn_dist_long_within_sampleid_from_control$treatment <-
                levels = c("Untreated", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"))
 
 
-f4b2 <- f3b2 <- rbind(cbind("Sputum",
-            lmer(dist ~ treatment + (1|subject_id),
-                data = path_horn_dist_long_within_sampleid_from_control %>%
-                        subset(sample_type == "Sputum")) %>% 
-                    confint()
-            ),
-      cbind("BAL",
-            lmer(dist ~ treatment + (1|subject_id),
-                 data = path_horn_dist_long_within_sampleid_from_control %>%
-                         subset(sample_type == "BAL")) %>% 
-                    confint()
-            ),
-      cbind("Nasal",
-            lmer(dist ~ treatment + (1|subject_id),
-                 data = path_horn_dist_long_within_sampleid_from_control %>%
-                         subset(sample_type == "Nasal")) %>% 
-                    confint()
-     )
-) %>% {
-        row_names <- rownames(.)
-        data_frame <- data.frame(.)
-        data_frame$treatment <- row_names
-        data_frame %>% 
-                remove_rownames() %>%
-                rename(sample_type = "V1",
-               "2.5%" = "X2.5..",
-               "97.5%" = "X97.5..") %>% 
-                mutate(`2.5%` = as.numeric(`2.5%`),
-                       `97.5%` = as.numeric(`97.5%`),
-                       mean = (`97.5%`+`2.5%`)/2,
-                       treatment = case_when(treatment == "(Intercept)" ~ "Untreated",
-                                             treatment == "treatmentlypma" ~ "lyPMA",
-                                             treatment == "treatmentbenzonase" ~ "Benzonase",
-                                             treatment == "treatmenthost_zero" ~ "HostZERO",
-                                             treatment == "treatmentmolysis" ~ "MolYsis",
-                                             treatment == "treatmentqiaamp" ~ "QIAamp"
-                                             ),
-                       treatment = factor(treatment,
-                                          levels = c("Untreated", "lyPMA", "Benzonase",
-                                      "HostZERO", "MolYsis", "QIAamp")),
-                       sample_type = factor(sample_type,
-                                          levels = c("BAL", "Nasal", "Sputum"))
-                       ) %>%
-                subset(treatment %in% c(#"Untreated", 
-                                        "lyPMA", "Benzonase",
-                                      "HostZERO", "MolYsis", "QIAamp"))
-} %>%
-        ggplot(aes(x = mean, y = treatment, col = treatment)) +
-        geom_point(aes(x=mean), shape=15, size=3) +
-        geom_linerange(aes(xmin=`2.5%`, xmax=`97.5%`)) +
+f4b2 <- path_horn_dist_long_within_sampleid_from_control %>% 
+        mutate(across(sample_type, factor, levels=c(#"Mock", 
+                                                    "BAL", "Nasal","Sputum"
+                                                    ))) %>%
+        subset(., .$sample_type != "Neg.") %>% 
+        subset(., .$treatment != "Untreated") %>%
+  mutate(treatment = factor(treatment, levels = c("lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
+                            labels = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"))) %>%
+        ggplot(aes(x = dist, y = treatment, col = treatment)) +
+        geom_boxplot() + 
         facet_wrap(~sample_type, nrow = 4) +
         scale_y_discrete(limits=rev) +
         scale_color_manual(values = c(#"#e31a1c",
@@ -5739,7 +5900,7 @@ f4b2 <- f3b2 <- rbind(cbind("Sputum",
                            breaks = c(#"Untreated", 
                                       "lyPMA", "Benzonase",
                                       "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        xlab("Morisita-Horn index from untreated") +
+        xlab("Morisita-Horn dissimilarity from untreated") +
         ylab("Treatment group") +
         theme_classic (base_size = 12, base_family = "sans") + 
         theme(plot.tag = element_text(size = 15),
@@ -6061,6 +6222,7 @@ Rwa result, with interaction term
 
 phyloseq_rel_nz <- transform_sample_counts(phyloseq$phyloseq_path_rpk, function(x) {x/sum(x)}) %>%
         subset_samples(S.obs != 0 & sample_type %in% c("Mock", "BAL", "Nasal", "Sputum"))
+
 
 set.seed(seed)
 horn_perm_inter_fun <- vegan::adonis2(distance(phyloseq_rel_nz, method="horn") ~ sample_type * treatment + subject_id,

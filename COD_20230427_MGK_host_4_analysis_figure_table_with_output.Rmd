@@ -110,7 +110,7 @@ Aim 1. What is the efficiency of host depletion for each method?
 
 Aim 2. Did host depletion change microbial community composition?
 
-        •	Alpha diversity (microbial species richness, microbial predicted function richness)
+        •	Alpha diversity (microbial species richness, microbial predicted functional richness)
         •	Beta diversity (Morisita-Horn distance compared to control (not host-depleted) sample)
         •	Differential abundance
 
@@ -246,12 +246,11 @@ Aim 4. Does host depletion increase the risk of contamination?
 ### Figure
         
         ### A: Correlation Plot. x-axis with host DNA proportion measured with shotgun metagenomic sequencing vs y-axis as that by qPCR.
-        ### B: Bland-Altman – x-axis as size of observation vs y-axis difference at that scale.
 ### Statistics
         ### Correlation coefficient
         ### Bland-Altman statistics
 
-## 2. Mediation analysis. Host depletion treatment increases species and predicted microbial function richness due higher effective sequencing depth 
+## 2. Mediation analysis. Host depletion treatment increases species and predicted microbial functional richness due higher effective sequencing depth 
 
         # Mediation R package
                 ## outcome = species richness
@@ -493,9 +492,9 @@ sample_data(phyloseq_unfiltered$phyloseq_path_rpk) <- sample_data(alpha_diversit
 **Figure S1**. Host depletion effects measured by qPCR. (A) total DNA (16S bacterial DNA + human), (B) host DNA, (C) bacterial DNA, and (D) proportion of host DNA.
 
 ```{r}
-#2A: Change in total DNA (qPCR)
+#1A: Change in total DNA (qPCR)
 
-fS2a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_host_nondil + DNA_bac_nondil))) +
+fS1a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_host_nondil + DNA_bac_nondil))) +
         geom_jitter(aes(color = treatment, x = treatment), lwd = 0.2,
                     alpha = 0.3, stroke = 0) +
         stat_summary(aes(color = treatment, x = treatment),
@@ -514,8 +513,8 @@ fS2a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "S
 
 
 
-#2B: Change in human DNA (qPCR)
-fS2b <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_host_nondil))) +
+#1B: Change in human DNA (qPCR)
+fS1b <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_host_nondil))) +
         geom_jitter(aes(col = treatment, x = treatment), 
                     lwd = 0.2, alpha = 0.3, stroke = 0) +
         stat_summary(aes(color = treatment, x = treatment),
@@ -531,8 +530,8 @@ fS2b <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "S
         ylab("log<sub>10</sub>(qPCR host DNA)<br>(ng/μL)") +
         labs(tag = "B")
 
-#2C: Change in 16S DNA (qPCR)
-fS2c <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_bac_nondil))) +
+#1C: Change in 16S DNA (qPCR)
+fS1c <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_bac_nondil))) +
         geom_jitter(aes(col = treatment, x = treatment),
                     lwd = 0.2, alpha = 0.3, stroke = 0) +
         stat_summary(aes(color = treatment, x = treatment),
@@ -548,8 +547,8 @@ fS2c <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "S
         ylab("log<sub>10</sub>(qPCR bacterial DNA)<br>(ng/μL)") +
         labs(tag = "C")
         
-#2D. Change in % host (qPCR)
-fS2d <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = host_proportion)) +
+#1D. Change in % host (qPCR)
+fS1d <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = host_proportion)) +
         geom_jitter(aes(col = treatment, x = treatment),
                     lwd = 0.2, alpha = 0.3, stroke = 0) +
         stat_summary(aes(color = treatment, x = treatment),
@@ -567,9 +566,9 @@ fS2d <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "S
 
 
 #output for markdown
-figureS2 <- ggarrange(fS2a, fS2b, fS2c, fS2d, common.legend = T , align = "hv")
+figureS1 <- ggarrange(fS1a, fS1b, fS1c, fS1d, common.legend = T , align = "hv")
 
-figureS2 
+figureS1 
 
 
 
@@ -580,7 +579,7 @@ png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manu
     res = 600
 ) #fixing multiple page issue
 
-figureS2
+figureS1
 # alpha diversity plots
 #ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
 #          ncol = 1) # alpha diversity plots
@@ -598,7 +597,7 @@ dev.off()
 ```{r warning=F, QC1.5.0}
 #how were the samples failed in library prep?
 
-figS1_final_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
+figS2_final_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
         ggplot(aes(x = reorder(baylor_other_id, -Final_reads),
                                y = log10(Final_reads + 1),
                                col = sample_type)) +
@@ -613,7 +612,7 @@ figS1_final_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq
         ylim(c(0, 8.5))
 
 
-figS1_total_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
+figS2_total_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
         ggplot(aes(x = reorder(baylor_other_id, -total_read),
                                y = log10(total_read + 1),
                                col = sample_type)) +
@@ -629,9 +628,9 @@ figS1_total_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq
 
 
 
-figS1 <- ggarrange(figS1_final_reads, figS1_total_reads, ncol = 2, common.legend = T)
+figS2 <- ggarrange(figS2_final_reads, figS2_total_reads, ncol = 2, common.legend = T)
 
-figS1
+figS2
 
 png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
@@ -640,7 +639,7 @@ png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manu
     res = 600
 ) #fixing multiple page issue
 
-figS1
+figS2
 # alpha diversity plots
 #ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
 #          ncol = 1) # alpha diversity plots
@@ -831,7 +830,7 @@ hr_lmer_bal_kbl <- hr_lmer_bal %>%
         rename("<i>p</i>-value" = "Pr(>|t|)",
                t_value = "t value") %>%
         merge(., 
-              hr_lmer_ns %>% confint() %>%
+              hr_lmer_bal %>% confint() %>%
                         round(digits = 1) %>% 
                         format(nsmall = 1) %>%
                         as.data.frame() %>%
@@ -917,7 +916,7 @@ hr_lmer_spt_kbl <- hr_lmer_spt %>%
         rename("<i>p</i>-value" = "Pr(>|t|)",
                t_value = "t value") %>%
         merge(., 
-              hr_lmer_ns %>% confint() %>%
+              hr_lmer_spt %>% confint() %>%
                         round(digits = 1) %>% 
                         format(nsmall = 1) %>%
                         as.data.frame() %>%
@@ -1197,7 +1196,7 @@ save_kable(tables2, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_m
 
 ```{r}
 
-f3a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(Raw_reads))) +
+fs3a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(Raw_reads))) +
         geom_jitter(aes(col = treatment, x = treatment),
                     lwd = 0.2, alpha = 0.3, stroke = 0)+
         stat_summary(aes(color = treatment, x = treatment),
@@ -1217,7 +1216,7 @@ f3a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sp
 #	- Host_mapped
 
 
-f3b <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(Host_mapped))) +
+fs3b <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(Host_mapped))) +
         geom_jitter(aes(col = treatment, x = treatment),
                     lwd = 0.2, alpha = 0.3, stroke = 0)+
         stat_summary(aes(color = treatment, x = treatment),
@@ -1244,7 +1243,7 @@ f3b <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sp
 
 #	- Final_reads
 
-f3c <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(Final_reads))) +
+fs3c <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(Final_reads))) +
         geom_jitter(aes(col = treatment, x = treatment),
                     lwd = 0.2, alpha = 0.3, stroke = 0)+
         stat_summary(aes(color = treatment, x = treatment),
@@ -1266,7 +1265,7 @@ f3c <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sp
 
 
 #	- % Host (we have used Host_mapped/Raw_reads in prior papers)
-f3d <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = sequencing_host_prop)) +
+fs3d <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = sequencing_host_prop)) +
         geom_jitter(aes(col = treatment, x = treatment),
                     lwd = 0.2, alpha = 0.3, stroke = 0)+
         #geom_linerange(aes(xmin=lower.ci, xmax=upper.ci)) +
@@ -1287,7 +1286,7 @@ f3d <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sp
 
 
 
-figS3 <- ggarrange(f3a, f3b, f3c, f3d, common.legend = T, align = "hv")
+figS3 <- ggarrange(fs3a, fs3b, fs3c, fs3d, common.legend = T, align = "hv")
 
 figS3
 
@@ -1402,6 +1401,20 @@ dev.off()
 
 ```{r warning=FALSE, message=FALSE}
 #Stratified by sample type
+neg_number_decontam <- 
+        phyloseq_unfiltered$phyloseq_count %>% 
+        subset_samples(sample_type == "Neg.") %>%
+        subset_samples(S.obs != 0) %>%
+        sample_names() %>%
+        length
+
+sample_number_decontam <- 
+        phyloseq_unfiltered$phyloseq_count %>% 
+        subset_samples(sample_type != "Mock") %>%
+        subset_samples(sample_type != "Neg.") %>%
+        subset_samples(S.obs != 0) %>%
+        sample_names() %>%
+        length
 
 prev_neg <- ((phyloseq_unfiltered$phyloseq_count %>% 
           subset_samples(sample_type == "Neg.") %>%
@@ -1410,6 +1423,8 @@ prev_neg <- ((phyloseq_unfiltered$phyloseq_count %>%
         rowSums %>% data.frame %>% rename("Prevalence (negative controls)" = ".")
 
 prev_all <- ((phyloseq_unfiltered$phyloseq_count %>%
+                      subset_samples(sample_type != "Mock") %>%
+                      subset_samples(sample_type != "Neg.") %>%
           otu_table %>% 
           data.frame(.)) != 0) %>%
         rowSums %>% data.frame %>% rename("Prevalence (all)" = ".")
@@ -1448,9 +1463,30 @@ contaminants <- rbind(contaminant_combined_bal, contaminant_combined_ns, contami
 
 names(contaminants) <- c("Sample type", "Taxa")
 
-merged_contaminants <- merge(contaminants, prev_all %>% rownames_to_column("Taxa"), by = "Taxa") %>%
-        merge(., prev_neg %>% rownames_to_column("Taxa"), by = "Taxa") %>%
-       dplyr::select(c("Sample type", "Taxa", "Prevalence (all)", "Prevalence (negative controls)")) %>%
+
+neg_number_decontam
+sample_number_decontam
+
+merged_contaminants <- merge(contaminants, prev_all %>% 
+                                     rownames_to_column("Taxa"), by = "Taxa") %>%
+        merge(., prev_neg %>%
+                      rownames_to_column("Taxa"), by = "Taxa") %>%
+       dplyr::select(c("Sample type",
+                       "Taxa",
+                       "Prevalence (all)",
+                       "Prevalence (negative controls)")) %>%
+        mutate(`Prevalence (all)` = paste0(`Prevalence (all)`,
+                                           " (",
+                                           round(`Prevalence (all)`/
+                                                         sample_number_decontam * 100, 2),
+                                           "%)"),
+                `Prevalence (negative controls)` = paste0(`Prevalence (negative controls)`,
+                                           " (",
+                                           round(`Prevalence (negative controls)`/
+                                                         neg_number_decontam * 100, 2),
+                                           "%)")) %>%
+        rename(`Prevalence (all) N = 93` = `Prevalence (all)`,
+               `Prevalence (negative controls) N = 31` = `Prevalence (negative controls)`) %>%
         .[order(.$"Sample type", .$"Taxa"),] %>%
         remove_rownames()
 
@@ -1507,6 +1543,8 @@ prev_neg <- ((phyloseq_unfiltered$phyloseq_count %>%
         rowSums %>% data.frame %>% rename("Prevalence (negative controls)" = ".")
 
 prev_all <- ((phyloseq_unfiltered$phyloseq_count %>%
+                      subset_samples(sample_type != "Mock") %>%
+                      subset_samples(sample_type != "Neg.") %>%
           otu_table %>% 
           data.frame(.)) != 0) %>%
         rowSums %>% data.frame %>% rename("Prevalence (all)" = ".")
@@ -1563,20 +1601,14 @@ data.frame("QIAamp", fix.empty.names = F,
         isContaminant(phyloseq_decontam_qiaamp, method="combined", neg = "is.neg", threshold = 0.1, conc = "DNA_bac_ng_uL") %>% subset(.,.$contaminant) %>% row.names
 )
 
-contaminants <- rbind(contaminant_combined_lypma,
+contaminants_strat_treat <- rbind(contaminant_combined_lypma,
                       contaminant_combined_ben, 
                       contaminant_combined_hostzero,
                       contaminant_combined_molysis,
                       contaminant_combined_QIAamp
                       )
 
-names(contaminants) <- c("Treatment", "Taxa")
-
-merged_contaminants_treatment <- merge(contaminants, prev_all %>% rownames_to_column("Taxa"), by = "Taxa") %>%
-        merge(., prev_neg %>% rownames_to_column("Taxa"), by = "Taxa") %>%
-       dplyr::select(c("Treatment", "Taxa", "Prevalence (all)", "Prevalence (negative controls)")) %>%
-        .[order(.$"Treatment", .$"Taxa"),] %>%
-        remove_rownames()
+names(contaminants_strat_treat) <- c("Treatment", "Taxa")
 
 
 
@@ -1590,14 +1622,15 @@ Summary table of potential contaminants with all sample types and stratified sam
 
 ```{r}
 
-tableS3 <- merged_contaminants %>% 
-        mutate(Taxa = species_italic2(Taxa)) %>%
+tableS10 <- merged_contaminants %>% 
+        mutate(Taxa = species_italic2(Taxa)
+               ) %>%
         kbl(format = "html", escape = F) %>%
         kable_styling(full_width = 0, html_font = "sans") 
-tableS3
+tableS10
 
 
-save_kable(tableS3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS10.html", self_contained = T)
+save_kable(tableS10, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS10.html", self_contained = T)
 ```
 
 ### {-}
@@ -1850,7 +1883,7 @@ sample_data(phyloseq$phyloseq_rel) %>%
 
 **Revised Table 1 was constructed after prevalence & abundacne filtering**
 
-**Table 1.** Sequencing results stratified by sample type and host depletion treatment. Number of samples in each experimental group, human and bacterial DNA measured by qPCR, number of samples did not pass the library QC or no microbial mapped reads, QC/d read, % host mapped reads, final reads, species, and function richness. Richness was calculated after employing prevalence and abundance filtration. Values depicted as N (%) or median (interquartile range). 
+**Table 1.** Sequencing results stratified by sample type and host depletion treatment. Number of samples in each experimental group, human and bacterial DNA measured by qPCR, number of samples did not pass the library QC or no microbial mapped reads, QC/d read, % host mapped reads, final reads, species, and functional richness. Richness was calculated after employing prevalence and abundance filtration. Values depicted as N (%) or median (interquartile range). 
 
 ```{r, warning=F, error=FALSE, results='asis', `QC2 Table - cnt.2`}
 
@@ -1866,7 +1899,7 @@ sample_data(phyloseq$phyloseq_count) <-
         merge(phyloseq$phyloseq_count %>% 
                       sample_data %>%
                       data.frame(check.names = F),
-              phyloseq$phyloseq_path_rpk %>% #extracting function richness as dataframe
+              phyloseq$phyloseq_path_rpk %>% #extracting functional richness as dataframe
                       sample_data %>%
                       data.frame(check.names = F) %>% 
                      dplyr::select(c("S.obs")) %>%
@@ -2965,11 +2998,11 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
 
 
 
-figS5 <- ggarrange(c, d, e, ncol = 1, common.legend = T, legend = "top")
+figS6 <- ggarrange(c, d, e, ncol = 1, common.legend = T, legend = "top")
 
 
 
-annotate_figure(figS5,
+annotate_figure(figS6,
                 left = text_grob("Relative abundance",
                                  rot = 90,
                                  family = "sans", 
@@ -2986,7 +3019,7 @@ png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manu
 ) #fixing multiple page issue
 
 
-annotate_figure(figS5,
+annotate_figure(figS6,
                 left = text_grob("Relative abundance",
                                  rot = 90,
                                  family = "sans", 
@@ -3265,14 +3298,14 @@ gram_neg_prop_bal_kbl <- gram_neg_prop_bal %>%
                   "QIAamp"),]
 
 
-tableS3 <- cbind(gram_neg_prop_mock_kbl, gram_neg_prop_bal_kbl, gram_neg_prop_ns_kbl, gram_neg_prop_spt_kbl) %>%
+tableS5 <- cbind(gram_neg_prop_mock_kbl, gram_neg_prop_bal_kbl, gram_neg_prop_ns_kbl, gram_neg_prop_spt_kbl) %>%
         kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "sans") %>% 
         add_header_above(c(" " = 1, "Mock" = 3, "BAL" = 3, "Nasal swab" = 3, "Sputum" = 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans") 
 
-tableS3
+tableS5
 
-save_kable(tableS3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS5.html", self_contained = T)
+save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS5.html", self_contained = T)
 
 
 ```
@@ -4110,7 +4143,7 @@ sr_lmer_spt_kbl <-  sr_lmer_spt %>%
                   "QIAamp"),]
         
 
-tables4 <- cbind(#sr_lmer_mock_kbl,
+tables3 <- cbind(#sr_lmer_mock_kbl,
                  sr_lmer_bal_kbl,
                  sr_lmer_ns_kbl,
                  sr_lmer_spt_kbl) %>%
@@ -4120,9 +4153,9 @@ tables4 <- cbind(#sr_lmer_mock_kbl,
                            "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 
-tables4
+tables3
 
-save_kable(tables4, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS3.html", self_contained = T)
+save_kable(tables3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS3.html", self_contained = T)
 
 ```
 
@@ -4268,7 +4301,7 @@ Tidy permanova result
 
 ```{r}
 
-tableS5 <- horn_perm_all %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
+tableS5_A <- horn_perm_all %>% data.frame(check.names = F) %>% rownames_to_column("row.names") %>% 
         mutate(row.names = case_when(row.names == "sample_type" ~ 'Sample type',
                                      row.names == "treatment" ~ 'Treatment',
                                      row.names == "subject_id" ~ 'Subject',
@@ -4289,16 +4322,13 @@ tableS5 <- horn_perm_all %>% data.frame(check.names = F) %>% rownames_to_column(
         kbl(format = "html", escape = 0) %>%
         kable_styling(full_width = 0, html_font = "sans")
 
-tableS5
+tableS5_A
 
 
 
 ```
 
 ### Table S6. PERMANOVA - Stratified
-
-
-
 
 Raw result - BAL
 
@@ -4391,16 +4421,16 @@ c <- horn_perm_spt %>% data.frame(check.names = F) %>% rownames_to_column('row.n
         dplyr::select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
 
-tableS5 <- cbind(a, b, c) %>% 
+tableS6 <- cbind(a, b, c) %>% 
         kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 
 
-save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS6.html", self_contained = T)
+save_kable(tableS6, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS6.html", self_contained = T)
 
 
-tableS5
+tableS6
 
 
 ```
@@ -4641,15 +4671,15 @@ mh_lmer_spt_kbl <-  mh_lmer_spt %>%
 
 
 
-tableS6 <- cbind(mh_lmer_bal_kbl, mh_lmer_ns_kbl, mh_lmer_spt_kbl) %>% 
+tableS7 <- cbind(mh_lmer_bal_kbl, mh_lmer_ns_kbl, mh_lmer_spt_kbl) %>% 
         kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 
 
-save_kable(tableS6, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS7.html", self_contained = T)
+save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS7.html", self_contained = T)
 
-tableS6
+tableS7
 
 
 ```
@@ -4659,7 +4689,7 @@ tableS6
 **Fig. S7.** Principal coordinate analysis plot based on Morisita-Horn dissimilarity of taxonomic sequencing results stratified by sample type.
 
 ```{r}
-figS6 <- ordinate(subset_samples(phyloseq_rel_nz, sample_type != "Neg." & sample_type != "Mock"), method = "PCoA", distance = "horn") %>%
+figS7 <- ordinate(subset_samples(phyloseq_rel_nz, sample_type != "Neg." & sample_type != "Mock"), method = "PCoA", distance = "horn") %>%
         plot_ordination(phyloseq_rel_nz, ., col = "treatment") +
         #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
@@ -4674,7 +4704,7 @@ figS6 <- ordinate(subset_samples(phyloseq_rel_nz, sample_type != "Neg." & sample
         #stat_ellipse(type = "norm") +
         #stat_ellipse(type = "t")
 
-figS6
+figS7
 
 png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS7.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
@@ -4682,7 +4712,7 @@ png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manu
     units = "mm",
     res = 600
 ) #fixing multiple page issue
-figS6 
+figS7
 dev.off()
 
 
@@ -5204,18 +5234,253 @@ med.out_qiaamp %>% summary
 Tidy table of mediation analysis result
 
 ```{r}
-table2 <- rbind(final.out.lypma,
+tableS4_a <- rbind(final.out.lypma,
       final.out.benzonase,
       final.out.host_zero, 
       final.out.molysis,
       final.out.qiaamp) %>%
-mutate(Treatment = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"), .before = "Indirect est.") %>%
-        kbl(format = "html") %>%
-        kable_styling(full_width = 0, html_font = "sans")
-save_kable(table2, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS4.html", self_contained = T)
-table2
+mutate(Treatment = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"), .before = "Indirect est.") 
+
+tableS4_a
 
 ```
+
+
+
+### Mediation analysis for function
+
+outcome = S.obs (with phyloseq$)
+exposure = treatment (stratified)
+mediator = Final_reads
+mediator-outcome confounders = sample_type
+exposure-mediator confounders = NA
+outcome model = Mixed effects linear regression 
+mediator model = Mixed effects linear regression
+
+**Mediation analysis was conducted stratified treatment.**
+
+**Table S4.** Mediation analysis results in estimated effect sizes and p-values of indirect effect, direct effect, and proportion of mediation. The analysis employed treatment as exposure, log10(final reads) as mediator, species richness as outcome, and sample type as mediator-exposure confounder. Analysis was stratified by each treatment and treated as binary variables. 
+
+```{r}
+
+detach_package(lmerTest)
+
+## all treatment groups
+
+sample_data_respiratory_path <- subset(phyloseq$phyloseq_path_rpk %>% sample_data %>% data.frame, sample_data$sample_type == "Sputum" | sample_data$sample_type == "BAL" | sample_data$sample_type == "Nasal")
+
+
+med.fit <- lmer(log10(Final_reads) ~ lypma +  sample_type + (1|subject_id),
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$lypma == 1))
+
+out.fit <- lmer(S.obs ~ lypma * log10(Final_reads) + sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$lypma == 1))
+set.seed(seed)
+med.out.lypma <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "lypma",
+                     mediator = "log10(Final_reads)",
+                     sims = 10000)
+
+out.sum <- summary(med.out.lypma)
+
+final.out.lypma <- data.frame(`Indirect est.`=out.sum$d.avg, 
+                          `Indirect p-value`=out.sum$d.avg.p,
+                          `Direct est.`=out.sum$z.avg, 
+                          `Direct p-value`=out.sum$z.avg.p, 
+                          `Total est.`=out.sum$tau.coef, 
+                          `Total p-value`=out.sum$tau.p,
+                          `Proportion mediation est.`=out.sum$n.avg, 
+                          `Proportion mediation p-value`=out.sum$n.avg.p,
+                          check.names = F) %>% 
+    mutate_all(~round(., 3))
+
+## benzonase
+
+
+med.fit <- lmer(log10(Final_reads) ~ benzonase + sample_type + (1|subject_id),
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$benzonase == 1))
+
+out.fit <- lmer(S.obs ~ benzonase * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$benzonase == 1))
+
+set.seed(seed)
+med.out.benzonase <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "benzonase",
+                     mediator = "log10(Final_reads)",
+                     sims = 10000)
+
+out.sum <- summary(med.out.benzonase)
+
+final.out.benzonase <- data.frame(`Indirect est.`=out.sum$d.avg, 
+                          `Indirect p-value`=out.sum$d.avg.p,
+                          `Direct est.`=out.sum$z.avg, 
+                          `Direct p-value`=out.sum$z.avg.p, 
+                          `Total est.`=out.sum$tau.coef, 
+                          `Total p-value`=out.sum$tau.p,
+                          `Proportion mediation est.`=out.sum$n.avg, 
+                          `Proportion mediation p-value`=out.sum$n.avg.p,
+                          check.names = F) %>% 
+    mutate_all(~round(., 3))
+
+## host zero
+
+
+med.fit <- lmer(log10(Final_reads) ~ host_zero +  sample_type + (1|subject_id),
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$host_zero == 1))
+
+out.fit <- lmer(S.obs ~ host_zero * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$host_zero == 1))
+set.seed(seed)
+med.out.hostzero <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "host_zero",
+                     mediator = "log10(Final_reads)",
+                     sims = 10000)
+
+out.sum <- summary(med.out.hostzero)
+
+final.out.host_zero <- data.frame(`Indirect est.`=out.sum$d.avg, 
+                          `Indirect p-value`=out.sum$d.avg.p,
+                          `Direct est.`=out.sum$z.avg, 
+                          `Direct p-value`=out.sum$z.avg.p, 
+                          `Total est.`=out.sum$tau.coef, 
+                          `Total p-value`=out.sum$tau.p,
+                          `Proportion mediation est.`=out.sum$n.avg, 
+                          `Proportion mediation p-value`=out.sum$n.avg.p,
+                          check.names = F) %>% 
+    mutate_all(~round(., 3))
+
+
+## molysis
+
+
+med.fit <- lmer(log10(Final_reads) ~ molysis +  sample_type + (1|subject_id),
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$molysis == 1))
+
+out.fit <- lmer(S.obs ~ molysis * log10(Final_reads) +  sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$molysis == 1))
+set.seed(seed)
+med.out.molysis <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "molysis",
+                     mediator = "log10(Final_reads)",
+                     sims = 10000)
+
+out.sum <- summary(med.out.molysis)
+
+final.out.molysis <- data.frame(`Indirect est.`=out.sum$d.avg, 
+                          `Indirect p-value`=out.sum$d.avg.p,
+                          `Direct est.`=out.sum$z.avg, 
+                          `Direct p-value`=out.sum$z.avg.p, 
+                          `Total est.`=out.sum$tau.coef, 
+                          `Total p-value`=out.sum$tau.p,
+                          `Proportion mediation est.`=out.sum$n.avg, 
+                          `Proportion mediation p-value`=out.sum$n.avg.p,
+                          check.names = F) %>% 
+    mutate_all(~round(., 3))
+
+## qiaamp
+
+
+med.fit <- lmer(log10(Final_reads) ~ qiaamp +  sample_type + (1|subject_id),
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$qiaamp == 1))
+
+out.fit <- lmer(S.obs ~ qiaamp * log10(Final_reads) + sample_type + (1|subject_id), 
+                data = subset(sample_data_respiratory_path, sample_data_respiratory_path$control == 1 | sample_data_respiratory_path$qiaamp == 1))
+
+set.seed(seed)
+med.out_qiaamp <- mediate(model.m = med.fit,
+                   model.y = out.fit,
+                     treat = "qiaamp",
+                     mediator = "log10(Final_reads)",
+                     sims = 10000)
+
+out.sum <- summary(med.out_qiaamp)
+
+final.out.qiaamp <- data.frame(`Indirect est.`=out.sum$d.avg, 
+                          `Indirect p-value`=out.sum$d.avg.p,
+                          `Direct est.`=out.sum$z.avg, 
+                          `Direct p-value`=out.sum$z.avg.p, 
+                          `Total est.`=out.sum$tau.coef, 
+                          `Total p-value`=out.sum$tau.p,
+                          `Proportion mediation est.`=out.sum$n.avg, 
+                          `Proportion mediation p-value`=out.sum$n.avg.p,
+                          check.names = F) %>% 
+    mutate_all(~round(., 3))
+
+```
+
+Raw mediation outputs - lyPMA
+
+```{r}
+med.out.lypma %>% summary
+```
+
+
+Raw mediation outputs - Benzonase
+
+```{r}
+med.out.benzonase %>% summary
+```
+
+
+Raw mediation outputs - host zero
+
+```{r}
+med.out.hostzero %>% summary
+```
+
+
+Raw mediation outputs - MolYsis
+
+```{r}
+med.out.molysis %>% summary
+```
+
+
+Raw mediation outputs - qiaamp
+
+```{r}
+med.out_qiaamp %>% summary
+```
+
+
+Tidy table of mediation analysis result (for functional richness)
+
+```{r}
+tableS4_b <- rbind(final.out.lypma,
+      final.out.benzonase,
+      final.out.host_zero, 
+      final.out.molysis,
+      final.out.qiaamp) %>%
+mutate(Treatment = c("lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"), .before = "Indirect est.") 
+
+tableS4_b
+
+```
+
+Mediation analsyis - combined table (Species and functional richness)
+
+```{r}
+
+
+tables4 <- rbind (data.frame(Outcome = "Species richness",
+           tableS4_a),
+       data.frame(Outcome = "Functional richness",
+           tableS4_b)
+       ) %>%
+        kbl(format = "html") %>%
+        kable_styling(full_width = 0, html_font = "sans")
+
+save_kable(tables4, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS4.html", self_contained = T)
+
+
+
+
+```
+
 
 
 # *x.	How were changes of individual taxa?*
@@ -5296,6 +5561,24 @@ filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 
 
 cat("NS highly changed taxa (q<0.1 & abs(.$coef) >1)")
 filt_fit_data_ns %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
+
+
+
+cat("NS taxa (q<0.1)")
+filt_fit_data_bal %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+
+cat("NS taxa (q<0.1)")
+filt_fit_data_ns %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+
+cat("Sputum taxa (q<0.1 & abs(.$coef) >1)")
+filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+
+
+cat("Sputum taxa (q<0.1 & abs(.$coef) >1)")
+filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
+
+
+
 
 ```
 
@@ -5430,9 +5713,9 @@ dev.off()
 ```
 
 
-### Fig. S9. Balloon plot
+### Fig. 4. Balloon plot
 
-**Fig. S9.** Mean relative abundance of top 20 significant taxa by q-value identified by differential abundance analysis using MaAsLin. Analyses were stratified by sample type. (A) bronchoalveolor lavage, (B) nasal swabs, and (C) sputum. Statistical significances were noted at the level of q-value < 0.1
+**Fig. 4.** Mean relative abundance of top 20 significant taxa by q-value identified by differential abundance analysis using MaAsLin. Analyses were stratified by sample type. (A) bronchoalveolor lavage, (B) nasal swabs, and (C) sputum. Statistical significances were noted at the level of q-value < 0.1
 
 
 
@@ -5645,7 +5928,7 @@ fig4 <- ggarrange(f5c %>% lemon::g_legend() %>% as_ggplot,
 
 fig4
 
-png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS9.png",   # The directory you want to save the file in
+png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 220, # The height of the plot in inches
     units = "mm",
@@ -5669,30 +5952,34 @@ dev.off()
 
 ```{r, warning=FALSE, message=FALSE}
 
-tableS7 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 2) %>% subset(., .$metadata != "sample_type" & .$metadata != "log10.Final_reads") %>% dplyr::select(c("feature", "metadata", "Estimate", "qval")) %>%
+filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 4) 
+
+tableS8 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 4) %>% dplyr::select(c("feature", "metadata", "Estimate", "qval")) %>%
         mutate(feature = paste("<i>", gsub("_", " ", feature), sep = "") %>%
                        gsub(" sp", "</i> sp.", .) %>% gsub(" group", "", .)) %>%
         mutate(feature = case_when(!grepl("</i>", feature) ~ paste(feature, "</i>", sep = ""),
                                    .default = feature))%>% 
         rename(Taxa = "feature",
-                     Treatment = "metadata",
+                     `Fixed effect` = "metadata",
                      "Change estimate of CLR transformed count" = "Estimate",
-                     `<i>q<i/>-value` = "qval") %>%
-        mutate(Treatment = case_when(Treatment == "lypma" ~ "lyPMA",
-                         Treatment == "host_zero" ~ "HostZERO",
-                         Treatment == "benzonase" ~ "Benzonase",
-                         Treatment == "molysis" ~ "MolYsis",
-                         Treatment == "qiaamp" ~ "QIAamp",
-                         .default = Treatment),
+                     `<i>q<i/>-value` = "qval") %>% 
+        mutate(`Fixed effect` = case_when(
+                         `Fixed effect` == "sample_type" ~ "Sample type",
+                         `Fixed effect` == "lypma" ~ "lyPMA",
+                         `Fixed effect` == "host_zero" ~ "HostZERO",
+                         `Fixed effect` == "benzonase" ~ "Benzonase",
+                         `Fixed effect` == "molysis" ~ "MolYsis",
+                         `Fixed effect` == "qiaamp" ~ "QIAamp",
+                         .default = `Fixed effect`),
                "Change estimate of CLR transformed count" = round(`Change estimate of CLR transformed count`, 3),
                `<i>q<i/>-value` = round(`<i>q<i/>-value`, 3)) %>%
         remove_rownames() %>% 
         kbl(format = "html", escape = FALSE) %>%
         kable_styling(full_width = 0, html_font = "sans")
 
-tableS7
+tableS8
 
-save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS8.html", self_contained = T)
+save_kable(tableS8, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS8.html", self_contained = T)
 
 ```
 
@@ -5707,11 +5994,11 @@ save_kable(tableS7, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_m
 
 ## Function diveristy {.tabset}
 
-### Fig. S10. Figure of alpha and beta 
+### Fig. S9. Figure of alpha and beta 
 
-**Fig. S10.** Alpha and beta diversity by sample type and treatment method of predicted functions. (A) Species richness with statistical test results (linear mixed effect model stratified by sample type), (B) Morisita-Horn dissimilarity within subject between treatment, representing squares for median value and bars for 95% confidence intervals.  
+**Fig. S9.** Alpha and beta diversity by sample type and treatment method of predicted functions. (A) Species richness with statistical test results (linear mixed effect model stratified by sample type), (B) Morisita-Horn dissimilarity within subject between treatment, representing squares for median value and bars for 95% confidence intervals.  
 
-```{r warning=FALSE, "Function richness"}
+```{r warning=FALSE, "Functional richness"}
 
 sample_data <- sample_data(phyloseq$phyloseq_path_rpk) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))
 phyloseq_rel_nz <- subset_samples(phyloseq$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c("BAL", "Nasal", "Sputum", "Mock"))
@@ -5734,7 +6021,7 @@ f4a <- ggplot(subset(sample_data(phyloseq$phyloseq_path_rpk) %>%
         stat_summary(aes(color = treatment),
                              fun.data="mean_sdl",  fun.args = list(mult=1), 
                              geom = "pointrange",  size = 0.4) +
-        ylab("Function richness") +
+        ylab("Functional richness") +
         xlab("Treatment group") +
         theme_classic (base_size = 12, base_family = "sans") + 
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using 
@@ -5942,11 +6229,11 @@ dev.off()
 ```
 
 
-### Function richness - LMER all samples
+### Functional richness - LMER all samples
 
 **Effect of some treatment was neutralized by interaction term. Therefore, the association was sample_type specific.**
 
-Effect size, standard error (SE) and p-value of a statistical test for function richness with an interaction term using linear mixed effect model (Species richness ~ sample type * treatment + (1|subject_id) ).
+Effect size, standard error (SE) and p-value of a statistical test for functional richness with an interaction term using linear mixed effect model (Species richness ~ sample type * treatment + (1|subject_id) ).
 
 
 raw result
@@ -5992,9 +6279,9 @@ lmer(S.obs ~ sample_type * treatment + (1|subject_id), data = sample_data %>% da
 
 ```
 
-### Table S9. Function richness - all & stratified
+### Table S9. Functional richness - all & stratified
 
-**Table S9.** Effect size, standard error (SE) and p-value of a statistical test for function richness with an interaction term using linear mixed effect model (function richness ~ treatment + (1|subject_id)). Stratified analyses were conducted for each sample type as an interaction term of sample type and treatment was significant (p-value < 0.001) at ANOVA of LMER(function richness ~ sample type + treatment + sample type * treatment + (1|subject_id)). The baseline of categorical variables is untreated group. Statistical significances were noted with **: p-value < 0.01 and ***: p-value < 0.001.
+**Table S9.** Effect size, standard error (SE) and p-value of a statistical test for functional richness with an interaction term using linear mixed effect model (functional richness ~ treatment + (1|subject_id)). Stratified analyses were conducted for each sample type as an interaction term of sample type and treatment was significant (p-value < 0.001) at ANOVA of LMER(functional richness ~ sample type + treatment + sample type * treatment + (1|subject_id)). The baseline of categorical variables is untreated group. Statistical significances were noted with **: p-value < 0.01 and ***: p-value < 0.001.
 
 Association was not adjusted with sequencing depth.
 
@@ -6200,16 +6487,16 @@ pfr_lmer_spt_kbl <-  pfr_lmer_spt %>%
                   "QIAamp"),]
 
 
-tables8 <- cbind(pfr_lmer_bal_kbl, pfr_lmer_ns_kbl, pfr_lmer_spt_kbl) %>%
+tables9 <- cbind(pfr_lmer_bal_kbl, pfr_lmer_ns_kbl, pfr_lmer_spt_kbl) %>%
     kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 
-tables8
+tables9
 
 
 
-save_kable(tables8, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS9.html", self_contained = T)
+save_kable(tables9, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS9.html", self_contained = T)
 
 
 ```
@@ -6368,13 +6655,13 @@ c <- horn_perm_spt_fun %>% data.frame(check.names = F) %>% rownames_to_column('r
         dplyr::select(c("R<sup>2</sup>", "<i>p</i>-value", " ")) 
 
 
-tables9 <- cbind(a, b, c) %>% 
+tables9_A <- cbind(a, b, c) %>% 
         kbl(format = "html", escape = 0) %>%
         add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 
 
-tables9
+tables9_A
 
 ```
 
@@ -6518,9 +6805,9 @@ f_maaslin_all
 ```
 
 
-### Fig. S11 MaAslin function - volcano plot 
+### Fig. S10 MaAslin function - volcano plot 
 
-Fig. S11. Volcano plot of differential abundance of function by each treatment with a model MaAsLin (copies per million of each function ~ sample type + lyPMA + Benzonase + HostZERO + MolYsis + QIAamp, random effect = subject id).
+Fig. S10. Volcano plot of differential abundance of function by each treatment with a model MaAsLin (copies per million of each function ~ sample type + lyPMA + Benzonase + HostZERO + MolYsis + QIAamp, random effect = subject id).
 
 ```{r}
 
@@ -6580,9 +6867,9 @@ figS9
 
 ```
 
-### Fig. S12 Function baloon plot 
+### Fig. S11 Function baloon plot 
 
-**Fig. S12.** Mean copies per million of top 20 significant function identified by differential abundance analysis using MaAsLin. Analyses were stratified by sample type. (A) Mock community, (B) bronchoalveolar lavage, (C) nasal swabs, and (D) sputum. Statistical significances were noted at the level of q-value < 0.1.
+**Fig. S11.** Mean copies per million of top 20 significant function identified by differential abundance analysis using MaAsLin. Analyses were stratified by sample type. (A) Mock community, (B) bronchoalveolar lavage, (C) nasal swabs, and (D) sputum. Statistical significances were noted at the level of q-value < 0.1.
  
 ```{r}
 
@@ -6857,9 +7144,9 @@ dev.off()
 ## Sensitivity analysis {.tabset}
 
 
-### Fig. S13. Rarefraction curve of species richenss
+### Fig. S12. Rarefraction curve of species richenss
 
-**Fig. S13.** Rarefaction curve for (A) species richness and (B) function richenss stratified by sample type, after removing possible contaminant-taxa identified by decontam and low prevalent taxa.
+**Fig. S12.** Rarefaction curve for (A) species richness and (B) function richenss stratified by sample type, after removing possible contaminant-taxa identified by decontam and low prevalent taxa.
 
 **As a sanity check, rarefaction curves were generated and seemed to be saturated**
 
@@ -6889,7 +7176,7 @@ ggplot(., aes(x = Final_reads/1000000, y = S.obs, col = treatment)) +
         geom_point() +
         theme_classic(base_family = "sans") +
         xlab("Final reads x 10<sup>6</sup>") +
-        ylab("Function richness") +
+        ylab("Functional richness") +
         labs(tag = "B") +
         theme(axis.title.x = element_markdown(), legend.position = "top") +
         guides(col = guide_legend(title = "Treatment", title.position = "top", nrow = 1)) +
@@ -6915,11 +7202,11 @@ dev.off()
 
 ```    
 
-### Fig. S14. Species richness of decontaminated output
+### Fig. S13. Species richness of decontaminated output
 
 As some of the species richness got way higher, this data cannot be used for alpha diversity indices.
 
-**Fig. S14.** Species richness of (A) raw data after prevalence and abundance filtering, (B) decontaminated species richness with decontam37, and (C) decontaminated data using tinyvamp.
+**Fig. S13.** Species richness of (A) raw data after prevalence and abundance filtering, (B) decontaminated species richness with decontam37, and (C) decontaminated data using tinyvamp.
 
 ```{r}
 
@@ -7374,7 +7661,7 @@ sr_lmer_spt_tv_kbl <- sr_lmer_spt_tv %>%
         
 
 
-tableA1 <- cbind(
+tableS11 <- cbind(
         cbind(sr_lmer_bal_decontam_kbl, sr_lmer_ns_decontam_kbl, sr_lmer_spt_decontam_kbl),
         cbind(sr_lmer_bal_tv_kbl, sr_lmer_ns_tv_kbl, sr_lmer_spt_tv_kbl) %>% remove_rownames()) %>%
     kbl(format = "html", escape = 0) %>%
@@ -7383,9 +7670,9 @@ tableA1 <- cbind(
         kable_styling(full_width = 0, html_font = "sans")
 
 
-tableA1
+tableS11
 
-save_kable(tableA1, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS11.html", self_contained = T)
+save_kable(tableS11, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS11.html", self_contained = T)
 
 
 
@@ -7517,7 +7804,7 @@ phyloseq$phyloseq_count %>%
 
 ## Table 2. Sequencing summary
 
-**Table 2**. Summary table of sequencing issues, significant effects linear mixed effect model (species richness ~ treatment + (1|subject)), changes in microbial beta diversity and significant effects of linear mixed effect model (function richness ~ treatment + (1|subject)). Linear mixed effect models were stratified by sample type and employed data after prevalence and abundance filtering.
+**Table 2**. Summary table of sequencing issues, significant effects linear mixed effect model (species richness ~ treatment + (1|subject)), changes in microbial beta diversity and significant effects of linear mixed effect model (functional richness ~ treatment + (1|subject)). Linear mixed effect models were stratified by sample type and employed data after prevalence and abundance filtering.
 
 **MolYsis for BAL, QIAamp for nasal swab, and HostZERO for sputum. **
 
@@ -7911,7 +8198,7 @@ summary_function_richness <-
                                .default = " ")) %>% 
         mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
          mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
-         mutate("Function richness" = 
+         mutate("Functional richness" = 
                        paste(round(Estimate, digits = 1) %>%
                                      format(nsmall = 1),
                              " ",
@@ -7925,7 +8212,7 @@ summary_function_richness <-
                   "HostZERO",
                   "MolYsis",
                   "QIAamp"),] %>%
-         dplyr::select(c("Function richness")),
+         dplyr::select(c("Functional richness")),
         
         pfr_lmer_ns %>%
         summary() %>%
@@ -7950,7 +8237,7 @@ summary_function_richness <-
                                .default = " ")) %>% 
         mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
          mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
-         mutate("Function richness" = 
+         mutate("Functional richness" = 
                        paste(round(Estimate, digits = 1) %>%
                                      format(nsmall = 1),
                              " ",
@@ -7964,7 +8251,7 @@ summary_function_richness <-
                   "HostZERO",
                   "MolYsis",
                   "QIAamp"),] %>%
-         dplyr::select(c("Function richness")) ,
+         dplyr::select(c("Functional richness")) ,
         
  pfr_lmer_spt %>%
         summary() %>%
@@ -7989,7 +8276,7 @@ summary_function_richness <-
                                .default = " ")) %>% 
         mutate(`Row.names` = gsub("treatment|sample_type", "", `Row.names`)) %>%
          mutate(`Row.names` = gsub(":", " * ", `Row.names`)) %>%
-         mutate("Function richness" = 
+         mutate("Functional richness" = 
                        paste(round(Estimate, digits = 1) %>%
                                      format(nsmall = 1),
                              " ",
@@ -8003,7 +8290,7 @@ summary_function_richness <-
                   "HostZERO",
                   "MolYsis",
                   "QIAamp"),] %>%
-         dplyr::select(c("Function richness")) 
+         dplyr::select(c("Functional richness")) 
 )
         
 

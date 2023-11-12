@@ -4,14 +4,16 @@ Host DNA depletion experiment
 
 
 This repository contains all the codes written to wrangle, process, test, and visualize data for a manuscript entitled 
+
 **Host DNA depletion on frozen human respiratory samples enables successful metagenomic sequencing for microbiome studies**
 
-Descriptions of each code were listed as follow:
+Descriptions of each code were listed as follows:
 
 1. Data wrangling
+   
 COD_20221129_MGK_host_1_wrangle.Rmd
 
-2. Exploratory analysis
+3. Exploratory analysis
 
 COD_20230427_MGK_host_3_analysis_figure_table.html
 

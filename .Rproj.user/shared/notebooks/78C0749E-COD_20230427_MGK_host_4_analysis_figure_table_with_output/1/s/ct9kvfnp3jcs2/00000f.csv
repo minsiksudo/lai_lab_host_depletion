@@ -1,0 +1,8 @@
+"0","# Loading files -----------------------------------------------------------"
+"0","#loading tidy phyloseq object"
+"0","phyloseq_unfiltered <- read_rds(""/Users/minsikkim/Dropbox (Personal)//Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds"")"
+"0",""
+"0","#sample data loading"
+"0","sample_data <- sample_data(phyloseq_unfiltered$phyloseq_count)"
+"0",""
+"0",""

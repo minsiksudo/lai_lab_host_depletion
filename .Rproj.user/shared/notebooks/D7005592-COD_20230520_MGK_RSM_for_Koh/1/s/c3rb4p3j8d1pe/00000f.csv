@@ -1,0 +1,8 @@
+"0",""
+"0","rsm_d8_comp %>% "
+"0","        summary %>% "
+"0","        .$lof %>%"
+"0","        data.frame() %>%"
+"0","        round(3) %>%"
+"0","        kbl(format = ""html"", caption = ""ANOVA for Day 8 composition"") %>%"
+"0","        kable_styling(full_width = 0, html_font = ""serif"")"

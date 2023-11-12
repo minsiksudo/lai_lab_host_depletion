@@ -1,0 +1,7 @@
+"0",""
+"0","png(file = ""/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4.png"",   # The directory you want to save the file in"
+"0","    width = 180, # The width of the plot in inches"
+"0","    height = 220, # The height of the plot in inches"
+"0","    units = ""mm"","
+"0","    res = 600"
+"0",") #fixing multiple page issue"

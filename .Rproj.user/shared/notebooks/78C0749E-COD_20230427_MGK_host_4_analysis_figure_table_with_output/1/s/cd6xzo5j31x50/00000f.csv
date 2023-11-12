@@ -1,0 +1,7 @@
+"0",""
+"0","sample_data <- sample_data(phyloseq$phyloseq_path_rpk) %>% data.frame(check.names = F) %>% subset(., !is.nan(.$simpson))"
+"0","phyloseq_rel_nz <- subset_samples(phyloseq$phyloseq_path_rpk, S.obs != 0 & sample_type %in% c(""BAL"", ""Nasal"", ""Sputum"", ""Mock""))"
+"0",""
+"0","sample_data(phyloseq_rel_nz)$log10.Final_reads <- log10(sample_data(phyloseq_rel_nz)$Final_reads)"
+"0","sample_data(phyloseq_rel_nz)$sampletype_treatment <- paste(sample_data(phyloseq_rel_nz)$sample_type, sample_data(phyloseq_rel_nz)$treatment, sep = "":"")"
+"0",""

@@ -1,0 +1,6 @@
+"0","# Loading files -----------------------------------------------------------
+#loading tidy phyloseq object
+phyloseq <- read_rds(""/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20221129_MGK_host_tidy_tax.rds"")
+"
+"2","Error in readRDS(con, refhook = refhook) : cannot open the connection
+"

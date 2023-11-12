@@ -1,0 +1,125 @@
+"0","#==============================================================================="
+"0","#BTC.LineZero.Header.1.1.0"
+"0","#==============================================================================="
+"0","#R Markdown environment setup and reporting utility."
+"0","#==============================================================================="
+"0","#RLB.Dependencies:"
+"0","#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml"
+"0","#==============================================================================="
+"0","#Input for document parameters, libraries, file paths, and options."
+"0","#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+="
+"0","knitr::opts_chunk$set(message=FALSE, warning = FALSE)"
+"0",""
+"0","path_working <- ""/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"""
+"0","path_library <- ""/Library/Frameworks/R.framework/Resources/library"""
+"0","str_libraries <- c(""readxl"", ""phyloseq"", ""tidyverse"", ""pacman"", ""yaml"", ""ggplot2"", ""microbiome"", ""decontam"", ""ggpubr"", ""lme4"", ""lmerTest"", ""Maaslin2"", ""qvalue"")"
+"0",""
+"0","        "
+"0","YAML_header <-"
+"0","'---"
+"0","title: ""Host-DNA DAanalysis with CLR and LME4"""
+"0","author: ""Minsik Kim"""
+"0","date: ""2032.09.25"""
+"0","output:"
+"0","    rmdformats::downcute:"
+"0","        downcute_theme: ""chaos"""
+"0","        code_folding: hide"
+"0","        fig_width: 6"
+"0","        fig_height: 6"
+"0","---'"
+"0","seed <- ""20230925"""
+"0",""
+"0","#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+"0","#Loads libraries, file paths, and other document options."
+"0","#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+"0","FUN.LineZero.Boot <- function() {"
+"0","    .libPaths(path_library)"
+"0",""
+"0","    require(pacman)"
+"0","    pacman::p_load(c(""knitr"", ""rmarkdown"", ""rmdformats"", ""yaml""))"
+"0",""
+"0","    knitr::opts_knit$set(root.dir = path_working)"
+"0",""
+"0","    str_libraries |> unique() |> sort() -> str_libraries"
+"0","    pacman::p_load(char = str_libraries)"
+"0",""
+"0","    set.seed(seed)"
+"0","}"
+"0","FUN.LineZero.Boot()"
+"0","#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+"0","#Outputs R environment report."
+"0","#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+"0","FUN.LineZero.Report <- function() {"
+"0","    cat(""Line Zero Environment:\n\n"")"
+"0","    paste(""R:"", pacman::p_version(), ""\n"") |> cat()"
+"0","    cat(""Libraries:\n"")"
+"0","    for (str_libraries in str_libraries) {"
+"0","        paste("
+"0","            ""    "", str_libraries, "": "", pacman::p_version(package = str_libraries),"
+"0","            ""\n"", sep = """""
+"0","        ) |> cat()"
+"0","    }"
+"0","    paste(""\nOperating System:"", pacman::p_detectOS(), ""\n"") |> cat()"
+"0","    paste(""    Library Path:"", path_library, ""\n"") |> cat()"
+"0","    paste(""    Working Path:"", path_working, ""\n"") |> cat()"
+"0","    paste(""Seed:"", seed, ""\n\n"") |> cat()"
+"0","    cat(""YAML Header:\n"")"
+"0","    cat(YAML_header)"
+"0","}"
+"0","FUN.LineZero.Report()"
+"1","Line Zero Environment:
+
+"
+"1","R: 4.3.1 
+"
+"1","Libraries:
+"
+"1","    readxl: 1.4.3
+"
+"1","    phyloseq: 1.41.1
+"
+"1","    tidyverse: 2.0.0
+"
+"1","    pacman: 0.5.1
+"
+"1","    yaml: 2.3.7
+"
+"1","    ggplot2: 3.4.4
+"
+"1","    microbiome: 1.22.0
+"
+"1","    decontam: 1.20.0
+"
+"1","    ggpubr: 0.6.0
+"
+"1","    lme4: 1.1.34
+"
+"1","    lmerTest: 3.1.3
+"
+"1","    Maaslin2: 1.14.1
+"
+"1","    qvalue: 2.32.0
+"
+"1","
+Operating System: Darwin 
+"
+"1","    Library Path: /Library/Frameworks/R.framework/Resources/library 
+"
+"1","    Working Path: /Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git 
+"
+"1","Seed: 20230925 
+
+"
+"1","YAML Header:
+"
+"1","---
+title: ""Host-DNA DAanalysis with CLR and LME4""
+author: ""Minsik Kim""
+date: ""2032.09.25""
+output:
+    rmdformats::downcute:
+        downcute_theme: ""chaos""
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---"

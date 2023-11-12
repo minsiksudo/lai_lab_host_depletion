@@ -1,0 +1,6 @@
+"0",""
+"0","lmer_taxa_withzeros %>% subset(., .$sample_type == ""BAL"")  %>% "
+"0","        ggplot(., aes(x = Estimate, y = -log10(q_val))) +"
+"0","        geom_point() +"
+"0","        ggtitle(""BAL LMER (with zeros) + CLR"") +"
+"0","        geom_hline(yintercept = 1, col = ""red"")"

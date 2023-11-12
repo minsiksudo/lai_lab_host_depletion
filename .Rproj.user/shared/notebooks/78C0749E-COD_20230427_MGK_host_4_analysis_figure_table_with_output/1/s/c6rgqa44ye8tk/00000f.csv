@@ -1,0 +1,6 @@
+"0",""
+"0","mock_otu <- subset_samples(phyloseq$phyloseq_count, sample_type ==""Mock"") %>% otu_table() %>% data.frame()"
+"0",""
+"0","mock_otu_nonzero <- mock_otu[rowSums(mock_otu[])>0,]"
+"0",""
+"0",""

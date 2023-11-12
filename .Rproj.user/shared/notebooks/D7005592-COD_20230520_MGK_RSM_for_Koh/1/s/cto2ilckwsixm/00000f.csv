@@ -1,0 +1,7 @@
+"0","rsm_d6_prod %>% "
+"0","        summary %>% "
+"0","        .$lof %>%"
+"0","        data.frame() %>%"
+"0","        round(3) %>%"
+"0","        kbl(format = ""html"", caption = ""ANOVA for Day 6 productivity"") %>%"
+"0","        kable_styling(full_width = 0, html_font = ""serif"")"

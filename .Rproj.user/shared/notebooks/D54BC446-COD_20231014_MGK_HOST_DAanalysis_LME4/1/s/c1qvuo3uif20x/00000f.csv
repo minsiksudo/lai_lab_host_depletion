@@ -1,0 +1,6 @@
+"0","# Loading data ------------------------------------------------------------"
+"0",""
+"0",""
+"0","phyloseq <- readRDS(""/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds"")"
+"0",""
+"0","# Adding alpha diversity indices ------------------------------------------"

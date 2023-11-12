@@ -1,0 +1,17 @@
+{
+    "sortOrder": [
+        {
+            "columnIndex": 4,
+            "ascending": false
+        },
+        {
+            "columnIndex": 2,
+            "ascending": true
+        },
+        {
+            "columnIndex": 3,
+            "ascending": false
+        }
+    ],
+    "path": "~/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
+}

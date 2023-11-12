@@ -1,0 +1,8 @@
+"0","tableS4_b <- rbind(final.out.lypma,"
+"0","      final.out.benzonase,"
+"0","      final.out.host_zero, "
+"0","      final.out.molysis,"
+"0","      final.out.qiaamp) %>%"
+"0","mutate(Treatment = c(""lyPMA"", ""Benzonase"", ""HostZERO"", ""MolYsis"", ""QIAamp""), .before = ""Indirect est."") "
+"0",""
+"0","tableS4_b"

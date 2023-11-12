@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<style>body{background-color:white;}</style>
+<script src="lib/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="lib/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="lib/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="lib/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="lib/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="lib/kePrint-0.0.1/kePrint.js"></script>
+<link href="lib/lightable-0.0.1/lightable.css" rel="stylesheet" />
+
+</head>
+<body>
+<table class="table" style="font-family: sans; width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Taxa </th>
+   <th style="text-align:left;"> Fixed effect </th>
+   <th style="text-align:right;"> Change estimate of CLR transformed count </th>
+   <th style="text-align:right;"> <i>q<i></i>-value </i>
+</th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> <i>Actinomyces graevenitzii</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 6.348 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Actinomyces odontolyticus</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.810 </td>
+   <td style="text-align:right;"> 0.023 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Actinomyces oris</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 6.431 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Actinomyces</i> sp. HMSC035G02 </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.653 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Actinomyces</i> sp. ICM47 </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.832 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Corynebacterium accolens</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 13.471 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Corynebacterium atypicum</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.963 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Rothia dentocariosa</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 7.048 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Rothia mucilaginosa</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 6.192 </td>
+   <td style="text-align:right;"> 0.010 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Cutibacterium acnes</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 12.358 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Cutibacterium granulosum</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 6.082 </td>
+   <td style="text-align:right;"> 0.005 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Prevotella oris</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -4.478 </td>
+   <td style="text-align:right;"> 0.032 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Gemella sanguinis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 6.933 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Staphylococcus epidermidis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 8.345 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Dolosigranulum pigrum</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 7.626 </td>
+   <td style="text-align:right;"> 0.030 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Granulicatella elegans</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.678 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Streptococcus australis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 5.144 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Streptococcus gordonii</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.994 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Streptococcus infantis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 6.457 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Streptococcus mitis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.856 </td>
+   <td style="text-align:right;"> 0.034 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Streptococcus parasanguinis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 7.562 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Streptococcus salivarius</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 7.307 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Streptococcus sanguinis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 5.021 </td>
+   <td style="text-align:right;"> 0.001 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Streptococcus</i> sp. F0442 </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.818 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Finegoldia magna</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -4.712 </td>
+   <td style="text-align:right;"> 0.018 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Cupriavidus</i> sp. </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -7.565 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Sutterella parvirubra</i> </td>
+   <td style="text-align:left;"> lyPMA </td>
+   <td style="text-align:right;"> 4.478 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Sutterella parvirubra</i> </td>
+   <td style="text-align:left;"> HostZERO </td>
+   <td style="text-align:right;"> 4.048 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Pseudomonas aeruginosa</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 7.500 </td>
+   <td style="text-align:right;"> 0.000 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Candida albicans</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -5.990 </td>
+   <td style="text-align:right;"> 0.013 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Candida dubliniensis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -6.395 </td>
+   <td style="text-align:right;"> 0.010 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Malassezia restricta</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> 4.803 </td>
+   <td style="text-align:right;"> 0.043 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Alloprevotella tannerae</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -5.883 </td>
+   <td style="text-align:right;"> 0.008 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Prevotella</i> sp. oral taxon 306 </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -4.575 </td>
+   <td style="text-align:right;"> 0.025 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Prevotella veroralis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -4.982 </td>
+   <td style="text-align:right;"> 0.017 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Lactobacillus fermentum</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -5.182 </td>
+   <td style="text-align:right;"> 0.029 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Staphylococcus haemolyticus</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -5.489 </td>
+   <td style="text-align:right;"> 0.028 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> <i>Candida orthopsilosis</i> </td>
+   <td style="text-align:left;"> Sample type </td>
+   <td style="text-align:right;"> -4.995 </td>
+   <td style="text-align:right;"> 0.026 </td>
+  </tr>
+</tbody>
+</table> <script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [["$","$"]]}})</script><script async src="https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

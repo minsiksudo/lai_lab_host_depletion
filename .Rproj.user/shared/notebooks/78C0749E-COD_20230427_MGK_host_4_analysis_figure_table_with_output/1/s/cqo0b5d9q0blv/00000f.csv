@@ -1,0 +1,7 @@
+"0",""
+"0","sample_data %>% "
+"0","        subset(., .$S.obs != 0) %>%"
+"0","        group_by(sample_type, treated) %>%"
+"0","        summarise(med = median(DNA_host_nondil + DNA_bac_nondil),"
+"0","                  lo = quantile(DNA_host_ng_uL + DNA_host_ng_uL, 0.25),"
+"0","                  high = quantile(DNA_host_nondil + DNA_bac_nondil, 0.75))"

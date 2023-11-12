@@ -1,0 +1,8 @@
+"0",""
+"0","#DA analysis - MaAslin"
+"0","#Running MaAslin for all sample without decontam"
+"0","#for taxa differentially abundant by host depletion method, look to see which ones overlap with potential contaminant taxa"
+"0",""
+"0","# Maaslin - # # y ~ log(final reads) + sample_type + treatment  -----------"
+"0",""
+"0","#all samples"

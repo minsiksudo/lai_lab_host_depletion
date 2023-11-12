@@ -358,7 +358,6 @@ for(i in 1:all) {
         #Here, as the taxa are already CLR transformed, I did not make model at log-scale.
         lme4_formula <- paste(names(taxa_data), "~", "sample_type + lypma + benzonase + host_zero + molysis + qiaamp + (1|subject_id)")
         
-        #BAL stratified analysis
         all_result <- lme4::lmer(formula = lme4_formula,
                                  data = lme_data) %>% 
                 lmerTest::as_lmerModLmerTest() %>% # p-value calculated by lmerTest

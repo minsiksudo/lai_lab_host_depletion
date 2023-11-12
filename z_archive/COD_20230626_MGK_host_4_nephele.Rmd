@@ -1,0 +1,723 @@
+---
+title: "COD_20230626_MGK_HOST_nephele"
+author: "Minsik Kim"
+date: "2023-06-26"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+        df_print: paged
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+## Loading packages
+
+```{r setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c(
+    "readxl", "phyloseq", "tidyverse", "pacman", "yaml"
+)
+
+path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "AMR", "kableExtra")
+        
+YAML_header <-
+'---
+title: "Host-DNA depletion: nephele pipeline"
+author: "Minsik Kim"
+date: "2032.06.26"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230310"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+    .libPaths(path_library)
+
+    require(pacman)
+    pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+
+    knitr::opts_knit$set(root.dir = path_working)
+
+    str_libraries |> unique() |> sort() -> str_libraries
+    pacman::p_load(char = str_libraries)
+
+    set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+    cat("Line Zero Environment:\n\n")
+    paste("R:", pacman::p_version(), "\n") |> cat()
+    cat("Libraries:\n")
+    for (str_libraries in str_libraries) {
+        paste(
+            "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+            "\n", sep = ""
+        ) |> cat()
+    }
+    paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+    paste("    Library Path:", path_library, "\n") |> cat()
+    paste("    Working Path:", path_working, "\n") |> cat()
+    paste("Seed:", seed, "\n\n") |> cat()
+    cat("YAML Header:\n")
+    cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+#Data cleaning description#
+
+1. Loading data 
+2. Merging all the output
+3. Tidifying metadata
+4. Save RDS file
+
+
+***1. Loading data***
+
+
+```{r warning=F, `Loading data`}
+#set working directory
+setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/2_Protocols/host_depletion/")
+
+#Loading meta data
+        #Loading the data
+        sample_data1 <- read_excel("SOP_20220324_MGK_Host_extraction.xlsx", sheet = 2)
+        #Cryopreserved data
+        sample_data2 <- read_excel("SOP_20220404_MGK_Host_qPCR_cryopreserve.xlsx", sheet = 2)
+        #BAL and sputum data
+        sample_data3 <- read_excel("SOP_20220407_MGK_sputum_BAL_host_depletion.xlsx", sheet = 5)
+        #Additional BAl and NS data
+        sample_data4 <- read_excel("SOP_20220606_MGK_BAL_NB_host_depletion.xlsx", sheet = 2)
+        #control_data
+        sample_data5 <- read_excel("SOP_20230112_MGK_host_depletion_controls.xlsx", sheet = 2) %>% subset(., .$sample_type != "nasal_swab")
+        
+#Laoding the qPCR data
+        #Loading data  - host
+        qPCR_data_host <- function(data){
+                data %>% data.frame() %>% mutate(Quantity.Mean = case_when(
+                        is.na(Quantity.Mean) ~ Quantity,
+                        TRUE ~ Quantity.Mean)) %>%
+                rename(extraction_id = "Sample", DNA_host_well = Quantity.Mean) %>% select(c("extraction_id", "DNA_host_well"))
+        }
+        host_simple1 <- read_excel("SOP_20220324_MGK_Host_extraction.xlsx", sheet = 6) %>% qPCR_data_host()
+        host_simple2 <- read_excel("SOP_20220404_MGK_Host_qPCR_cryopreserve.xlsx", sheet = 5) %>% qPCR_data_host()
+        host_simple3 <- read_excel("SOP_20220407_MGK_sputum_BAL_host_depletion.xlsx", sheet = 6) %>% qPCR_data_host()
+        host_simple4 <- read_excel("SOP_20220606_MGK_BAL_NB_host_depletion.xlsx", sheet = 5) %>% qPCR_data_host()
+        host_simple5 <- read_excel("SOP_20230112_MGK_host_depletion_controls.xlsx", sheet = 9) %>% qPCR_data_host()
+
+#Loading data  - Bac
+        qPCR_data_bac <- function(data){
+                data %>% data.frame() %>% mutate(Quantity.Mean = case_when(
+                        is.na(Quantity.Mean) ~ Quantity,
+                        TRUE ~ Quantity.Mean)) %>%
+                rename(extraction_id = "Sample", DNA_bac_well = Quantity.Mean) %>% select(c("extraction_id", "DNA_bac_well"))
+        }
+        bac_simple1 <- read_excel("SOP_20220324_MGK_Host_extraction.xlsx", sheet = 7) %>% qPCR_data_bac()
+        bac_simple2 <- read_excel("SOP_20220404_MGK_Host_qPCR_cryopreserve.xlsx", sheet = 6) %>% qPCR_data_bac()
+        bac_simple3 <- read_excel("SOP_20220407_MGK_sputum_BAL_host_depletion.xlsx", sheet = 7) %>% qPCR_data_bac()
+        bac_simple4 <- read_excel("SOP_20220606_MGK_BAL_NB_host_depletion.xlsx", sheet = 6) %>% qPCR_data_bac()
+        bac_simple5 <- read_excel("SOP_20230112_MGK_host_depletion_controls.xlsx", sheet = 8) %>% qPCR_data_bac()
+
+```
+
+
+***Merging all the output***
+
+
+```{r, warning=F, `Merging all the outputs`}
+        #Mergineg sampledata, host and bacterial qPCR data
+        sample_results <- list()
+        for (i in 1:5) {
+                  sample_data <- get(paste0("sample_data", i))
+                  host_simple <- get(paste0("host_simple", i))
+                  bac_simple <- get(paste0("bac_simple", i))
+                  
+                  sample_results[[i]] <- merge(sample_data, host_simple, by = "extraction_id") %>%
+                                          merge(., bac_simple, by = "extraction_id") %>%
+                                          subset(., !duplicated(extraction_id, fromLast = T)) %>%
+                          mutate(collection_date = as.character(collection_date), extraction_date = as.character(extraction_date))
+        }
+
+        #Changing type of data
+        sample_results[[3]]$aliquot <- as.character(sample_results[[3]]$aliquot)
+        
+        sample_result <- dplyr::bind_rows(sample_results[[1]], sample_results[[2]], sample_results[[3]], sample_results[[4]], sample_results[[5]])
+
+```
+
+***Tidyfying data***
+
+1. Re-calculattion of DNA concentration (adjusting dilution factors, standard concentration, etc.)
+2. creating new column (treatment)
+
+
+```{r warning=F, `Caculation of DNA, assigning treatment groups`}
+
+#Specification at Zymo was 20, 2, 0.2, ... per well. 2 uL of standards were used.
+#qPCR standards were 10, 0.1, 0.01 ng / uL etc. 
+#Prior calculatoin was based on zymo's specification. (20 ng / uL, which is wrong). This need to be modified
+
+sample_result<- sample_result %>% 
+        mutate(DNA_bac_ng_uL = DNA_host_well/2, 
+               DNA_host_ng_uL = DNA_bac_well/2,
+               DNA_bac_gene_copies_uL = DNA_bac_ng_uL * 198349.73, 
+               DNA_bac_16S_copies_uL = DNA_bac_gene_copies_uL * 7, 
+               DNA_host_nondil = DNA_host_ng_uL * 10, DNA_bac_nondil = DNA_bac_ng_uL * 10, #qPCR was conducted for 10-fold diluted samples.
+               host_proportion = (DNA_host_nondil/(DNA_host_nondil + DNA_bac_nondil)))
+
+#Method and sample_type labels modification
+sample_result <- sample_result %>% mutate(
+        treatment = case_when(
+                sample_result$control == 1 ~ "control",
+                sample_result$lypma == 1 ~ "lyPMA",
+                sample_result$benzonase == 1 ~ "benzonase",
+                sample_result$qiaamp == 1 ~ "qiaamp",
+                sample_result$host_zero == 1 ~ "host_zero",
+                sample_result$molysis == 1 ~ "molysis",
+                TRUE ~ "control"),
+        sample_type = case_when(
+                sample_type == "host_depletion_negative_control" ~ "neg_depletion",
+                sample_type == "host_depletion_positive_control" ~ "pos_depletion",
+                TRUE ~ sample_type)
+)
+
+
+```
+
+#Merging all the output#                
+
+1. Loading phyloseq object
+2. Adding more data to the phyloseq - sampledata
+3. Factorize predictors
+4. Saving RDS
+
+***1. Loading phyloseq object***
+
+
+```{r warning=FALSE, `Loading phyloseq object`}
+
+phyloseq1 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
+phyloseq2 <- microbiome::read_biom2phyloseq("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/metaphlan3/metaphlan3.allkingdoms.EstCount.biom")
+
+
+#Merging
+
+readstat1 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20221102_PQ00331_Host_Depletion/ReadStats.txt", sep = "\t") %>%
+        rename(baylor_other_id = SampleID)
+#control data
+readstat2 <- read.csv("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/LaiP_WGS3_PQ00430_Deliverables_Without_Spikeins/ReadStats.txt", sep = "\t") %>%
+        rename(baylor_id = SampleID)
+
+baylor_ids <- rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/3_Documentation/Communications/2022-06-22_baylor_shipping_host_depletion_lowinput/CMMR_MetadataCapture_20220622_LaiP-PQ00181_Host DNADepletion.xlsx", skip = 27),
+                    baylor_ids2 <- read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/Baylor_Processed/20230124_PQ00430_sicas2_nasal_host_depleted/CMMR_MetadataCapture_20230124_LaiP-PQ00430_SICAS2_NS.xlsx", skip = 27)
+)
+
+baylor_ids <- baylor_ids %>% select(c("UNIQUE alphanumeric ID", "Optional              secondary ID")) %>%
+        rename(baylor_id = "UNIQUE alphanumeric ID",
+               baylor_other_id = "Optional              secondary ID",) %>%
+        subset(., !is.na(.$baylor_other_id))
+
+#Merging
+readstat <- rbind(merge(readstat1, baylor_ids, by = "baylor_other_id"),
+                  merge(readstat2, baylor_ids, by = "baylor_id"))
+
+#Generating baylor ID
+sample_result <- sample_result %>%
+        mutate(baylor_other_id = case_when(
+            extraction_date == "20230119" ~ sample_id,
+            sample_type == "neg_extraction" ~ paste(extraction_date, "Neg", sep = "_"),
+            sample_type == "pos_extraction" ~ paste(extraction_date, "Pos", sep = "_"),
+            cryo_preserve == 1 ~ paste(sample_id, "cryo", sep = "_"),
+            sample_type == "BAL" ~ paste(sample_id, aliquot, treatment, sep = "_"),
+            grepl("NS_26|NS_37", sample_id) ~ paste(sample_id, aliquot, treatment, sep = "_"),
+            TRUE ~ paste(sample_id, treatment, sep = "_"))) %>%
+        mutate(baylor_other_id = gsub("20220610", "20220606", baylor_other_id)) # older extraction date used for baylor shipping log
+        
+
+#Merging Readstat + metadata
+sample_data1 <- merge(readstat, sample_result, by = "baylor_other_id") %>%
+        mutate(baylor_other_id2 = baylor_other_id) %>%
+        column_to_rownames(var = "baylor_other_id2") %>%
+        sample_data()
+sample_data2 <- merge(readstat, sample_result, by = "baylor_other_id") %>%
+        mutate(baylor_id2 = baylor_id) %>%
+        column_to_rownames(var = "baylor_id2") %>%
+        sample_data()
+phyloseq <- merge_phyloseq(merge_phyloseq(sample_data(sample_data1), phyloseq1), merge_phyloseq(sample_data(sample_data2), phyloseq2))
+
+
+
+```
+
+***2. Adding more data to the phyloseq - sampledata***
+
+```{r, warning=F, `Adding more data to phyloseq object`}
+#Adding host DNA proportion of sequencing results
+sample_data <- sample_data(phyloseq) %>% data.frame %>% 
+        mutate(sequencing_host_prop = Host_mapped/Reads_after_trim, .after = Metaphlan_mapped)
+
+#Adding Treatment status
+sample_data$treated <- rowSums(sample_data[, c("lypma", "benzonase", "molysis", "host_zero", "qiaamp")])
+sample_data$treated <- ifelse(is.na(sample_data$treated), 0, sample_data$treated)
+
+# Adding library prep results --------------------------------------------
+lib_fail_list <- c("NS_6_b_lyPMA", "NS_8_b_lyPMA", "NS_17_b_lyPMA", "NS_21_b_host_zero", "NS_22_b_host_zero", "NS_19_d_molysis", "NS_21_d_molysis", "NS_22_d_molysis", "NS_23_d_molysis", "NS_26_b_lyPMA", "BAL_073_b_host_zero", "BAL_073_c_molysis", "BAL_078_d_lyPMA")
+sample_data$lib_failed <- sample_data$baylor_other_id %in% lib_fail_list
+
+
+
+```
+
+
+***2. Adding more data to the phyloseq - picogreen***
+
+```{r, warning=F, `Adding more data to phyloseq object 2`}
+#Adding host DNA proportion of sequencing results
+picogreen <- rbind(read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 1, skip = 1),
+       read_excel("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_Baylor/4_Data/1_Raw/DNA_Concentration/DAR_20221221_MGK_picogreen_PQ00331.xlsx", sheet = 2, skip = 1)
+       ) %>% rename(baylor_other_id = "Sample", picogreen_ng_ul = "Concentration (ng/ul)") %>% select(c("baylor_other_id", 
+                                                                                                        "picogreen_ng_ul"))
+sample_data <- merge(sample_data %>% rownames_to_column("row.names"), picogreen, all = T, by = "baylor_other_id") %>% subset(.,!is.na(.$row.names)) %>% remove_rownames() %>% column_to_rownames("row.names")
+
+
+#constructing phylose object
+phyloseq <- merge_phyloseq(otu_table(phyloseq), tax_table(phyloseq), sample_data(sample_data))
+
+
+
+```
+
+
+
+
+***3. Factorize predictors***
+
+```{r, warning=F, `Factorize predictors`}
+# Factorize predicters ----------------------------------------------------
+# + creating lables for figures
+
+sample_data(phyloseq) <- sample_data(phyloseq) %>% data.frame(check.names = F) %>% 
+        mutate(treatment = tolower(treatment), 
+               treatment = factor(treatment,
+                                  levels = c("control", "lypma", "benzonase", "host_zero", "molysis", "qiaamp"),
+                                  labels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+               sample_type = factor(sample_type,
+                                    levels = c("neg_depletion", "neg_extraction", "pos_extraction", "pos_depletion", "BAL", "nasal_swab", "Sputum"), 
+                                    #labels = c("BAL", "Nasal", "Sputum", "Neg. ext.", "Pos. ext.", "Neg. dep.", "Pos. dep."))) %>%
+                                    labels = c( "Neg.", "Neg.", "Mock", "Mock", "BAL", "Nasal", "Sputum"))) %>%
+        #rename(subject_id = "original_sample") %>%
+        sample_data()
+
+
+sample_data(phyloseq)$subject_id <- ifelse(is.na(sample_data(phyloseq)$subject_id), as.character(sample_data(phyloseq)$sample_type), sample_data(phyloseq)$subject_id)
+sample_data(phyloseq)$subject_id <- ifelse(sample_data(phyloseq)$subject_id == "lab_member", as.character(sample_data(phyloseq)$original_sample),
+                                           sample_data(phyloseq)$subject_id)
+
+
+
+```
+
+Loading nephele pipeline results
+
+```{r warning=FALSE, `Loading functional phyloseq object`}
+                 
+#Loading phyloseq object
+
+
+setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/@minsik/project_sicas2/data_tidy/")
+
+pool1_otu <- read.csv("DAT_20230626_MGK_HOST_nephele_pool1.txt", sep = "\t", check.names = F) %>% .[, 8:length(.)] %>% column_to_rownames("Species")
+
+pool2_otu <- read.csv("DAT_20230626_MGK_HOST_nephele_pool2.txt", sep = "\t", check.names = F) %>% .[, 8:length(.)] %>% column_to_rownames("Species")
+
+pool3_otu <- read.csv("DAT_20230626_MGK_HOST_nephele_pool3.txt", sep = "\t", check.names = F) %>% .[, 8:length(.)] %>% column_to_rownames("Species")
+
+pool1_tax <- read.csv("DAT_20230626_MGK_HOST_nephele_pool1.txt", sep = "\t", check.names = F) %>% 
+        .[, 2:8] %>%
+        mutate(row.names = Species) %>%
+        column_to_rownames("row.names")
+        
+pool2_tax <- read.csv("DAT_20230626_MGK_HOST_nephele_pool2.txt", sep = "\t", check.names = F) %>% 
+        .[, 2:8] %>%
+        mutate(row.names = Species) %>%
+        column_to_rownames("row.names")
+        
+pool3_tax <- read.csv("DAT_20230626_MGK_HOST_nephele_pool3.txt", sep = "\t", check.names = F) %>% 
+        .[, 2:8] %>%
+        mutate(row.names = Species) %>%
+        column_to_rownames("row.names")
+```
+
+
+
+```{r}
+
+phyloseq_nephele_pool1 <- merge_phyloseq(sample_data(phyloseq),
+                                         tax_table(pool1_tax %>% as.matrix()),
+                                         otu_table(pool1_otu, taxa_are_rows = T))
+
+phyloseq_nephele_pool2 <- merge_phyloseq(sample_data(phyloseq),
+                                         tax_table(pool2_tax %>% as.matrix()),
+                                         otu_table(pool2_otu, taxa_are_rows = T))
+
+phyloseq_nephele_pool3 <- merge_phyloseq(sample_data(phyloseq),
+                                         tax_table(pool3_tax %>% as.matrix()),
+                                         otu_table(pool3_otu, taxa_are_rows = T))
+
+phyloseq_nephele <- merge_phyloseq(phyloseq_nephele_pool1, phyloseq_nephele_pool2, phyloseq_nephele_pool3)
+
+```
+
+**Table S4.** Summary table of potential contaminants with all sample types and stratified sample types in all methods (prevalence, frequence, and combined)
+
+```{r}
+
+
+tableS4 <- matrix(nrow=3,ncol=4) %>% data.frame() %>% rename(" " = X1, "BAL" = X2, "Nasal swab" = X3, "Sputum" = X4) %>%
+        rownames_to_column("x") %>% mutate(x = c("Prevalence method", "Frequency method", "Combined"),
+                                           " " = c(16, 3, 6),
+                                           `BAL` = c(14, 0, 1),
+                                           `Nasal swab` = c(12, 0, 0),
+                                           `Sputum` = c(12, 3, 2)
+                                           ) %>% column_to_rownames("x") %>%
+        kbl(format = "html") %>%
+        add_header_above(c(" " = 1, "Non-stratified" = 1, "Stratified" = 3)) %>% 
+        kable_styling(full_width = 0, html_font = "serif") 
+tableS4
+
+save_kable(tableS4, file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS4.html", self_contained = T)
+```
+# Alpha diversity calculation
+
+
+```{r}
+
+alpha_diversity <- function(data) {
+        otu_table <- otu_table(data) %>% .[colSums(.) !=0]
+        S.obs <- rowSums(t(otu_table) != 0)
+        sample_data <- sample_data(data)
+        data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
+        data_shannon <- vegan::diversity(t(otu_table), index = "shannon") # calculate Shannon index using vegan package
+        data_hill <- exp(data_shannon)                           # calculate Hills index
+        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, aggregate = TRUE) # dominance (Berger-Parker index), etc.
+        data_invsimpson <- vegan::diversity(t(otu_table), index = "invsimpson")                          # calculate Shannon index using vegan package
+        alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
+        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
+}
+
+#relative abundance phyloseq
+phyloseq_nephele_rel <- transform_sample_counts(phyloseq_nephele, function(x){x/sum(x)})
+
+sample_data(phyloseq_nephele) <- sample_data(alpha_diversity(phyloseq_nephele))
+sample_data(phyloseq_nephele_rel) <- sample_data(alpha_diversity(phyloseq_nephele_rel))
+phyloseq_nephele
+phyloseq
+```
+
+### Total reads by sample type (Figure S1)
+
+*ii.	How were changes in sequencing results?*
+        1.	Sequencing reads (Final reads or total reads) by sample type, descending order (Figure S1)
+        
+**Figure S1. **Sum of MetaPhlan mapped reads by sample type
+
+```{r warning=F, QC1.5.0}
+#how were the samples failed in library prep?
+sample_data(phyloseq_nephele) %>% data.frame %>% mutate(total_read = phyloseq_nephele %>% otu_table %>% colSums()) %>%
+        ggplot(aes(x = reorder(baylor_other_id, -total_read),
+                               y = log10(total_read + 1),
+                               col = sample_type)) +
+                geom_point() +
+                theme_classic(base_family = "serif") +
+                theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
+                ylab("log<sub>10</sub>(Sum of MetaPhlan mapped reads)") +
+                xlab("Samples") +
+        guides(col=guide_legend(title="Sample type")) +
+        scale_color_brewer(type = "qual", palette = 6)
+
+
+
+
+```
+# *v.	Were there any bias in Mock community? *
+
+        1.	Stacked bar plot of mock (Figure S2)
+                a.	A  - Species level information
+                b.	B - gram strain
+
+        2.	Statistical test results on gram stain changes (Table S5)
+                a.	Lmer(sqrt(gram-stain) ~ sample type + treatment + sample type * treatment + (1|subject_id) ) 
+
+## Positive controls {.tabset}
+
+### Positive controls (Fig. S5)
+
+                
+**Fig. S5**. Barplot of positive controls by treatment methods at (A) species level and (B) gram-stain information
+
+                
+```{r, warning=FALSE}
+
+#Manipulating phyloseq - only top 10 
+
+
+#Manipulating phyloseq - only top 10 
+
+my_plot_bar = function (physeq, x = "Sample", y = "Abundance", fill = NULL, title = NULL, 
+                        facet_grid = NULL) {
+    mdf = psmelt(physeq)
+    p = ggplot(mdf, aes_string(x = x, y = y, fill = fill))
+    p = p + geom_bar(stat = "identity")
+    p = p + theme(axis.text.x = element_text(angle = -90, hjust = 0))
+    if (!is.null(facet_grid)) {
+        p <- p + facet_grid(facet_grid)
+    }
+    if (!is.null(title)) {
+        p <- p + ggtitle(title)
+    }
+    return(p)
+}
+phyloseq_rel <- transform_sample_counts(phyloseq, function(x){x/sum(x)})
+phyloseq_control_rel <- subset_samples(phyloseq_rel, sample_type == "Mock" | sample_type == "Neg.") #adding data of controls
+
+tax_table(phyloseq_nephele_rel) %>%
+        cbind(species20 = "[Others]") %>%
+        {top20species <- head(taxa_sums(phyloseq_nephele_rel) %>%
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 20)
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[, 8] <- gsub("_", " ", .[, 8])
+   .[, 8] <- gsub("[]]|[[]", "",  .[, 8])
+   .[, 8] <- gsub(" sp", " sp.",  .[, 8])
+   .[, 8] <- gsub(" sp.", "</i> sp.",  .[, 8])
+   .[, 8] <- gsub(" group", "</i> group.",  .[, 8])
+   .[, 8] <- ifelse(grepl("Others",.[, 8]),
+                    "Others",
+                    ifelse(grepl("Unclassified",.[, 8]),
+                    "Unflassified sp.", 
+                    (ifelse(grepl("</i>",  .[, 8]),
+                           paste("<i>",  .[, 8], sep = ""),
+                           paste("<i>",  .[, 8], "</i>", sep = "")) %>%
+                            gsub("s__", "", .) %>%
+                            gsub("_", " ", .))))
+   phyloseq_temp <- phyloseq_nephele_rel
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   phyloseq_temp
+  } %>%
+        subset_samples(., sample_type == "Neg.") %>%
+        my_plot_bar(., fill="species20") + 
+        ylab("Relative abundancne") +
+        theme_classic(base_size = 11, base_family = "serif") +
+       # scale_fill_brewer(type = "qual", palette = 6) +
+        #scale_fill_manual("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99",
+         #                 '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99') +
+        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 20 species")) +
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+                    scales= "free_x", nrow=1) +
+        ggtitle("Negs communities annotated by kraken")
+
+
+ tax_table(phyloseq_control_rel) %>%
+        cbind(species20 = "[Others]") %>%
+        {top20species <- head(taxa_sums(phyloseq_control_rel) %>%
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 20)
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[, 8] <- gsub("s__", " ", .[, 8])
+   .[, 8] <- gsub("_", " ", .[, 8])
+   .[, 8] <- gsub("[]]|[[]", "",  .[, 8])
+   .[, 8] <- gsub(" sp", " sp.",  .[, 8])
+   .[, 8] <- gsub(" sp.", "</i> sp.",  .[, 8])
+   .[, 8] <- gsub(" group", "</i> group.",  .[, 8])
+   .[, 8] <- ifelse(grepl("Others",.[, 8]),
+                    "Others",
+                    ifelse(grepl("</i>",  .[, 8]),
+                           paste("<i>",  .[, 8], sep = ""),
+                           paste("<i>",  .[, 8], "</i>", sep = "")) %>%
+                            gsub("s__", "", .) %>%
+                            gsub("_", " ", .))
+   phyloseq_temp <- phyloseq_control_rel
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   phyloseq_temp
+  } %>%
+        subset_samples(., sample_type == "Neg.") %>%
+        my_plot_bar(., fill="species20") + 
+        ylab("Relative abundancne") +
+        theme_classic(base_size = 11, base_family = "serif") +
+       # scale_fill_brewer(type = "qual", palette = 6) +
+        #scale_fill_manual("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99",
+         #                 '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99') +
+        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 20 species")) +
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+                    scales= "free_x", nrow=1) +
+        ggtitle("Negs communities annotated by MetaPhlAn") +
+        labs(tag = "B")
+
+
+
+fig_A <- tax_table(phyloseq_nephele_rel) %>%
+        cbind(species20 = "[Others]") %>%
+        {top20species <- head(taxa_sums(phyloseq_nephele_rel) %>%
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 20)
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[, 8] <- gsub("_", " ", .[, 8])
+   .[, 8] <- gsub("[]]|[[]", "",  .[, 8])
+   .[, 8] <- gsub(" sp", " sp.",  .[, 8])
+   .[, 8] <- gsub(" sp.", "</i> sp.",  .[, 8])
+   .[, 8] <- gsub(" group", "</i> group.",  .[, 8])
+   .[, 8] <- ifelse(grepl("Others",.[, 8]),
+                    "Others",
+                    ifelse(grepl("Unclassified",.[, 8]),
+                    "Unflassified sp.", 
+                    (ifelse(grepl("</i>",  .[, 8]),
+                           paste("<i>",  .[, 8], sep = ""),
+                           paste("<i>",  .[, 8], "</i>", sep = "")) %>%
+                            gsub("s__", "", .) %>%
+                            gsub("_", " ", .))))
+   phyloseq_temp <- phyloseq_nephele_rel
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   phyloseq_temp
+  } %>%
+        subset_samples(., sample_type == "Mock") %>%
+        my_plot_bar(., fill="species20") + 
+        ylab("Relative abundancne") +
+        theme_classic(base_size = 11, base_family = "serif") +
+       # scale_fill_brewer(type = "qual", palette = 6) +
+        #scale_fill_manual("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99",
+         #                 '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99') +
+        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 20 species")) +
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+                    scales= "free_x", nrow=1) +
+        ggtitle("Mock communities annotated by kraken") +
+        labs(tag = "A")
+
+
+
+fig_B <- tax_table(phyloseq_control_rel) %>%
+        cbind(species20 = "[Others]") %>%
+        {top20species <- head(taxa_sums(phyloseq_control_rel) %>%
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 20)
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[, 8] <- gsub("s__", " ", .[, 8])
+   .[, 8] <- gsub("_", " ", .[, 8])
+   .[, 8] <- gsub("[]]|[[]", "",  .[, 8])
+   .[, 8] <- gsub(" sp", " sp.",  .[, 8])
+   .[, 8] <- gsub(" sp.", "</i> sp.",  .[, 8])
+   .[, 8] <- gsub(" group", "</i> group.",  .[, 8])
+   .[, 8] <- ifelse(grepl("Others",.[, 8]),
+                    "Others",
+                    ifelse(grepl("</i>",  .[, 8]),
+                           paste("<i>",  .[, 8], sep = ""),
+                           paste("<i>",  .[, 8], "</i>", sep = "")) %>%
+                            gsub("s__", "", .) %>%
+                            gsub("_", " ", .))
+   phyloseq_temp <- phyloseq_control_rel
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   phyloseq_temp
+  } %>%
+        subset_samples(., sample_type == "Mock") %>%
+        my_plot_bar(., fill="species20") + 
+        ylab("Relative abundancne") +
+        theme_classic(base_size = 11, base_family = "serif") +
+       # scale_fill_brewer(type = "qual", palette = 6) +
+        #scale_fill_manual("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99",
+         #                 '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99') +
+        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 20 species")) +
+        facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "Host zero", "Molysis", "QIAamp")),
+                    scales= "free_x", nrow=1) +
+        ggtitle("Mock communities annotated by MetaPhlAn") +
+        labs(tag = "B")
+
+
+
+png(file = "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/6_Results/host_depletion/nephele/FigureN1.png",   # The directory you want to save the file in
+    width = 450, # The width of the plot in inches
+    height = 200, # The height of the plot in inches
+    units = "mm",
+    res = 300
+) #fixing multiple page issue
+
+figure <- ggarrange(fig_A, fig_B, ncol= 1)
+figure
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+        
+
+```   
+```
+
+ 
+```{r warning=FALSE }
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+    str_libraries |>
+        pacman::p_citation() |>
+        print(bibtex = FALSE) |>
+        capture.output() %>%
+        .[-1:-3] %>% .[. != ""] |>
+        stringr::str_squish() |>
+        stringr::str_replace("_", "") |>
+        cat()
+    cat("\n")
+}
+#===============================================================================
+```

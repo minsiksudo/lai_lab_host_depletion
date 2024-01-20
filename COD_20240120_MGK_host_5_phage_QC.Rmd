@@ -1,0 +1,253 @@
+---
+title: "COD_20240120_HOST_5_phage_QC"
+author: "Minsik Kim"
+date: "2024-01-20"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+        df_print: paged
+editor_options: 
+  chunk_output_type: inline
+  markdown: 
+    wrap: 72
+---
+
+# Loading packages
+
+```{r warning=FALSE, message=FALSE, setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+path_working <- "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
+path_library <- "/Library/Frameworks/R.framework/Resources/library"
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car", "mediation", "lemon", "qvalue")
+        
+YAML_header <-
+'---
+title: "Host-DNA depletion analysis"
+author: "Minsik Kim"
+date: "2024.01.20"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230925"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+    .libPaths(path_library)
+
+    require(pacman)
+    pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+
+    knitr::opts_knit$set(root.dir = path_working)
+
+    str_libraries |> unique() |> sort() -> str_libraries
+    pacman::p_load(char = str_libraries)
+
+    set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+    cat("Line Zero Environment:\n\n")
+    paste("R:", pacman::p_version(), "\n") |> cat()
+    cat("Libraries:\n")
+    for (str_libraries in str_libraries) {
+        paste(
+            "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+            "\n", sep = ""
+        ) |> cat()
+    }
+    paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+    paste("    Library Path:", path_library, "\n") |> cat()
+    paste("    Working Path:", path_working, "\n") |> cat()
+    paste("Seed:", seed, "\n\n") |> cat()
+    cat("YAML Header:\n")
+    cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+
+
+## Analysis prep {.tabset}
+
+### Loading data
+
+```{r warning=F, message=FALSE, "Data loading"}
+
+
+phage_example <- read.csv("/Users/minsikkim/Dropbox (Personal)/@minsik/project_ucas/Marker-magu_20240112/P1039_markger_magu_output/p1039.combined_profile.tsv", sep = "\t")
+
+
+```
+
+# exploratory data analysis 
+
+```{r warning=F, message=FALSE, "Data wrangling"}
+phage_example$SGB
+phage_example$P_phase4_control
+phage_example$marker.magu_genes
+phage_example$S_high
+phage_example$lineage %>% str_split_fixed(pattern = "[|]", 8) %>% data.frame %>% .[,8] %>% duplicated
+phage_example$lineage %>% str_split_fixed(pattern = "[|]", 8) %>% data.frame %>% .[350,] 
+phage_example$lineage %>% str_split_fixed(pattern = "[|]", 8) %>% data.frame %>% .[100,] 
+phage_example <- read.csv("/Users/minsikkim/Dropbox (Personal)/@minsik/project_ucas/Marker-magu_20240112/P1039_markger_magu_output/p1039.combined_profile.tsv", sep = "\t")
+phage_example$SGB %>% str_split_fixed(pattern = "[|]", 2) %>% data.frame %>% .[100,] 
+grep("59748", phage_example$SGB)
+
+grep("59748", phage_example$SGB)
+```
+
+# Subsetting Viral tax_table & making viral phyloseq object
+
+
+
+```{r warning=F, message=FALSE, "Data wrangling"}
+
+phage_example_virus <- subset(phage_example, phage_example$lineage %>% grepl("virus", .))
+tax_table_virus <- phage_example_virus$lineage %>% str_split_fixed(pattern = "[|]", 7) %>% {
+        data_frame <- data.frame("Kingdom" = .[,1],
+                   "Phylum" = .[,2],
+                   "Class" = .[,3],
+                   "Order" = .[,4],
+                   "Family" = .[,5],
+                   "Genus" = .[,6],
+                   "Species" = .[,7])
+        data_frame
+}
+rownames(tax_table_virus) <- tax_table_virus$Species
+
+
+row.names(phage_example_virus) <- phage_example_virus$SGB
+
+data_virus <- phage_example_virus%>% select(names(phage_example_virus)[365:373])
+data_virus
+
+phage_example_virus <- phage_example_virus %>%
+        select(-c(names(phage_example_virus)[365:373])) %>% 
+        select(-c("SGB"))
+```
+
+# Generating sample_data
+
+the inference about sample type was given by my first impression from the sample_ids (as this is preliminary analysis)
+
+```{r}
+
+sample_data <- data.frame(sample_names = phage_example_virus %>% names) %>%
+        mutate(sample_type = ifelse(grepl("mock", sample_names), "Mock DNA",
+                                    ifelse(grepl("PosCtrl", sample_names), "Mock community",
+                                           ifelse(grepl("dust", sample_names), "Dust samples",
+                                                  ifelse(grepl("phase", sample_names), "Ambiguous Ctrls",
+                                           "Other samples"))))) %>%
+        column_to_rownames("sample_names")
+                                    
+phage_example_virus
+vphyloseq <- merge_phyloseq(sample_data = sample_data(sample_data),
+               otu_table = otu_table(phage_example_virus, taxa_are_rows = T),
+               tax_table = tax_table(tax_table_virus %>% as.matrix()))
+
+
+```
+
+
+# Calculating species richness
+
+```{r}
+
+data <- otu_table(vphyloseq) %>% data.frame
+S.obs <- (as.data.frame(otu_table(vphyloseq)) != 0) %>% colSums() %>% data.frame()
+
+#mergind daata - species richenss with sample_data
+sample_data(vphyloseq) <- {
+        data <- sample_data(vphyloseq)        
+        data$species_richness <- S.obs$.
+        sample_data(data)
+        data
+}
+
+
+
+sample_data(vphyloseq)
+
+```
+
+# plotting species richenss (viral)
+
+```{r}
+
+sample_names(vphyloseq)
+sample_data(vphyloseq) %>%
+        as.data.frame() %>%
+        ggplot(., aes(x = sample_type, y = species_richness, fill = sample_type)) +
+        geom_boxplot() +
+        theme_classic(base_size = 10) +
+        scale_fill_brewer(type = "qual", palette = 6) +
+        ylab("Viral species richness") +
+        #theme(axis.text.x = element_text(angle=20, ))
+        xlab("Sample type") 
+
+
+```
+
+```{r}
+
+
+summary_dataframe <- sample_data(vphyloseq) %>% data.frame %>% group_by(sample_type) %>% summarise(`Species richness` = paste(round(mean(species_richness), 2), "±", round(sd(species_richness), 2))) %>% data.frame()
+
+
+```
+
+# Bibliography
+
+```{r warning=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+    str_libraries |>
+        pacman::p_citation() |>
+        print(bibtex = FALSE) |>
+        capture.output() %>%
+        .[-1:-3] %>% .[. != ""] |>
+        stringr::str_squish() |>
+        stringr::str_replace("_", "") |>
+        cat()
+    cat("\n")
+}
+#===============================================================================
+```

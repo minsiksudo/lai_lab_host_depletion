@@ -365,109 +365,24 @@ sample_data(phyloseq_unfiltered) <- sample_data(alpha_diversity(phyloseq_unfilte
 
 # **3.1. Screening of treatment effect**
 
-# *i.	Did treatment change host % in qPCR results? *
+# Summary
 
-## qPCR and seqeuncing {.tabset}                
+## Summary table {.tabset}                
 
-### Fig. S1. qPCR figure
+### Summary table of species richness
 
-**Figure S1**. Host depletion effects measured by qPCR. (A) total DNA (16S bacterial DNA + human), (B) host DNA, (C) bacterial DNA, and (D) proportion of host DNA.
+**Table Sx**. 
 
 ```{r}
-#1A: Change in total DNA (qPCR)
 
-fS1a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_host_nondil + DNA_bac_nondil))) +
-        geom_jitter(aes(color = treatment, x = treatment), lwd = 0.2,
-                    alpha = 0.3, stroke = 0) +
-        stat_summary(aes(color = treatment, x = treatment),
-                             fun.data="mean_sdl",  fun.args = list(mult=1), 
-                             geom = "pointrange",  size = 0.4) +
-        theme_classic (base_size = 12, base_family = "sans")+ 
-        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Treatment")+
-        theme(axis.title.y = element_markdown(),
-              plot.tag = element_text(size = 15),
-              axis.text.x = element_blank()) +
-        facet_wrap(~sample_type, scale = "free_x") +
-        ylab("log<sub>10</sub>(qPCR total DNA)<br>(ng/μL)") +
-        labs(tag = "A") +
-        guides(fill = guide_legend(nrow = 1))
-
-
-
-#1B: Change in human DNA (qPCR)
-fS1b <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_host_nondil))) +
-        geom_jitter(aes(col = treatment, x = treatment), 
-                    lwd = 0.2, alpha = 0.3, stroke = 0) +
-        stat_summary(aes(color = treatment, x = treatment),
-                             fun.data="mean_sdl",  fun.args = list(mult=1), 
-                             geom = "pointrange",  size = 0.4) +
-        theme_classic (base_size = 12, base_family = "sans")+ 
-        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Treatment")+
-        theme(axis.title.y = element_markdown(),
-              plot.tag = element_text(size = 15),
-              axis.text.x = element_blank()) +
-        facet_wrap(~sample_type, scale = "free_x") +
-        ylab("log<sub>10</sub>(qPCR host DNA)<br>(ng/μL)") +
-        labs(tag = "B")
-
-#1C: Change in 16S DNA (qPCR)
-fS1c <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(DNA_bac_nondil))) +
-        geom_jitter(aes(col = treatment, x = treatment),
-                    lwd = 0.2, alpha = 0.3, stroke = 0) +
-        stat_summary(aes(color = treatment, x = treatment),
-                             fun.data="mean_sdl",  fun.args = list(mult=1), 
-                             geom = "pointrange",  size = 0.4) +
-        theme_classic (base_size = 12, base_family = "sans")+ 
-        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Treatment")+
-        theme(axis.title.y = element_markdown(),
-              plot.tag = element_text(size = 15),
-              axis.text.x = element_blank()) +
-        facet_wrap(~sample_type, scale = "free_x") +
-        ylab("log<sub>10</sub>(qPCR bacterial DNA)<br>(ng/μL)") +
-        labs(tag = "C")
+sample_data(phyloseq_unfiltered) %>% 
+        data.frame() %>%
+        group_by(sample_type, treatment) %>%
+        summarise(Mean_SObs = mean(S.obs),
+                  SD_SObs = sd(S.obs),
+                  N = n())
         
-#1D. Change in % host (qPCR)
-fS1d <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = host_proportion)) +
-        geom_jitter(aes(col = treatment, x = treatment),
-                    lwd = 0.2, alpha = 0.3, stroke = 0) +
-        stat_summary(aes(color = treatment, x = treatment),
-                             fun.data="mean_sdl",  fun.args = list(mult=1), 
-                             geom = "pointrange",  size = 0.4) +
-        theme_classic (base_size = 12, base_family = "sans")+ 
-        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        scale_x_discrete(name ="Treatment")+
-        theme(axis.title.y = element_markdown(),
-              plot.tag = element_text(size = 15),
-              axis.text.x = element_blank()) +
-        facet_wrap(~sample_type, scale = "free_x") +
-        ylab("Host DNA ratio") +
-        labs(tag = "D")
-
-
-#output for markdown
-figureS1 <- ggarrange(fS1a, fS1b, fS1c, fS1d, common.legend = T , align = "hv")
-
-figureS1 
-
-
-
-#png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS1.png",   # The directory you want to save the file in
-#    width = 180, # The width of the plot in inches
-#    height = 170, # The height of the plot in inches
-#    units = "mm",
-#    res = 600
-#) #fixing multiple page issue
-
-#figureS1
-# alpha diversity plots
-#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
-#          ncol = 1) # alpha diversity plots
-
-#dev.off()
-
+sample_data
 
 ```
 
@@ -1139,41 +1054,6 @@ red_flag_taxa <- data.frame(species = taxa_qc$species,
                                            0)) %>%
         mutate(red_flag_decontam = species %in% (contaminants$Taxa %>% unique()))
 
-subset(red_flag_taxa, red_flag_taxa$red_flag_prev == 1 & red_flag_taxa$red_flag_prev_abd == 0)
-
-
-#decontaminated phyloseq 
-phyloseq_decontam <- phyloseq
-phyloseq_decontam$phyloseq_count <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_prev_abd != 1 &
-                                                   !red_flag_taxa$red_flag_decontam)$species,
-                                    phyloseq$phyloseq_count)
-
-phyloseq_decontam$phyloseq_rel <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_prev_abd != 1 &
-                                                   !red_flag_taxa$red_flag_decontam)$species,
-                                    phyloseq$phyloseq_rel) %>%
-        transform_sample_counts(., function(x){x/sum(x)})
-        
-#phyloseq for analysis
-phyloseq$phyloseq_count <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_prev_abd != 1)$species,
-                                    phyloseq$phyloseq_count)
-phyloseq$phyloseq_rel <- prune_taxa(subset(red_flag_taxa,
-                                           red_flag_taxa$red_flag_prev_abd != 1)$species,
-                                    phyloseq$phyloseq_rel) %>%
-        transform_sample_counts(., function(x){x/sum(x)})
-
-
-phyloseq$phyloseq_path_rpk <- prune_taxa(subset(red_flag_function, red_flag_function$red_flag_prev_abd != 1)$function., phyloseq$phyloseq_path_rpk)
-
-#phyloseq$tree_phyloseq_count <- prune_taxa(subset(red_flag_taxa,
-                                           #red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
-                                    #phyloseq$tree_phyloseq_count)
-
-#phyloseq$tree_phyloseq_rel <- prune_taxa(subset(red_flag_taxa,
-                                           #red_flag_taxa$red_flag_prev_abd != 1 & !red_flag_taxa$red_flag_decontam_prev)$species,
-                                    #phyloseq$tree_phyloseq_rel)
 
 ```
 
@@ -1187,228 +1067,15 @@ red_flag_taxa
 
 ### {-}
 
-## Extras {.tabset}
-
-### Alpha diversity calculation
-
-```{r}
-
-#Calculation of alpha diversity indices for filtered samples
-
-alpha_diversity <- function(data) {
-        otu_table <- otu_table(data) %>% .[colSums(.) !=0]
-        S.obs <- rowSums(t(otu_table) != 0)
-        sample_data <- sample_data(data)
-        data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
-        data_shannon <- vegan::diversity(t(otu_table), index = "shannon") # calculate Shannon index using vegan package
-        data_hill <- exp(data_shannon)                           # calculate Hills index
-        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, aggregate = TRUE) # dominance (Berger-Parker index), etc.
-        data_invsimpson <- vegan::diversity(t(otu_table), index = "invsimpson")                          # calculate Shannon index using vegan package
-        alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
-        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
-}
-#sample_data(phyloseq$phyloseq_count) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
-sample_data(phyloseq$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq$phyloseq_count))
-sample_data(phyloseq$phyloseq_count) <-sample_data(alpha_diversity(phyloseq$phyloseq_count)) 
-sample_data(phyloseq$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq$phyloseq_path_rpk))  
-
-sample_data(phyloseq_tv) <- sample_data(alpha_diversity(phyloseq_tv))  
-
-sample_data(phyloseq_decontam$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq_decontam$phyloseq_count))  
-
-sample_data(phyloseq_decontam$phyloseq_count) <- sample_data(alpha_diversity(phyloseq_decontam$phyloseq_count))
-
-sample_data <- sample_data(phyloseq$phyloseq_count)
-
-```
-
-### Alpha diversity calculation data
-
-```{r}
-sample_data(phyloseq$phyloseq_rel) %>% 
-        data.frame() %>%
-        dplyr::select(c("S.obs", "data_shannon", "data_invsimpson")) 
-```
-
-
-### Table 1 (revised)
-
-**Revised Table 1 was constructed after prevalence & abundacne filtering**
-
-**Table 1.** Sequencing results stratified by sample type and host depletion treatment. Number of samples in each experimental group, human and bacterial DNA measured by qPCR, number of samples did not pass the library QC or no microbial mapped reads, QC/d read, % host mapped reads, final reads, species, and functional richness. Richness was calculated after employing prevalence and abundance filtration. Values depicted as N (%) or median (interquartile range). 
-
-```{r, warning=F, error=FALSE, results='asis', `QC2 Table - cnt.2`}
-
-sample_data(phyloseq$phyloseq_count)$sequencing_fail <- 
-        ifelse(phyloseq$phyloseq_count %>% 
-                       sample_data %>%
-                       .$S.obs == 0,
-               1,
-               0)
-
-sample_data(phyloseq$phyloseq_count) <- 
-        
-        merge(phyloseq$phyloseq_count %>% 
-                      sample_data %>%
-                      data.frame(check.names = F),
-              phyloseq$phyloseq_path_rpk %>% #extracting functional richness as dataframe
-                      sample_data %>%
-                      data.frame(check.names = F) %>% 
-                     dplyr::select(c("S.obs")) %>%
-                      rename(F.obs = "S.obs"),
-              by = 0
-        ) %>%
-                column_to_rownames("Row.names")
-
-table1 <- sample_data(phyloseq$phyloseq_count) %>% data.frame() %>% 
-        dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL")) %>% 
-        group_by (sample_type, treatment) %>%
-        summarise(`N` = n(),
-            #      `Total DNA <br>ng/µL` = paste(format(round(median(picogreen_ng_ul),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(picogreen_ng_ul, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(picogreen_ng_ul, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
-               `Human DNA <br>pg/µL` = paste(format(round(median(DNA_host_ng_uL*1000),1), nsmall = 1, big.mark = ","), " (", format(round(quantile(DNA_host_ng_uL*1000, 0.25),1), nsmall = 1, big.mark = ","), ", ", format(round(quantile(DNA_host_ng_uL*1000, 0.75),1), nsmall = 1, big.mark = ","), ")", sep = ""),
-               `Bacterial DNA <br>pg/µL` = paste(format(round(median(DNA_bac_ng_uL*1000),1), nsmall = 1, big.mark = ","), " (", format(round(quantile(DNA_bac_ng_uL*1000, 0.25),1), nsmall = 1, big.mark = ","), ", ", format(round(quantile(DNA_bac_ng_uL*1000, 0.75),1), nsmall = 1, big.mark = ","), ")", sep = ""),
-              `Sequencing fail<br>N (%)` = paste(sum(lib_failed + sequencing_fail), " (", sum(lib_failed +sequencing_fail) / n() * 100, " %)", sep = ""),
-              `QC'd reads<br>reads x 10<sup>6</sup>` = paste(format(round(median(Reads_after_trim/1000000),1), nsmall = 1, big.mark = ","), " (", format(round(quantile(Reads_after_trim/1000000, 0.25),1), nsmall = 1, big.mark = ","), ", ", format(round(quantile(Reads_after_trim/1000000, 0.75),1), nsmall = 1, big.mark = ","), ")", sep = ""),
-              `Host reads<br>%` = paste(format(round(median(sequencing_host_prop*100),1),
-                                                nsmall = 1, big.mark = ","),
-                                         " (",
-                                         format(round(quantile(sequencing_host_prop * 100,
-                                                               0.25),
-                                                      1),
-                                                nsmall = 1,
-                                                big.mark = ","), 
-                                         ", ", 
-                                         format(round(quantile(sequencing_host_prop * 100, 0.75),1), 
-                                                nsmall = 1, 
-                                                big.mark = ","), 
-                                         ")", 
-                                         sep = ""),
-             `Final reads<br>reads x 10<sup>6</sup>` = paste(format(round(median(Final_reads/1000000,
-                                                                                 na.rm = T),
-                                                                          1),
-                                                                    nsmall = 1, big.mark = ","),
-                                                             " (", 
-                                                             format(round(quantile(Final_reads/1000000,
-                                                                                            0.25,
-                                                                                            na.rm = T),
-                                                                                   1),
-                                                                             nsmall = 1,
-                                                                             big.mark = ","),
-                                                             ", ",
-                                                             format(round(quantile(Final_reads/1000000, 
-                                                                                   0.75, 
-                                                                                   na.rm = T),
-                                                                          1), 
-                                                                    nsmall = 1, 
-                                                                    big.mark = ","), 
-                                                             ")",
-                                                             sep = ""),
-             `Species<br>richness` = paste(median(S.obs, na.rm = T),
-                                                             " (", 
-                                                             quantile(S.obs, 0.25, na.rm = T),
-                                                             ", ",
-                                                             quantile(S.obs, 0.75, na.rm = T),
-                                                             ")",
-                                                             sep = ""),
-            `Function<br>richness` = paste(median(F.obs, na.rm = T),
-                                                             " (", 
-                                                             quantile(F.obs, 0.25, na.rm = T),
-                                                             ", ",
-                                                             quantile(F.obs, 0.75, na.rm = T),
-                                                             ")",
-                                                             sep = "")
-              
-            ) %>% 
-        data.frame(check.names = F) %>% 
-        arrange(sample_type, treatment) %>%
-        rename(`Sample` = sample_type, Treatment = treatment) %>%
-        mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "sans")
-
-table1 
-
-
-save_kable(table1, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table1.html", self_contained = T)
-
-
-```
-
-
-
-```{r}
-
-mock_otu <- subset_samples(phyloseq$phyloseq_count, sample_type =="Mock") %>% otu_table() %>% data.frame()
-
-mock_otu_nonzero <- mock_otu[rowSums(mock_otu[])>0,]
-
-
-```
-
-### {-}
-
-## **+ α** *Reproducing Amy's decontamination*
-
-This code takes a wile to run + 1800 lines of codes, therefore not included in this manuscript. (will be submitted separately).
-
-
-```{r, message=FALSE, warning=FALSE}
-
-```
-
-## Calculations used for main text
-
-## Figure 1 numbers {.tabset}
-
-**These tables were generated to note average med(IQR) of qPCR results**
-
-### Figure 1 numbers (Host DNA) - treated vs untreated
-
-This is calculations used for writing values of Figure 1 in the main text (as figure does not show exact value)
-
-```{r}
-
-sample_data %>% 
-        subset(., .$S.obs != 0) %>%
-        group_by(sample_type, treated) %>%
-        summarise(med = median(DNA_host_nondil + DNA_bac_nondil),
-                  lo = quantile(DNA_host_ng_uL + DNA_host_ng_uL, 0.25),
-                  high = quantile(DNA_host_nondil + DNA_bac_nondil, 0.75))
-
-sample_data %>% subset(., .$S.obs != 0) %>%
-        group_by(sample_type, treated) %>% summarise(med = median(DNA_host_ng_uL), lo = quantile(DNA_host_ng_uL, 0.25), high = quantile(DNA_host_ng_uL, 0.75))
-
-```
-
-### Figure 1 numbers (Host prooportion) - treated vs untreated
-
-
-```{r}
-sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% summarise(med = median(host_proportion), lo = quantile(host_proportion, 0.25), high = quantile(host_proportion, 0.75))
-```
-
-
-### Figure 1 numbers (bacterial DNA) - treated vs untreated
-
-```{r}
-sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% summarise(med = median(DNA_bac_ng_uL), lo = quantile(DNA_bac_ng_uL, 0.25), high = quantile(DNA_bac_ng_uL, 0.75))
-
-```
-
-### {-}
-
 # **3.3. Effects of treatments on taxonomic composition**
-
-
-
 
 
 # *Did taxonomic composition change? 
 
-## Fig. 2 Overview of sequencing results
-
-- PSL comments: I would move this to the supplement and replace with a figure that demonstrates the relative abundance of the 10 most abundant species (stratified by sample type) and 10 most abundant KEGG functions. The whole point is to highlight why you would want to do metagenomics rather than amplicon sequencing. Consider using the following qualitative color palette from colorbrewer: 
+## Fig. X Overview of sequencing results
 
 
-**Fig. 2. ** Relative abundances at species level by sample type after employing prevalence and abundance filtering and top 10 species in each sample type by mean abundance. (A) BAL, (B) nasal swabs, (C) sputum, and (D) mock community. Empty space indicates samples showed no microbial reads, i.e., sequencing failed samples.
+**Fig. SX. ** Relative abundances at SGB level by sample type after employing prevalence and abundance filtering and Top 10 phage in each sample type by mean abundance. (A) BAL, (B) nasal swabs, (C) sputum, and (D) mock community. Empty space indicates samples showed no microbial reads, i.e., sequencing failed samples.
 
 
 ```{r, warning=FALSE, message=FALSE}
@@ -1429,33 +1096,17 @@ my_plot_bar = function (physeq, x = "Sample", y = "Abundance", fill = NULL, titl
     return(p)
 }
 
-a <- tax_table(subset_samples(phyloseq$phyloseq_rel,
+a <- tax_table(subset_samples(phyloseq_unfiltered_rel,
                               sample_type == "Mock")) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Mock") %>% 
-           subset_samples(., S.obs != 0)) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "Mock")) %>% 
                                 data.frame %>%
                                 arrange(-.) %>%
                                 row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Mock") %>% 
-           subset_samples(., S.obs != 0)
+        .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+        phyloseq_temp <- subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "Mock") 
    tax_table(phyloseq_temp) <- tax_table(.) 
    phyloseq_temp
   } %>%
@@ -1467,7 +1118,7 @@ a <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               axis.text.x = element_text(color = "white")) +
-        guides(fill=guide_legend(title="Top 10 species")) +
+        guides(fill=guide_legend(title="Top 10 phage")) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
         facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         labs(tag = "A")
@@ -1476,45 +1127,17 @@ a <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         
 
 
-b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Neg.") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-        ) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Neg.") %>%
-                                      subset_samples(.,
-                                                     baylor_other_id != "20220606_Neg") %>%
-                                      transform_sample_counts(.,
-                                                              function(x){ifelse(is.na(x),
-                                                                                 0, 
-                                                                                 x)})
-                              ) %>%
+b <- tax_table(subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "Neg.")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(phyloseq_unfiltered,
+                              sample_type == "Neg.")) %>% 
                                 data.frame %>%
                                 arrange(-.) %>%
                                 row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Neg.") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
+        .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+        phyloseq_temp <- subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "Neg.") 
    tax_table(phyloseq_temp) <- tax_table(.) 
    phyloseq_temp
   } %>% 
@@ -1526,49 +1149,28 @@ b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               axis.text.x = element_text(color = "white")) +
-        guides(fill=guide_legend(title="Top 10 species")) +
+        guides(fill=guide_legend(title="Top 10 phage")) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         facet_wrap ( ~ treatment,
                     scales= "free_x", nrow=1) +
         ggtitle("E    Negative control")
 
-c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "BAL") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-        ) %>%
+c <- tax_table(subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "BAL")) %>%
         cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "BAL") %>%
-                                      transform_sample_counts(.,
-                                                              function(x){ifelse(is.na(x),
-                                                                                 0, 
-                                                                                 x)})
-                              ) %>%
+        {top20species <- head(taxa_sums(subset_samples(phyloseq_unfiltered,
+                              sample_type == "BAL")) %>% 
                                 data.frame %>%
                                 arrange(-.) %>%
                                 row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "BAL") %>%
-           transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
+        .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+        phyloseq_temp <- subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "BAL")
    tax_table(phyloseq_temp) <- tax_table(.) 
    sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
-           factor(labels = c("A", "B", "C", "D", "E"))
+           factor(labels = c("A", "B", "C", "D", "E")) %>%
+           as.character()
    phyloseq_temp
   } %>% 
         my_plot_bar(., x = "subject_id", fill="species20") + 
@@ -1578,7 +1180,7 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
-        guides(fill=guide_legend(title="Top 10 species")) +
+        guides(fill=guide_legend(title="Top 10 phage")) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         facet_wrap ( ~ treatment,
@@ -1586,34 +1188,17 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         ggtitle("A    BAL")
 
 
-d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Nasal") %>% 
-           subset_samples(., S.obs != 0)) %>%
+d <- tax_table(subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "Nasal")) %>%
         cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Nasal") %>% 
-           subset_samples(., S.obs != 0)) %>%
+        {top20species <- head(taxa_sums(subset_samples(phyloseq_unfiltered,
+                              sample_type == "Nasal")) %>% 
                                 data.frame %>%
                                 arrange(-.) %>%
                                 row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Nasal") %>% 
-           subset_samples(., S.obs != 0)
+        .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+        phyloseq_temp <- subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "Nasal")
    tax_table(phyloseq_temp) <- tax_table(.) 
    sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
            factor(labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")) %>%
@@ -1627,40 +1212,23 @@ d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
-        guides(fill=guide_legend(title="Top 10 species")) +
+        guides(fill=guide_legend(title="Top 10 phage")) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
 #        scale_x_discrete(drop=) +
         facet_wrap(~ treatment,  nrow = 1, drop = T, scales = "free_x") +
         ggtitle("B    Nasal swabs")
 
-e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Sputum") %>% 
-           subset_samples(., S.obs != 0)) %>%
+e <- tax_table(subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "Sputum")) %>%
         cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Sputum") %>% 
-           subset_samples(., S.obs != 0)) %>%
+        {top20species <- head(taxa_sums(subset_samples(phyloseq_unfiltered,
+                              sample_type == "Sputum")) %>% 
                                 data.frame %>%
                                 arrange(-.) %>%
                                 row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Sputum") %>% 
-           subset_samples(., S.obs != 0)
+        .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+        phyloseq_temp <- subset_samples(phyloseq_unfiltered_rel,
+                              sample_type == "Sputum")
    tax_table(phyloseq_temp) <- tax_table(.) 
    sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
            factor(labels = c("A", "B", "C", "D", "E"))
@@ -1673,7 +1241,7 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
-        guides(fill=guide_legend(title="Top 10 species")) +
+        guides(fill=guide_legend(title="Top 10 phage")) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
         facet_wrap(~ treatment, scales= "free_x", nrow = 1) +
         ggtitle("C    Sputum")
@@ -1702,12 +1270,12 @@ annotate_figure(fig2,
 
           
 
-png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2.png",   # The directory you want to save the file in
-    width = 180, # The width of the plot in inches
-    height = 160, # The height of the plot in inches
-    units = "mm",
-    res = 600
-) #fixing multiple page issue
+#png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2.png",   # The directory you want to save the file in
+#    width = 180, # The width of the plot in inches
+#    height = 160, # The height of the plot in inches
+#    units = "mm",
+#    res = 600
+#) #fixing multiple page issue
 
 annotate_figure(fig2,
                 left = text_grob("Relative abundance",
@@ -1728,11 +1296,6 @@ dev.off()
 
 ```
 
-** 3 Candidat and 2 Staphylococcus --> can be used for a reason why we should be doing shotgun sequencing (species level)
-
-Dolosgranulum - repored present in nose
-Malassezia - fungi
-[others] --> [Other]
 
 ### Fig. S5. Changes of Mock microbial community
 
@@ -1747,920 +1310,6 @@ barplot_mock_microbe
 
 ```
 
-Why **Cryptococcus** is missing? Double-check with a plot of top 20 taxa
-
-```{r}
-
-tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Mock")) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Mock") %>% 
-           subset_samples(., S.obs != 0)) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 20)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Mock") %>% 
-           subset_samples(., S.obs != 0)
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., fill="species20") + 
-        xlab("Subject") +
-        ylab("") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(size = 6),
-              legend.key.size = unit(3, "mm"),
-              legend.title = element_text(size = 6),
-              axis.text.x = element_text(color = "white")) +
-        guides(fill=guide_legend(title="Top 20 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 9, name = "Set3"),
-                                     RColorBrewer::brewer.pal(n = 12, name = "Paired")
-                                     )) +
-        facet_wrap (~ treatment, scales = "free_x", nrow = 1)
-        #ggtitle("D    Mock")
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-        
-
-```
-There were **Cryptococcus neoformans**, however, it seems like they were assigned as **Cryptococcus gattii**.
-
-
-
-### Predicted function barplot
-
-**This figure is not included in the main text as it is having too taxonomic groups**
-
-```{r, warning=FALSE, message=FALSE}
-
-
-phyloseq$phyloseq_path_cpm <- transform_sample_counts(phyloseq$phyloseq_path_rpk, function(x){x/sum(x)*1000000})
-
-a <- tax_table(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Mock") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-        ) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Mock") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "pathway"])
-   .[, 3] <- gsub("s__", " ", .[, 3])
-   .[, 3] <- gsub("_", " ", .[, 3])
-   .[, 3] <- gsub("[]]|[[]", "",  .[, 3])
-   .[, 3] <- gsub(" sp", " sp.",  .[, 3])
-   .[, 3] <- gsub(" sp.", "</i> sp.",  .[, 3])
-   .[, 3] <- gsub(" group", "</i> group.",  .[, 3])
-   .[, 3] <- ifelse(grepl("Other",.[, 3]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 3]),
-                           paste("<i>",  .[, 3], sep = ""),
-                           paste("<i>",  .[, 3], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Mock") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., fill="species20") + 
-        ylab("Relative abundancne") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(), 
-              axis.text.x = element_text(size = 0)) +
-        guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        facet_wrap (~ treatment, scales= "free_x", nrow = 1) +
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-        labs(tag="D") + 
-        ggtitle("Mock")
-
-
-
-b <- tax_table(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Neg.") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-        ) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Neg.") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "pathway"])
-   .[, 3] <- gsub("s__", " ", .[, 3])
-   .[, 3] <- gsub("_", " ", .[, 3])
-   .[, 3] <- gsub("[]]|[[]", "",  .[, 3])
-   .[, 3] <- gsub(" sp", " sp.",  .[, 3])
-   .[, 3] <- gsub(" sp.", "</i> sp.",  .[, 3])
-   .[, 3] <- gsub(" group", "</i> group.",  .[, 3])
-   .[, 3] <- ifelse(grepl("Other",.[, 3]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 3]),
-                           paste("<i>",  .[, 3], sep = ""),
-                           paste("<i>",  .[, 3], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Neg.") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., fill="species20") + 
-        ylab("Relative abundancne") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(), 
-              axis.text.x = element_text(size = 0)) +
-        guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        facet_wrap (~ treatment, scales= "free_x", nrow = 1) +
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-        labs(tag="E") + 
-        ggtitle("Negative controls")
-
-
-
-c <- tax_table(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "BAL") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "BAL") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "pathway"])
-   .[, 3] <- gsub("s__", " ", .[, 3])
-   .[, 3] <- gsub("_", " ", .[, 3])
-   .[, 3] <- gsub("[]]|[[]", "",  .[, 3])
-   .[, 3] <- gsub(" sp", " sp.",  .[, 3])
-   .[, 3] <- gsub(" sp.", "</i> sp.",  .[, 3])
-   .[, 3] <- gsub(" group", "</i> group.",  .[, 3])
-   .[, 3] <- ifelse(grepl("Other",.[, 3]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 3]),
-                           paste("<i>",  .[, 3], sep = ""),
-                           paste("<i>",  .[, 3], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "BAL") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., fill="species20") + 
-        ylab("Relative abundancne") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
-        guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        facet_wrap (~ treatment, scales= "free_x", nrow = 1) +
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-        labs(tag="A") + 
-        ggtitle("BAL")
-
-
-
-d <- tax_table(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Nasal") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-        ) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Nasal") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "pathway"])
-   .[, 3] <- gsub("s__", " ", .[, 3])
-   .[, 3] <- gsub("_", " ", .[, 3])
-   .[, 3] <- gsub("[]]|[[]", "",  .[, 3])
-   .[, 3] <- gsub(" sp", " sp.",  .[, 3])
-   .[, 3] <- gsub(" sp.", "</i> sp.",  .[, 3])
-   .[, 3] <- gsub(" group", "</i> group.",  .[, 3])
-   .[, 3] <- ifelse(grepl("Other",.[, 3]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 3]),
-                           paste("<i>",  .[, 3], sep = ""),
-                           paste("<i>",  .[, 3], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Nasal") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., fill="species20") + 
-        ylab("Relative abundancne") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
-        guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        facet_wrap (~ treatment, scales= "free_x", nrow = 1) +
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-        labs(tag="B") + 
-        ggtitle("Nasal swabs")
-
-
-
-e <- tax_table(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Sputum") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Sputum") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "pathway"])
-   .[, 3] <- gsub("s__", " ", .[, 3])
-   .[, 3] <- gsub("_", " ", .[, 3])
-   .[, 3] <- gsub("[]]|[[]", "",  .[, 3])
-   .[, 3] <- gsub(" sp", " sp.",  .[, 3])
-   .[, 3] <- gsub(" sp.", "</i> sp.",  .[, 3])
-   .[, 3] <- gsub(" group", "</i> group.",  .[, 3])
-   .[, 3] <- ifelse(grepl("Other",.[, 3]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 3]),
-                           paste("<i>",  .[, 3], sep = ""),
-                           paste("<i>",  .[, 3], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_path_cpm,
-                              sample_type == "Neg.") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., fill="species20") + 
-        ylab("Relative abundancne") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(), axis.text.x = element_blank()) +
-        guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        facet_wrap (~ treatment, scales= "free_x", nrow = 1) +
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-        labs(tag="C") + 
-        ggtitle("Sputum")
-
-
-a
-b
-c
-d
-e
-
-
-```
-
-
-
-# *v.	Were there any bias in Mock community? *
-
-
-## Gram-stain analysis {.tabset}
-
-### Fig. S6. Bar plot of gram-stain
-
-**Fig. S6.** Bar plot annotated with gram-stain information of (A) BAL, (B) nasal swabs, (C) sputum, and (D) mock communities after each treatment. 
-  
-
-                
-```{r, warning=FALSE}
-
-barplot_mock_gramproportion <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Mock")) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Mock") %>% 
-           subset_samples(., S.obs != 0)) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Mock") %>% 
-           subset_samples(., S.obs != 0)
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., fill="gram_stain") + 
-        ylab("") +
-        xlab("Subject") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(), 
-              legend.position = "right",
-              axis.title.y = element_blank(),
-              axis.text.x = element_blank()) +
-        guides(fill=guide_legend(title="Gram-stain")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
-        labs(tag = "B")
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-
-
-b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Neg.") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-        ) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Neg.") %>%
-                                      subset_samples(.,
-                                                     baylor_other_id != "20220606_Neg") %>%
-                                      transform_sample_counts(.,
-                                                              function(x){ifelse(is.na(x),
-                                                                                 0, 
-                                                                                 x)})
-                              ) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Neg.") %>%
-        subset_samples(.,
-                       baylor_other_id != "20220606_Neg") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   phyloseq_temp
-  } %>% 
-        my_plot_bar(., fill="gram_stain") + 
-        ylab("") +
-        xlab("Subject") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(),
-              axis.text.x = element_blank()) +
-        guides(fill=guide_legend(title="Gram-stain")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
-        facet_wrap ( ~ treatment,
-                    scales= "free_x", nrow=1) +
-        ggtitle("E  Negative controls")
-
-c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "BAL") %>%
-                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-        ) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "BAL") %>%
-                                      transform_sample_counts(.,
-                                                              function(x){ifelse(is.na(x),
-                                                                                 0, 
-                                                                                 x)})
-                              ) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "BAL") %>%
-           transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
-           factor(labels = c("A", "B", "C", "D", "E"))
-   phyloseq_temp
-  } %>% 
-        my_plot_bar(., x = "subject_id", fill="gram_stain") + 
-        ylab("") +
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(),
-              axis.title.y = element_blank(),
-              axis.title.x = element_blank()) +
-        guides(fill=guide_legend(title="Gram-stain")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
-        facet_wrap ( ~ treatment,
-                    scales= "free_x", nrow=1) +
-        ggtitle("A  BAL")
-
-
-d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Nasal") %>% 
-           subset_samples(., S.obs != 0)) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Nasal") %>% 
-           subset_samples(., S.obs != 0)) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Nasal") %>% 
-           subset_samples(., S.obs != 0)
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
-           factor(labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")) %>% 
-           as.character()
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., x = "subject_id", fill="gram_stain") + 
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank()) +
-        guides(fill=guide_legend(title="Gram-stain")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-#        scale_x_discrete(drop=) +
-        facet_wrap(~ treatment,  nrow = 1, drop = T, scale = "free_x") +
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-        ggtitle("B  Nasal swabs")
-
-
-
-
-
-
-
-e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Sputum") %>% 
-           subset_samples(., S.obs != 0)) %>%
-        cbind(species20 = "[Other]") %>%
-        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Sputum") %>% 
-           subset_samples(., S.obs != 0)) %>%
-                                data.frame %>%
-                                arrange(-.) %>%
-                                row.names(), 10)
-   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
-   .[, 9] <- gsub("s__", " ", .[, 9])
-   .[, 9] <- gsub("_", " ", .[, 9])
-   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
-   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
-   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
-   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
-   .[, 9] <- ifelse(grepl("Other",.[, 9]),
-                    "Other",
-                    ifelse(grepl("</i>",  .[, 9]),
-                           paste("<i>",  .[, 9], sep = ""),
-                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
-                            gsub("s__", "", .) %>%
-                            gsub("_", " ", .)
-   )
-   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
-                              sample_type == "Sputum") %>% 
-           subset_samples(., S.obs != 0)
-   tax_table(phyloseq_temp) <- tax_table(.) 
-   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
-           factor(labels = c("A", "B", "C", "D", "E"))
-   phyloseq_temp
-  } %>%
-        my_plot_bar(., x = "subject_id", fill="gram_stain")+
-        theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(),
-              axis.title.y = element_blank(),
-              axis.title.x = element_blank()) +
-        guides(fill=guide_legend(title="Gram-stain")) +
-        #scale_x_discrete(drop=F) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        facet_wrap(~ treatment, scales= "free_x", nrow = 1) +
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
-        ggtitle("C  Sputum")
-
-
-
-figS6 <- ggarrange(c, d, e, ncol = 1, common.legend = T, legend = "top")
-
-
-
-annotate_figure(figS6,
-                left = text_grob("Relative abundance",
-                                 rot = 90,
-                                 family = "sans", 
-                                 size = 11)
-)
-
-
-
-png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS6.png",   # The directory you want to save the file in
-    width = 180, # The width of the plot in inches
-    height = 200, # The height of the plot in inches
-    units = "mm",
-    res = 600
-) #fixing multiple page issue
-
-
-annotate_figure(figS6,
-                left = text_grob("Relative abundance",
-                                 rot = 90,
-                                 family = "sans", 
-                                 size = 11)
-)
-
-# alpha diversity plots
-#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
-#          ncol = 1) # alpha diversity plots
-
-dev.off()
-
-
-
-
-
-```                
-
-
-### Gram-stain stats (all samples)
-                
-
-Effect size, standard error (SE) and p-value at a statistical test on gram-negative proportion using linear mixed effect model. lmer( Gram-negative proportion vs sample_type + treatment + sample_type \* treatment +
-(1\|subject_id) )
-
-**Interaction term was significant (p-value = 0.018771)**
-
-Raw results
-
-```{r warning=F}
-lmer_gram_stain_proportion <- lmer(gram_neg_prop ~ sample_type + treatment + sample_type * treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")))
-
-lmer_gram_stain_proportion %>% summary
-```
-
-ANOVA on lmer result
-
-```{r warning=F}
-lmer_gram_stain_proportion %>% anova 
-```
-
-### Table S5. Gram-stain stats -stratified 
-
-**Stratified analsyis**
-
-Table S5. Effect size, standard error (SE) and p-value at a statistical test on gram-negative 
-proportion using linear mixed effect model. LMER(Gram-negative proportion vs sample type + treatment + sample type * treatment + (1|subject id)). Stratified analyses were conducted for each sample type as an interaction term of sample type and treatment was significant at an ANOVA test (p-value < 0.001) using a model, LMER (Gram-negative proportion ~ sample type + treatment + sample type * treatment  + (1|subject_id) ). The baseline of categorical variables is untreated BAL, and statistical significances were noted with `*: p-value < 0.05 and ***: p-value < 0.001.`
-
-Raw results - Mock
-
-```{r}
-##Mock
-gram_neg_prop_mock <- 
-        lm(gram_neg_prop ~ treatment,
-     data = sample_data(phyloseq$phyloseq_rel) %>% data.frame %>% subset(., .$sample_type %in% c("Mock"))) 
-
-gram_neg_prop_mock %>%
-        summary
-```
-
-BAL
-
-```{r}
-##BAL
-gram_neg_prop_bal <- 
-lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) 
-
-
-gram_neg_prop_bal %>%
-        summary
-```
-
-Nasal
-
-```{r}
-
-##Nasal
-gram_neg_prop_ns <- 
-lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Nasal"))) 
-
-
-gram_neg_prop_ns %>%
-        summary
-```
-
-Sputum
-
-```{r}
-##Sputum
-gram_neg_prop_spt <- 
-lmer(gram_neg_prop ~ treatment + (1|subject_id),
-     data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("Sputum"))) 
-
-gram_neg_prop_spt %>%
-        summary
-```
-
-
-Tidy summarized table
-
-
-```{r}
-
-gram_neg_prop_mock_kbl <- gram_neg_prop_mock %>%
-        summary() %>%
-        .$coefficients %>%
-        data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               t_value = "t value") %>%
-        merge(., 
-              gram_neg_prop_mock %>% confint() %>%
-                        round(digits = 1) %>% 
-                        format(nsmall = 1) %>%
-                        as.data.frame() %>%
-                        mutate(conf = paste("(",
-                                            gsub(" ","", .[,1]),
-                                            ", ",
-                                            gsub(" ","", .[,2]),
-                                            ")",
-                                            sep = "")),
-              by = 0
-              ) %>%
-        column_to_rownames("Row.names") %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        
-        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
-        mutate("Effect size (95% CI)" = 
-                       paste(round(Estimate, digits = 1) %>%
-                                     format(nsmall = 1),
-                             conf, 
-                             sep = " "),
-               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
-        .[c("(Intercept)",
-                  "lyPMA",
-                  "Benzonase",
-                  "HostZERO",
-                  "MolYsis",
-                  "QIAamp"),]
-
-gram_neg_prop_ns_kbl  <- gram_neg_prop_ns %>%
-        summary() %>%
-        .$coefficients %>%
-        data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               t_value = "t value") %>%
-        merge(., 
-              gram_neg_prop_ns %>% confint() %>%
-                        round(digits = 1) %>% 
-                        format(nsmall = 1) %>%
-                        as.data.frame() %>%
-                        mutate(conf = paste("(",
-                                            gsub(" ","", .[,1]),
-                                            ", ",
-                                            gsub(" ","", .[,2]),
-                                            ")",
-                                            sep = "")),
-              by = 0
-              ) %>%
-        column_to_rownames("Row.names") %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        
-        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
-        mutate("Effect size (95% CI)" = 
-                       paste(round(Estimate, digits = 1) %>%
-                                     format(nsmall = 1),
-                             conf, 
-                             sep = " "),
-               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
-        .[c("(Intercept)",
-                  "lyPMA",
-                  "Benzonase",
-                  "HostZERO",
-                  "MolYsis",
-                  "QIAamp"),]
-
-
-gram_neg_prop_spt_kbl <- gram_neg_prop_spt %>%
-        summary() %>%
-        .$coefficients %>%
-        data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               t_value = "t value") %>%
-        merge(., 
-              gram_neg_prop_spt %>% confint() %>%
-                        round(digits = 1) %>% 
-                        format(nsmall = 1) %>%
-                        as.data.frame() %>%
-                        mutate(conf = paste("(",
-                                            gsub(" ","", .[,1]),
-                                            ", ",
-                                            gsub(" ","", .[,2]),
-                                            ")",
-                                            sep = "")),
-              by = 0
-              ) %>%
-        column_to_rownames("Row.names") %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        
-        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
-        mutate("Effect size (95% CI)" = 
-                       paste(round(Estimate, digits = 1) %>%
-                                     format(nsmall = 1),
-                             conf, 
-                             sep = " "),
-               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
-        .[c("(Intercept)",
-                  "lyPMA",
-                  "Benzonase",
-                  "HostZERO",
-                  "MolYsis",
-                  "QIAamp"),]
-
-
-
-gram_neg_prop_bal_kbl <- gram_neg_prop_bal %>%
-        summary() %>%
-        .$coefficients %>%
-        data.frame(check.names = F) %>% 
-        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
-                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
-                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
-                               .default = " ")) %>% 
-        rename("<i>p</i>-value" = "Pr(>|t|)",
-               t_value = "t value") %>%
-        merge(., 
-              gram_neg_prop_bal %>% confint() %>%
-                        round(digits = 1) %>% 
-                        format(nsmall = 1) %>%
-                        as.data.frame() %>%
-                        mutate(conf = paste("(",
-                                            gsub(" ","", .[,1]),
-                                            ", ",
-                                            gsub(" ","", .[,2]),
-                                            ")",
-                                            sep = "")),
-              by = 0
-              ) %>%
-        column_to_rownames("Row.names") %>%
-        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
-        
-        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
-        column_to_rownames(var = "x") %>% 
-        mutate("Effect size (95% CI)" = 
-                       paste(round(Estimate, digits = 1) %>%
-                                     format(nsmall = 1),
-                             conf, 
-                             sep = " "),
-               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
-        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
-        .[c("(Intercept)",
-                  "lyPMA",
-                  "Benzonase",
-                  "HostZERO",
-                  "MolYsis",
-                  "QIAamp"),]
-
-
-tableS5 <- cbind(gram_neg_prop_mock_kbl, gram_neg_prop_bal_kbl, gram_neg_prop_ns_kbl, gram_neg_prop_spt_kbl) %>%
-        kbl(format = "html", escape = 0) %>% kable_styling(full_width = 0, html_font = "sans") %>% 
-        add_header_above(c(" " = 1, "Mock" = 3, "BAL" = 3, "Nasal swab" = 3, "Sputum" = 3)) %>% 
-        kable_styling(full_width = 0, html_font = "sans") 
-
-tableS5
-
-save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS5.html", self_contained = T)
-
-
-```
 
 ### {-}
 
@@ -2690,8 +1339,8 @@ save_kable(tableS5, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_m
 
 ```{r, warning=FALSE, message=FALSE}
 
-f3a <- ggplot(subset(sample_data(phyloseq$phyloseq_count) %>% 
-                             data.frame, sample_data(phyloseq$phyloseq_count)$sample_type %in% c(#"Mock",
+f3a <- ggplot(subset(sample_data(phyloseq_unfiltered) %>% 
+                             data.frame, sample_data(phyloseq_unfiltered)$sample_type %in% c(#"Mock",
                                      "Sputum", "Nasal", "BAL")), aes(x = treatment, y = S.obs)) +
         geom_jitter(aes(color = treatment),
                     position = position_jitter(0.2), size = 1.2, alpha = 0.3, stroke = 0) +
@@ -3219,31 +1868,6 @@ dev.off()
 
 ## Alpha diversity changes {.tabset}
 
-### Calculation for log centered Final reads
-
-**Distribution of centralized final reads**
-
-```{r}
-sample_data <- sample_data(phyloseq$phyloseq_count)
-sample_data$log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("BAL") & sample_data$treatment %in% c("Untreated")) %>% .$Final_reads) + 1))
-
-sample_data$bal_log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("BAL") & sample_data$treatment %in% c("Untreated"))%>% .$Final_reads) + 1))
-
-sample_data$ns_log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("Nasal") & sample_data$treatment %in% c("Untreated"))%>% .$Final_reads) + 1))
-
-sample_data$spt_log_centered_final_reads <- log(sample_data$Final_reads + 1) - median(log((subset(sample_data, sample_data$sample_type %in% c("Sputum") & sample_data$treatment %in% c("Untreated"))%>% .$Final_reads) + 1))
-
-
-subset(sample_data, sample_data$sample_type %in% c("BAL", "Nasal", "Sputum")) %>% .$log_centered_final_reads %>% hist (main = "Histogram of centered log10 final reads of BAL, Nasal, Sputum")
-
-subset(sample_data, sample_data$sample_type %in% c("BAL")) %>% .$log_centered_final_reads %>% hist (main = "Histogram of centered log10 final reads of BAL")
-
-subset(sample_data, sample_data$sample_type %in% c("Nasal")) %>% .$log_centered_final_reads %>% hist (main = "Histogram of centered log10 final reads of Nasal")
-
-subset(sample_data, sample_data$sample_type %in% c("Sputum")) %>% .$log_centered_final_reads %>% hist (main = "Histogram of centered log10 final reads of Sputum")
-
-```
-
 ### Species richness (all sample)
 
 **This table is too redundant. Removed from the manuscript.**. 
@@ -3255,7 +1879,7 @@ Effect size, standard error (SE) and p-value of a statistical test for species r
 Raw result
 
 ```{r}
-lmer_sr <- lmer(S.obs ~ treatment * sample_type + log10(Final_reads) + (1|subject_id),
+lmer_sr <- lmer(S.obs ~ treatment * sample_type + log10(Viral_reads) + (1|subject_id),
                     data = sample_data %>% 
                             data.frame %>% 
                             subset(., .$S.obs != 0))
@@ -3295,7 +1919,7 @@ LMER raw result - BAL
 sr_lmer_bal <- lmer(S.obs ~ treatment + (1|subject_id),
                     data = sample_data %>% 
                             data.frame %>% 
-                            subset(., .$sample_type %in% c("BAL") & S.obs != 0))
+                            subset(., .$sample_type %in% c("BAL")))
 sr_lmer_bal %>% summary()
         
 ```
@@ -3418,6 +2042,7 @@ sr_lmer_ns_kbl <-  sr_lmer_ns %>%
         mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
                                abs(`Pr(>|t|)`) < 0.01 ~ "**",
                                abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               abs(`Pr(>|t|)`) < 0.1 ~ ".",
                                .default = " ")) %>% 
         rename("<i>p</i>-value" = "Pr(>|t|)",
                t_value = "t value") %>%
@@ -3507,7 +2132,7 @@ tables3 <- cbind(#sr_lmer_mock_kbl,
 
 tables3
 
-save_kable(tables3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS3.html", self_contained = T)
+#save_kable(tables3, file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS3.html", self_contained = T)
 
 ```
 
@@ -4118,7 +2743,7 @@ tax_table(phyloseq_control_rel_contam) %>%
         theme_classic(base_size = 11, base_family = "serif") +
         ggtitle("Contaminants in Zymo mock (denominator is total microbes in samples)") +
         theme(legend.text = element_markdown()) +
-        guides(fill=guide_legend(title="Top 10 species")) +
+        guides(fill=guide_legend(title="Top 10 phage")) +
         facet_wrap (~ factor(treatment, levels = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")),
                     scales= "free_x", nrow=1)
 
@@ -4243,7 +2868,7 @@ barplot_mock_microbe_zymo_filtered <- phyloseq_control_rel_10zymo %>%
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               axis.text.x = element_text(color = "white")) +
-        guides(fill=guide_legend(title="Top 10 species")) +
+        guides(fill=guide_legend(title="Top 10 phage")) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 9, name = "Paired"))) +
         facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         labs(tag = "A")

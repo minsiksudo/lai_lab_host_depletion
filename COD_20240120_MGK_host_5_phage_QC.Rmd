@@ -28,10 +28,21 @@ editor_options:
 #===============================================================================
 #Input for document parameters, libraries, file paths, and options.
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
-knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+#knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/minsik/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Dropbox (Personal)"))
+
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R/x86_64-pc-linux-gnu-library/4.1/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
 str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car", "mediation", "lemon", "qvalue")
         
 YAML_header <-
@@ -68,6 +79,7 @@ FUN.LineZero.Boot()
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Outputs R environment report.
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 FUN.LineZero.Report <- function() {
     cat("Line Zero Environment:\n\n")
     paste("R:", pacman::p_version(), "\n") |> cat()
@@ -87,7 +99,6 @@ FUN.LineZero.Report <- function() {
 }
 FUN.LineZero.Report()
 
-
 ```
 
 
@@ -97,7 +108,8 @@ FUN.LineZero.Report()
 ### Loading data
 
 ```{r warning=F, message=FALSE, "Data loading"}
-phage_example <- read.csv("/Users/minsikkim/Dropbox (Personal)/@minsik/project_ucas/Marker-magu_20240112/P1039_markger_magu_output/p1039.combined_profile.tsv", sep = "\t")
+phage_example <- read.csv("@minsik/project_ucas/Marker-magu_20240112/P1039_markger_magu_output/p1039.combined_profile.tsv", sep = "\t")
+
 ```
 
 # exploratory data analysis 
@@ -110,16 +122,13 @@ phage_example$S_high
 phage_example$lineage %>% str_split_fixed(pattern = "[|]", 8) %>% data.frame %>% .[,8] %>% duplicated
 phage_example$lineage %>% str_split_fixed(pattern = "[|]", 8) %>% data.frame %>% .[350,] 
 phage_example$lineage %>% str_split_fixed(pattern = "[|]", 8) %>% data.frame %>% .[100,] 
-phage_example <- read.csv("/Users/minsikkim/Dropbox (Personal)/@minsik/project_ucas/Marker-magu_20240112/P1039_markger_magu_output/p1039.combined_profile.tsv", sep = "\t")
+phage_example <- read.csv("@minsik/project_ucas/Marker-magu_20240112/P1039_markger_magu_output/p1039.combined_profile.tsv", sep = "\t")
 phage_example$SGB %>% str_split_fixed(pattern = "[|]", 2) %>% data.frame %>% .[100,] 
 grep("59748", phage_example$SGB)
 
-grep("59748", phage_example$SGB)
 ```
 
 # Subsetting Viral tax_table & making viral phyloseq object
-
-
 
 ```{r warning=F, message=FALSE, "Data wrangling"}
 phage_example_virus <- subset(phage_example, phage_example$lineage %>% grepl("virus", .))
@@ -220,28 +229,188 @@ summary_dataframe <- sample_data(vphyloseq) %>% data.frame %>% group_by(sample_t
 ## Laoding Marker-MAGu data
 
 ```{r}
-marker_magu_reads1 <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.AlignedReads.tsv", sep = "\t", check.names = F)
+marker_magu_reads1 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.AlignedReads.tsv", sep = "\t", check.names = T)
 
-marker_magu_tax1 <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.combined_profile.tsv", check.names = F)
+marker_magu_tax1 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.combined_profile.tsv", check.names = F)
 
-marker_magu_reads2 <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.AlignedReads.tsv", sep = "\t", check.names = F)
+marker_magu_reads2 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.AlignedReads.tsv", sep = "\t", check.names = T)
 
-marker_magu_tax2 <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.combined_profile.tsv", check.names = F)
+marker_magu_tax2 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.combined_profile.tsv", check.names = F)
 
 ```
+
 
 ## Loading phyloseq data
 
 Loading phylose data to extract sample metadata
 
 ```{r}
-phyloseq_unfiltered <- readRDS("/Users/minsikkim/Dropbox (Personal)//Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+phyloseq_unfiltered <- readRDS("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 sample_data <- phyloseq_unfiltered$phyloseq_count %>% sample_data
 
 
 sample_data$baylor_id
 ```
+
+## QC column names
+
+Some data are duplicated (with .1 as their variable name)
+
+
+```{r}
+
+marker_magu_reads1 %>% names %>% .[grep("[.]1",.)]
+marker_magu_reads2 %>% names %>% .[grep("[.]1",.)]
+
+```
+
+
+```{r}
+marker_magu_reads1 <-  marker_magu_reads1 %>% 
+        select(-c((marker_magu_reads1 %>% names %>% .[grep("[.]1", .)])))
+
+
+marker_magu_reads2 <-  marker_magu_reads2 %>% 
+        select(-c((marker_magu_reads2 %>% names %>% .[grep("[.]1", .)])))
+
+
+names(marker_magu_reads1) <- names(marker_magu_reads1)  %>% gsub("X", "", .)
+
+names(marker_magu_reads2) <- names(marker_magu_reads2)  %>% gsub("X", "", .)
+```
+
+
+# QC on the names of SGBs
+
+```{r}
+
+sbg_table_1 <- marker_magu_reads1$SGB %>% 
+        str_split_fixed(., "[|]", 2) %>% 
+        data.frame(check.names = F,
+                   species = .[,1],
+                   SBG = .[,2])
+
+sbg_table_2 <- marker_magu_reads2$SGB %>% 
+        str_split_fixed(., "[|]", 2) %>% 
+        data.frame(check.names = F,
+                   species = .[,1],
+                   SBG = .[,2])
+
+
+sbg_table_1 %>% subset(., grepl("s__Bifidobacterium", .$species))
+sbg_table_2 %>% subset(., grepl("s__Bifidobacterium", .$species))
+
+```
+
+
+# Subsetting viral tax table
+
+
+
+```{r}
+
+magu_virus1 <- subset(marker_magu_reads1, marker_magu_reads1$lineage %>% grepl("virus", .))
+magu_virus2 <- subset(marker_magu_reads2, marker_magu_reads2$lineage %>% grepl("virus", .))
+
+```
+
++ Taxnomic table can be made but it is not informative (all viruses were unclassified)
+
+```{r}
+tax_table_virus1 <- magu_virus1$lineage %>% str_split_fixed(pattern = "[|]", 7) %>% {
+        data_frame <- data.frame("Kingdom" = .[,1],
+                   "Phylum" = .[,2],
+                   "Class" = .[,3],
+                   "Order" = .[,4],
+                   "Family" = .[,5],
+                   "Genus" = .[,6],
+                   "Species" = .[,7])
+        data_frame
+}
+
+tax_table_virus2 <- magu_virus2$lineage %>% str_split_fixed(pattern = "[|]", 7) %>% {
+        data_frame <- data.frame("Kingdom" = .[,1],
+                   "Phylum" = .[,2],
+                   "Class" = .[,3],
+                   "Order" = .[,4],
+                   "Family" = .[,5],
+                   "Genus" = .[,6],
+                   "Species" = .[,7])
+        data_frame
+}
+
+```
+
+Separating lineage, contig-ids, etc.
+
+```{r}
+rownames(tax_table_virus1) <- tax_table_virus1$Species
+rownames(tax_table_virus2) <- tax_table_virus2$Species
+
+row.names(magu_virus1) <- magu_virus1$SGB
+row.names(magu_virus2) <- magu_virus2$SGB
+
+
+data_virus1 <- magu_virus1 %>% select("lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score")
+
+data_virus2 <- magu_virus2 %>% select("lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score")
+
+magu_virus1 <- magu_virus1 %>%
+        select(-c("SGB", "lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score"))
+
+magu_virus2 <- magu_virus2 %>%
+        select(-c("SGB", "lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score"))
+
+
+```
+
+# Making 2 phyloseq objects
+
+```{r}
+
+v_otu1 <- otu_table(magu_virus1, taxa_are_rows = T)
+
+v_otu2 <- otu_table(magu_virus2, taxa_are_rows = T)
+
+```
+
+Generating & merging phyloseq object
+
+```{r}
+v_phy1 <- merge_phyloseq(v_otu1, sample_data(phyloseq_unfiltered$phyloseq_count))
+
+dummy_phyloseq <- phyloseq_unfiltered$phyloseq_count
+sample_names(dummy_phyloseq) <- sample_data(dummy_phyloseq)$baylor_id
+
+v_phy2 <- merge_phyloseq(v_otu2, sample_data(dummy_phyloseq))
+
+
+v_phyloseq <- merge_phyloseq(v_phy1, v_phy2)
+
+v_phyloseq <- prune_taxa(taxa_sums(v_phyloseq) != 0, v_phyloseq)
+
+sample_names(v_phyloseq) <- sample_data(v_phyloseq)$baylor_other_id
+
+sample_sums(v_phyloseq)
+
+
+
+phyloseq_unfiltered$phyloseq_count %>% 
+        sample_names %>%
+        .[!(phyloseq_unfiltered$phyloseq_count %>% sample_names) %in% (v_phyloseq %>% sample_names)]
+
+
+```
+
+1 sample is missing (from the original .tsv file)
+
+# Save RDS
+
+```{r}
+saveRDS(v_phyloseq, "Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu.rds")
+```
+
 
 
 # Bibliography

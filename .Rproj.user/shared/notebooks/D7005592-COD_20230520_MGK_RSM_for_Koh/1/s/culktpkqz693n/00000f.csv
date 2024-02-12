@@ -1,4 +1,0 @@
-"0","rsm_data <- subset(raw_data, raw_data$data_type ==""rsm"")"
-"0","rsm_day6 <- subset(rsm_data, rsm_data$day == 6)"
-"0","rsm_day8 <- subset(rsm_data, rsm_data$day == 8)"
-"0",""

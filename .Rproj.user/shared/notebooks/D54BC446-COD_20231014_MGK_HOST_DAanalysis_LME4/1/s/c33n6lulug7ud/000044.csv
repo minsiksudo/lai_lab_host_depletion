@@ -1,6 +1,0 @@
-"0",""
-"0","maaslin_sputum %>% "
-"0","        ggplot(., aes(x = coef, y = -log10(qval))) +"
-"0","        geom_point() +"
-"0","        ggtitle(""MaAslin CLR"") +"
-"0","        geom_hline(yintercept = 1, col = ""red"")"

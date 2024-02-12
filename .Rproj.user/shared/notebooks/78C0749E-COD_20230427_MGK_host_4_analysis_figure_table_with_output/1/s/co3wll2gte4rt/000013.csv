@@ -1,3 +1,0 @@
-"0","sample_data(phyloseq$phyloseq_rel) %>% "
-"0","        data.frame() %>%"
-"0","        dplyr::select(c(""S.obs"", ""data_shannon"", ""data_invsimpson"")) "

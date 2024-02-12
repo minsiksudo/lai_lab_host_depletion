@@ -1,1 +1,0 @@
-"0","sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% summarise(med = median(host_proportion), lo = quantile(host_proportion, 0.25), high = quantile(host_proportion, 0.75))"

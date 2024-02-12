@@ -1,6 +1,0 @@
-"0",""
-"0","persp(rsm_d6_comp, temp ~ nitrogen, col=rainbow(50), theta=230, xlabs = c(expression(""N source concentration (g/L)"", ""Temperature (°C)"")),"
-"0","      phi=20, r = 3, d=1, border = NULL, ltheta = 135, lphi = 100, "
-"0","      shade = 0.75, zlab=""EPA composition (%TL)"", col.axis=2, font.lab=2, col.lab=35,"
-"0","      contour=(""colors""))"
-"0",""

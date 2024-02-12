@@ -1,2 +1,0 @@
-"0","        # CLR transformed data, all samples at once "
-"0","        physeq0_clr_bal %>% otu_table %>% t %>% data.frame() %>% head()"

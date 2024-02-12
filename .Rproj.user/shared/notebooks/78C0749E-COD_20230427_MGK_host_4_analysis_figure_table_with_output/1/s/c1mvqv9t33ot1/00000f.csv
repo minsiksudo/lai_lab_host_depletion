@@ -1,8 +1,0 @@
-"0",""
-"0","f_maaslin_all <- read.csv(""/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_maaslin_all.csv"")"
-"0","f_fit_data_bal <- read.csv(""/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_fit_data_bal.csv"")"
-"0","f_fit_data_spt <- read.csv(""/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_fit_data_spt.csv"")"
-"0","f_fit_data_ns <- read.csv(""/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_fit_data_ns.csv"")"
-"0","#f_fit_data_pos <- read.csv(""/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/da_lmer_filt_f_fit_data_pos.csv"")"
-"0",""
-"0",""

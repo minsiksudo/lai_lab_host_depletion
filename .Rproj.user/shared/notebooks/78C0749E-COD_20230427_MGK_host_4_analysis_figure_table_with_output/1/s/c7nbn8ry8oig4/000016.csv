@@ -1,7 +1,0 @@
-"0",""
-"0","tableS10 <- merged_contaminants %>% "
-"0","        mutate(Taxa = species_italic2(Taxa)"
-"0","               ) %>%"
-"0","        kbl(format = ""html"", escape = F) %>%"
-"0","        kable_styling(full_width = 0, html_font = ""sans"") "
-"0","tableS10"

@@ -1,8 +1,0 @@
-"0","phyloseq$phyloseq_count %>% "
-"0","        sample_data %>%"
-"0","        data.frame() %>%"
-"0","        group_by(subject_id) %>%"
-"0","        summarise(subject_id = subject_id,"
-"0","                  treatment = treatment,"
-"0","                  S.obs = S.obs,"
-"0","                  S.obs_untreated = S.obs)"

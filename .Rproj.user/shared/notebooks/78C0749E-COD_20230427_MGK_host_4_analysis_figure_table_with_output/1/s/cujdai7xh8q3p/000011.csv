@@ -1,5 +1,0 @@
-"0","        #ggtitle(""D    Mock"")"
-"0","        #facet_wrap (~ factor(sample_type, levels = c(""Mock"", ""BAL"", ""Nasal"", ""Sputum"")),"
-"0","        #            scales= ""free_x"", nrow=2) +"
-"0","        "
-"0",""

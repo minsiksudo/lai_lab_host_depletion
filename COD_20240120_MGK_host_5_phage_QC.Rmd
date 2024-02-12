@@ -345,11 +345,18 @@ tax_table_virus2 <- magu_virus2$lineage %>% str_split_fixed(pattern = "[|]", 7) 
 Separating lineage, contig-ids, etc.
 
 ```{r}
+
+tax_table_virus1$Species <- tax_table_virus1$Species %>% gsub("s__", "", .) %>% gsub("_", "", .)
+tax_table_virus2$Species <- tax_table_virus2$Species %>% gsub("s__", "", .) %>% gsub("_", "", .)
+
 rownames(tax_table_virus1) <- tax_table_virus1$Species
 rownames(tax_table_virus2) <- tax_table_virus2$Species
 
-row.names(magu_virus1) <- magu_virus1$SGB
-row.names(magu_virus2) <- magu_virus2$SGB
+tax_table_virus1 <- tax_table(tax_table_virus1 %>% as.matrix())
+tax_table_virus2 <- tax_table(tax_table_virus2 %>% as.matrix())
+
+row.names(magu_virus1) <- magu_virus1$SGB %>% gsub("s__", "", .) %>% gsub("_", "", .)
+row.names(magu_virus2) <- magu_virus2$SGB %>% gsub("s__", "", .) %>% gsub("_", "", .)
 
 
 data_virus1 <- magu_virus1 %>% select("lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score")
@@ -378,12 +385,14 @@ v_otu2 <- otu_table(magu_virus2, taxa_are_rows = T)
 Generating & merging phyloseq object
 
 ```{r}
-v_phy1 <- merge_phyloseq(v_otu1, sample_data(phyloseq_unfiltered$phyloseq_count))
+
+
+v_phy1 <- merge_phyloseq(v_otu1, sample_data(phyloseq_unfiltered$phyloseq_count), tax_table_virus1)
 
 dummy_phyloseq <- phyloseq_unfiltered$phyloseq_count
 sample_names(dummy_phyloseq) <- sample_data(dummy_phyloseq)$baylor_id
 
-v_phy2 <- merge_phyloseq(v_otu2, sample_data(dummy_phyloseq))
+v_phy2 <- merge_phyloseq(v_otu2, sample_data(dummy_phyloseq), tax_table_virus2)
 
 
 v_phyloseq <- merge_phyloseq(v_phy1, v_phy2)

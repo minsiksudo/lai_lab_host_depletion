@@ -12,7 +12,7 @@
 "0",""
 "0","path_working <- ""/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"""
 "0","path_library <- ""/Library/Frameworks/R.framework/Resources/library"""
-"0","str_libraries <- c(""readxl"", ""phyloseq"", ""tidyverse"", ""pacman"", ""yaml"", ""ggplot2"", ""vegan"", ""microbiome"", ""ggpubr"", ""viridis"", ""decontam"", ""gridExtra"", ""ggpubr"", ""lme4"", ""lmerTest"", ""writexl"", ""harrietr"", ""Maaslin2"", ""ggtext"", ""ggpmisc"", ""gamm4"", ""reshape2"", ""kableExtra"", ""knitr"", ""ggtree"", ""car"", ""mediation"", ""lemon"")"
+"0","str_libraries <- c(""readxl"", ""phyloseq"", ""tidyverse"", ""pacman"", ""yaml"", ""ggplot2"", ""vegan"", ""microbiome"", ""ggpubr"", ""viridis"", ""decontam"", ""gridExtra"", ""ggpubr"", ""lme4"", ""lmerTest"", ""writexl"", ""harrietr"", ""Maaslin2"", ""ggtext"", ""ggpmisc"", ""gamm4"", ""reshape2"", ""kableExtra"", ""knitr"", ""ggtree"", ""car"", ""mediation"", ""lemon"", ""qvalue"")"
 "0","        "
 "0","YAML_header <-"
 "0","'---"
@@ -99,7 +99,7 @@
 "
 "1","    ggpubr: 0.6.0
 "
-"1","    lme4: 1.1.34
+"1","    lme4: 1.1.35.1
 "
 "1","    lmerTest: 3.1.3
 "
@@ -111,13 +111,13 @@
 "
 "1","    ggtext: 0.1.2
 "
-"1","    ggpmisc: 0.5.4.1
+"1","    ggpmisc: 0.5.5
 "
 "1","    gamm4: 0.2.6
 "
 "1","    reshape2: 1.4.4
 "
-"1","    kableExtra: 1.3.4
+"1","    kableExtra: 1.3.4.9000
 "
 "1","    knitr: 1.45
 "
@@ -127,7 +127,9 @@
 "
 "1","    mediation: 4.5.0
 "
-"1","    lemon: 0.4.6
+"1","    lemon: 0.4.7
+"
+"1","    qvalue: 2.32.0
 "
 "1","
 Operating System: Darwin 

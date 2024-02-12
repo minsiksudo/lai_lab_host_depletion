@@ -97,11 +97,7 @@ FUN.LineZero.Report()
 ### Loading data
 
 ```{r warning=F, message=FALSE, "Data loading"}
-
-
 phage_example <- read.csv("/Users/minsikkim/Dropbox (Personal)/@minsik/project_ucas/Marker-magu_20240112/P1039_markger_magu_output/p1039.combined_profile.tsv", sep = "\t")
-
-
 ```
 
 # exploratory data analysis 
@@ -126,7 +122,6 @@ grep("59748", phage_example$SGB)
 
 
 ```{r warning=F, message=FALSE, "Data wrangling"}
-
 phage_example_virus <- subset(phage_example, phage_example$lineage %>% grepl("virus", .))
 tax_table_virus <- phage_example_virus$lineage %>% str_split_fixed(pattern = "[|]", 7) %>% {
         data_frame <- data.frame("Kingdom" = .[,1],
@@ -220,6 +215,34 @@ summary_dataframe <- sample_data(vphyloseq) %>% data.frame %>% group_by(sample_t
 
 
 ```
+# Marker-Magu data processing
+
+## Laoding Marker-MAGu data
+
+```{r}
+marker_magu_reads1 <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.AlignedReads.tsv", sep = "\t", check.names = F)
+
+marker_magu_tax1 <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.combined_profile.tsv", check.names = F)
+
+marker_magu_reads2 <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.AlignedReads.tsv", sep = "\t", check.names = F)
+
+marker_magu_tax2 <- read.csv("/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.combined_profile.tsv", check.names = F)
+
+```
+
+## Loading phyloseq data
+
+Loading phylose data to extract sample metadata
+
+```{r}
+phyloseq_unfiltered <- readRDS("/Users/minsikkim/Dropbox (Personal)//Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+
+sample_data <- phyloseq_unfiltered$phyloseq_count %>% sample_data
+
+
+sample_data$baylor_id
+```
+
 
 # Bibliography
 

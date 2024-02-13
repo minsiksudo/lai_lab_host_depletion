@@ -229,11 +229,11 @@ summary_dataframe <- sample_data(vphyloseq) %>% data.frame %>% group_by(sample_t
 ## Laoding Marker-MAGu data
 
 ```{r}
-marker_magu_reads1 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.AlignedReads.tsv", sep = "\t", check.names = T)
+marker_magu_reads1 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.RPKM.tsv", sep = "\t", check.names = T)
 
 marker_magu_tax1 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00331_marker_magu_output/PQ00331.combined_profile.tsv", check.names = F)
 
-marker_magu_reads2 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.AlignedReads.tsv", sep = "\t", check.names = T)
+marker_magu_reads2 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.RPKM.tsv", sep = "\t", check.names = T)
 
 marker_magu_tax2 <- read.csv("Project_SICAS2_microbiome/4_Data/1_Raw/Sequencing_Baylor_Metagenomics/20240209_PQ00430_marker_magu_output/PQ00430.without.spikeins.combined_profile.tsv", check.names = F)
 
@@ -301,6 +301,7 @@ sbg_table_2 <- marker_magu_reads2$SGB %>%
 sbg_table_1 %>% subset(., grepl("s__Bifidobacterium", .$species))
 sbg_table_2 %>% subset(., grepl("s__Bifidobacterium", .$species))
 
+
 ```
 
 
@@ -309,15 +310,43 @@ sbg_table_2 %>% subset(., grepl("s__Bifidobacterium", .$species))
 
 
 ```{r}
+magu_microbe1 <- subset(marker_magu_reads1, !(marker_magu_reads1$lineage %>% grepl("Virus", .)))
+magu_microbe2 <- subset(marker_magu_reads2, !(marker_magu_reads2$lineage %>% grepl("Virus", .)))
 
-magu_virus1 <- subset(marker_magu_reads1, marker_magu_reads1$lineage %>% grepl("virus", .))
-magu_virus2 <- subset(marker_magu_reads2, marker_magu_reads2$lineage %>% grepl("virus", .))
-
+magu_virus1 <- subset(marker_magu_reads1, marker_magu_reads1$lineage %>% grepl("Virus", .))
+magu_virus2 <- subset(marker_magu_reads2, marker_magu_reads2$lineage %>% grepl("Virus", .))
 ```
 
 + Taxnomic table can be made but it is not informative (all viruses were unclassified)
 
 ```{r}
+
+tax_table_microbe1 <- magu_microbe1$lineage %>% str_split_fixed(pattern = "[|]", 8) %>% {
+        data_frame <- data.frame("Kingdom" = .[,1],
+                   "Phylum" = .[,2],
+                   "Class" = .[,3],
+                   "Order" = .[,4],
+                   "Family" = .[,5],
+                   "Genus" = .[,6],
+                   "Species" = .[,7],
+                   "SBG" = .[,8])
+        data_frame
+}
+
+tax_table_microbe2 <- magu_microbe2$lineage %>% str_split_fixed(pattern = "[|]", 8) %>% {
+        data_frame <- data.frame("Kingdom" = .[,1],
+                   "Phylum" = .[,2],
+                   "Class" = .[,3],
+                   "Order" = .[,4],
+                   "Family" = .[,5],
+                   "Genus" = .[,6],
+                   "Species" = .[,7],
+                   "SBG" = .[,8])
+        data_frame
+}
+
+
+
 tax_table_virus1 <- magu_virus1$lineage %>% str_split_fixed(pattern = "[|]", 7) %>% {
         data_frame <- data.frame("Kingdom" = .[,1],
                    "Phylum" = .[,2],
@@ -326,7 +355,18 @@ tax_table_virus1 <- magu_virus1$lineage %>% str_split_fixed(pattern = "[|]", 7) 
                    "Family" = .[,5],
                    "Genus" = .[,6],
                    "Species" = .[,7])
-        data_frame
+        host_tax <- magu_virus1$iphop_host_genus %>% 
+                str_split_fixed(pattern = "[;]", 6) %>% data.frame()
+        host_tax <- data.frame("H_Kingdom" = host_tax[,1],
+                   "H_Phylum" = host_tax[,2],
+                   "H_Class" = host_tax[,3],
+                   "H_Order" = host_tax[,4],
+                   "H_Family" = host_tax[,5],
+                   "H_Genus" = host_tax[,6])
+        data_frame <- cbind(data_frame, 
+                            host_tax,
+                            select(.data = magu_virus1, c("contig_id", "marker.magu_genes", "contig_length", "checkv_completeness",
+                                                          "iphop_confidence", "Virulence_score")))
 }
 
 tax_table_virus2 <- magu_virus2$lineage %>% str_split_fixed(pattern = "[|]", 7) %>% {
@@ -337,7 +377,18 @@ tax_table_virus2 <- magu_virus2$lineage %>% str_split_fixed(pattern = "[|]", 7) 
                    "Family" = .[,5],
                    "Genus" = .[,6],
                    "Species" = .[,7])
-        data_frame
+        host_tax <- magu_virus2$iphop_host_genus %>% 
+                str_split_fixed(pattern = "[;]", 6) %>% data.frame()
+        host_tax <- data.frame("H_Kingdom" = host_tax[,1],
+                   "H_Phylum" = host_tax[,2],
+                   "H_Class" = host_tax[,3],
+                   "H_Order" = host_tax[,4],
+                   "H_Family" = host_tax[,5],
+                   "H_Genus" = host_tax[,6])
+        data_frame <- cbind(data_frame, 
+                            host_tax,
+                            select(.data = magu_virus2, c("contig_id", "marker.magu_genes", "contig_length", "checkv_completeness",
+                                                          "iphop_confidence", "Virulence_score")))
 }
 
 ```
@@ -346,22 +397,36 @@ Separating lineage, contig-ids, etc.
 
 ```{r}
 
+tax_table_microbe1$SBG <- tax_table_microbe1$SBG %>% gsub("t__", "", .)
+tax_table_microbe2$SBG <- tax_table_microbe2$SBG %>% gsub("t__", "", .)
+
 tax_table_virus1$Species <- tax_table_virus1$Species %>% gsub("s__", "", .) %>% gsub("_", "", .)
 tax_table_virus2$Species <- tax_table_virus2$Species %>% gsub("s__", "", .) %>% gsub("_", "", .)
+
+rownames(tax_table_microbe1) <- tax_table_microbe1$SBG
+rownames(tax_table_microbe2) <- tax_table_microbe2$SBG
 
 rownames(tax_table_virus1) <- tax_table_virus1$Species
 rownames(tax_table_virus2) <- tax_table_virus2$Species
 
+tax_table_microbe1 <- tax_table(tax_table_microbe1 %>% as.matrix())
+tax_table_microbe2 <- tax_table(tax_table_microbe2 %>% as.matrix())
+
 tax_table_virus1 <- tax_table(tax_table_virus1 %>% as.matrix())
 tax_table_virus2 <- tax_table(tax_table_virus2 %>% as.matrix())
+
+
+row.names(magu_microbe1) <- magu_microbe1$SGB %>% gsub(".*[|]", "", .) %>% gsub("t__", "", .)
+row.names(magu_microbe2) <- magu_microbe2$SGB %>% gsub(".*[|]", "", .) %>% gsub("t__", "", .)
 
 row.names(magu_virus1) <- magu_virus1$SGB %>% gsub("s__", "", .) %>% gsub("_", "", .)
 row.names(magu_virus2) <- magu_virus2$SGB %>% gsub("s__", "", .) %>% gsub("_", "", .)
 
+magu_microbe1 <- magu_microbe1 %>%
+        select(-c("SGB", "lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score"))
 
-data_virus1 <- magu_virus1 %>% select("lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score")
-
-data_virus2 <- magu_virus2 %>% select("lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score")
+magu_microbe2 <- magu_microbe2 %>%
+        select(-c("SGB", "lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score"))
 
 magu_virus1 <- magu_virus1 %>%
         select(-c("SGB", "lineage", "contig_id", "marker.magu_genes", "contig_length", "checkv_completeness", "iphop_host_genus", "iphop_confidence", "Virulence_score"))
@@ -376,9 +441,29 @@ magu_virus2 <- magu_virus2 %>%
 
 ```{r}
 
+m_otu1 <- otu_table(magu_microbe1, taxa_are_rows = T)
+
+m_otu2 <- otu_table(magu_microbe2, taxa_are_rows = T)
+
+
+
 v_otu1 <- otu_table(magu_virus1, taxa_are_rows = T)
 
 v_otu2 <- otu_table(magu_virus2, taxa_are_rows = T)
+
+```
+
+# Double-checking if SBG matches
+
+```{r}
+rbind(tax_table_virus1 %>% data.frame %>% subset(., .$Species == "vSGB67035"),
+      tax_table_virus2 %>% data.frame %>% subset(., .$Species == "vSGB67035"))
+
+tax_table_virus2
+
+rbind(tax_table_virus1 %>% data.frame %>% subset(., .$Species == "vSGB31342"),
+      tax_table_virus2 %>% data.frame %>% subset(., .$Species == "vSGB31342"))
+
 
 ```
 
@@ -387,20 +472,26 @@ Generating & merging phyloseq object
 ```{r}
 
 
+m_phy1 <- merge_phyloseq(m_otu1, sample_data(phyloseq_unfiltered$phyloseq_count), tax_table_microbe1)
 v_phy1 <- merge_phyloseq(v_otu1, sample_data(phyloseq_unfiltered$phyloseq_count), tax_table_virus1)
 
 dummy_phyloseq <- phyloseq_unfiltered$phyloseq_count
 sample_names(dummy_phyloseq) <- sample_data(dummy_phyloseq)$baylor_id
 
+m_phy2 <- merge_phyloseq(m_otu2, sample_data(dummy_phyloseq), tax_table_microbe2)
 v_phy2 <- merge_phyloseq(v_otu2, sample_data(dummy_phyloseq), tax_table_virus2)
 
 
+m_phyloseq <- merge_phyloseq(m_phy1, m_phy2)
 v_phyloseq <- merge_phyloseq(v_phy1, v_phy2)
 
+m_phyloseq <- prune_taxa(taxa_sums(m_phyloseq) != 0, m_phyloseq)
 v_phyloseq <- prune_taxa(taxa_sums(v_phyloseq) != 0, v_phyloseq)
 
+sample_names(m_phyloseq) <- sample_data(m_phyloseq)$baylor_other_id
 sample_names(v_phyloseq) <- sample_data(v_phyloseq)$baylor_other_id
 
+sample_sums(m_phyloseq)
 sample_sums(v_phyloseq)
 
 
@@ -410,6 +501,10 @@ phyloseq_unfiltered$phyloseq_count %>%
         .[!(phyloseq_unfiltered$phyloseq_count %>% sample_names) %in% (v_phyloseq %>% sample_names)]
 
 
+phyloseq <- list()
+phyloseq$microbe_rpkm <- m_phyloseq
+phyloseq$viral_rpkm <- v_phyloseq
+
 ```
 
 1 sample is missing (from the original .tsv file)
@@ -417,7 +512,7 @@ phyloseq_unfiltered$phyloseq_count %>%
 # Save RDS
 
 ```{r}
-saveRDS(v_phyloseq, "Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu.rds")
+saveRDS(phyloseq, "Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu.rds")
 ```
 
 

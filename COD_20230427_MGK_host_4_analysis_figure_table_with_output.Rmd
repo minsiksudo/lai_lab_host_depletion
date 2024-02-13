@@ -30,8 +30,20 @@ editor_options:
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 knitr::opts_chunk$set(message=FALSE, warning = FALSE)
 
-path_working <- "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
+
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/minsik/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Dropbox (Personal)"))
+
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R/x86_64-pc-linux-gnu-library/4.1/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
 str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car", "mediation", "lemon", "qvalue")
         
 YAML_header <-
@@ -321,7 +333,7 @@ Aim 4. Does host depletion increase the risk of contamination?
 ```{r warning=F, message=FALSE, "Data loading"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
-phyloseq_unfiltered <- read_rds("/Users/minsikkim/Dropbox (Personal)//Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+phyloseq_unfiltered <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 #sample data loading
 sample_data <- sample_data(phyloseq_unfiltered$phyloseq_count)

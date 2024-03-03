@@ -25,6 +25,12 @@ setwd(path_working)
 
 phyloseq <- readRDS("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu_Jessica.rds")
 
+#Changing taxa name
+
+taxa_names(phyloseq$viral_host_rpkm) <- tax_table(phyloseq$viral_host_rel) %>% data.frame %>% .$Genus
+taxa_names(phyloseq$viral_host_rel) <- tax_table(phyloseq$viral_host_rel) %>% data.frame %>% .$Genus
+
+
 # Adding alpha diversity indices ------------------------------------------
 
 

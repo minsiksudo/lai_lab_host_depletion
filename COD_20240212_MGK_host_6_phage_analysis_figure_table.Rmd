@@ -137,11 +137,15 @@ Conclusion
 ```{r warning=F, message=FALSE, "Data loading"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
-phyloseq <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu.rds")
+phyloseq <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu_Jessica.rds")
 
 m_phyloseq <- phyloseq$microbe_rpkm
 v_phyloseq <- phyloseq$viral_rpkm
+v_h_phyloseq <- phyloseq$viral_host_rpkm
 
+m_phyloseq_rel <- phyloseq$microbe_rel
+v_phyloseq_rel <- phyloseq$viral_rel
+v_h_phyloseq_rel <- phyloseq$viral_host_rel
 
 ```
 
@@ -150,7 +154,7 @@ v_phyloseq <- phyloseq$viral_rpkm
 
 ```{r}           
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(data) %>% .[colSums(.) !=0]
+        otu_table <- otu_table(data) #%>% .[colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -163,23 +167,21 @@ alpha_diversity <- function(data) {
 }
 
 sample_data(m_phyloseq) <- sample_data(alpha_diversity(m_phyloseq)) 
-
 sample_data(v_phyloseq) <- sample_data(alpha_diversity(v_phyloseq)) 
+sample_data(v_h_phyloseq) <- sample_data(alpha_diversity(v_h_phyloseq)) 
 
+
+sample_data(m_phyloseq_rel) <- sample_data(alpha_diversity(m_phyloseq_rel)) 
+sample_data(v_phyloseq_rel) <- sample_data(alpha_diversity(v_phyloseq_rel)) 
+sample_data(v_h_phyloseq_rel) <- sample_data(alpha_diversity(v_h_phyloseq_rel)) 
 
 
 #sample data loading
-m_sample_data <- sample_data(m_phyloseq) %>% data.frame()
 
+m_sample_data <- sample_data(m_phyloseq) %>% data.frame()
 sample_data(v_phyloseq)$Viral_reads <- sample_sums(v_phyloseq)
 v_sample_data <- sample_data(v_phyloseq) %>% data.frame()
-
-
-m_phyloseq_rel <- m_phyloseq %>%
-        transform_sample_counts(., function(x){x/sum(x)})
-
-v_phyloseq_rel <- v_phyloseq %>%
-        transform_sample_counts(., function(x){x/sum(x)})
+v_h_sample_data <- sample_data(v_h_phyloseq) %>% data.frame()
 
 ```
 
@@ -777,6 +779,199 @@ annotate_figure(fig2,
 
 ```
 
+
+### Fig. Viral host of samples
+
+Relative abundances at host Genus level by sample type after employing prevalence and abundance filtering and Top 10 phage in each sample type by mean abundance. (A) BAL, (B) nasal swabs, (C) sputum, and (D) mock community. Empty space indicates samples showed no microbial reads, i.e., sequencing failed samples.
+
+
+```{r, warning=FALSE, message=FALSE}
+
+#{taxa_names(v_h_phyloseq_rel) <-  tax_table(v_h_phyloseq_rel) %>% data.frame %>% .$Genus
+#v_h_phyloseq_rel
+#} %>%
+v_h_phyloseq_rel_renamed <- v_h_phyloseq_rel
+taxa_names(v_h_phyloseq_rel_renamed) <-  tax_table(v_h_phyloseq_rel) %>% data.frame %>% .$Genus
+
+a <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Mock")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Mock")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- paste0("*", .[, 7], "*")
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Mock") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+        phyloseq_temp
+  } %>% 
+        my_plot_bar(., fill="species20") + 
+        xlab("Sample") +
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              axis.text.x = element_text(color = "white")) +
+        guides(fill=guide_legend(title="Top 10 phage's host Genus")) +
+        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+        facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
+        labs(tag = "A")
+        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
+        #            scales= "free_x", nrow=2) +
+        
+
+
+b <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Neg.")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Neg.")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- paste0("*", .[, 7], "*")
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Neg.") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+        phyloseq_temp
+  } %>% 
+        my_plot_bar(., fill="species20") + 
+        ylab("") +
+        xlab("Subject") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              axis.text.x = element_text(color = "white")) +
+        guides(fill=guide_legend(title="Top 10 phage's host Genus")) +
+        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+        #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
+        facet_wrap ( ~ treatment,
+                    scales= "free_x", nrow=1) +
+        ggtitle("E    Negative control")
+
+c <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "BAL")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "BAL")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- paste0("*", .[, 7], "*")
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "BAL") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E")) %>%
+           as.character()
+   phyloseq_temp
+  } %>% 
+        my_plot_bar(., x = "subject_id", fill="species20") + 
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 phage's host Genus")) +
+        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+        #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
+        facet_wrap ( ~ treatment,
+                    scales= "free_x", nrow=1) +
+        ggtitle("A    BAL")
+
+
+d <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- paste0("*", .[, 7], "*")
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")) %>%
+           as.character()
+   phyloseq_temp
+  } %>% 
+        my_plot_bar(., x = "subject_id", fill="species20") + 
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 phage's host Genus")) +
+        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+#        scale_x_discrete(drop=) +
+        facet_wrap(~ treatment,  nrow = 1, drop = T, scales = "free_x") +
+        ggtitle("B    Nasal swabs")
+
+e <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Sputum")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Sputum")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- paste0("*", .[, 7], "*")
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Sputum") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E"))
+   phyloseq_temp
+  } %>%
+        my_plot_bar(., x = "subject_id", fill="species20")+
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 phage's host Genus")) +
+        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+        facet_wrap(~ treatment, scales= "free_x", nrow = 1) +
+        ggtitle("C    Sputum")
+
+
+fig2 <- ggarrange(c, c %>% lemon::g_legend() %>% as_ggplot,
+                  d, d %>% lemon::g_legend() %>% as_ggplot,
+                  e, e %>% lemon::g_legend() %>% as_ggplot,
+                  #a, a %>% lemon::g_legend() %>% as_ggplot,
+                  #b, b %>% lemon::g_legend() %>% as_ggplot,
+                  ncol=2,nrow=3, widths = c(3, 1),
+                  legend = "none",
+                  align = "hv")
+
+annotate_figure(fig2,
+                left = text_grob("Viral relative abundance",
+                                 rot = 90,
+                                 family = "sans", 
+                                 size = 11),
+                bottom = text_grob("Subject",
+                                 rot = 0,
+                                 family = "sans", 
+                                 size = 11)
+)
+
+fig2
+
+```
 
 ### Fig. Viral community of Zymo Mock
 

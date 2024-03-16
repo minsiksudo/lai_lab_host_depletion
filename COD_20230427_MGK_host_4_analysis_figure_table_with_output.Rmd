@@ -481,6 +481,31 @@ alpha_diversity <- function(data) {
         alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
         sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
 }
+sample_data(v_phyloseq$viral_rel) <- sample_data(alpha_diversity(v_phyloseq$viral_rel))
+
+sample_data(phyloseq_unfiltered$phyloseq_count)$V.obs <- 
+        sample_data(v_phyloseq$viral_rel) %>% 
+        data.frame %>% 
+        select("S.obs") %>% 
+#        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
+#                                 .default = S.obs)) %>%
+        .[sample_names(phyloseq_unfiltered$phyloseq_count),]
+
+sample_data(phyloseq_unfiltered$phyloseq_rel)$V.obs <- 
+        sample_data(v_phyloseq$viral_rel) %>% 
+        data.frame %>% 
+        select("S.obs") %>% 
+#        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
+#                                 .default = S.obs)) %>%
+        .[sample_names(phyloseq_unfiltered$phyloseq_count),]
+
+sample_data(phyloseq_unfiltered$phyloseq_path_rpk)$V.obs <- 
+        sample_data(v_phyloseq$viral_rel) %>% 
+        data.frame %>% 
+        select("S.obs") %>% 
+#        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
+#                                 .default = S.obs)) %>%
+        .[sample_names(phyloseq_unfiltered$phyloseq_count),]
 
 phyloseq <- phyloseq_unfiltered
 
@@ -488,8 +513,10 @@ sample_data(phyloseq_unfiltered$phyloseq_rel) <- sample_data(alpha_diversity(phy
 sample_data(phyloseq_unfiltered$phyloseq_count) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_count)) 
 sample_data(phyloseq_unfiltered$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_path_rpk))  
 
-sample_data(v_phyloseq$viral_rel) <- sample_data(alpha_diversity(v_phyloseq$viral_rel))
-sample_data(v_phyloseq$viral_rel)$S.obs
+
+
+        
+
 ```
 
 ## {-}
@@ -1896,7 +1923,7 @@ sample_data(phyloseq$phyloseq_rel) %>%
 
 **Revised Table 1 was constructed after prevalence & abundacne filtering**
 
-**Table 1.** Sequencing results stratified by sample type and host depletion treatment. Number of samples in each experimental group, human and bacterial DNA measured by qPCR, number of samples did not pass the library QC or no microbial mapped reads, QC/d read, % host mapped reads, final reads, species, and functional richness. Richness was calculated after employing prevalence and abundance filtration. Values depicted as N (%) or median (interquartile range). 
+**Table 1.** Sequencing results stratified by sample type and host depletion treatment. Number of samples in each experimental group, human and bacterial DNA measured by qPCR, number of samples did not pass the library QC or no microbial mapped reads, QC/d read, % host mapped reads, final reads, microbial species, function, and viral species richness. Microbial richness was calculated after employing prevalence and abundance filtration. Samples failed sequencing were removed from the calculation. Values depicted as N (%) or median (interquartile range). 
 
 ```{r, warning=F, error=FALSE, results='asis', `QC2 Table - cnt.2`}
 
@@ -1964,18 +1991,25 @@ table1 <- sample_data(phyloseq$phyloseq_count) %>% data.frame() %>%
                                                                     big.mark = ","), 
                                                              ")",
                                                              sep = ""),
-             `Species<br>richness` = paste(median(S.obs, na.rm = T),
+             `Microbial<br>species<br>richness` = paste(median(S.obs, na.rm = T),
                                                              " (", 
                                                              quantile(S.obs, 0.25, na.rm = T),
                                                              ", ",
                                                              quantile(S.obs, 0.75, na.rm = T),
                                                              ")",
                                                              sep = ""),
-            `Function<br>richness` = paste(median(F.obs, na.rm = T),
+            `Microbial function<br>richness` = paste(median(F.obs, na.rm = T),
                                                              " (", 
                                                              quantile(F.obs, 0.25, na.rm = T),
                                                              ", ",
                                                              quantile(F.obs, 0.75, na.rm = T),
+                                                             ")",
+                                                             sep = ""),
+                `Viral<br>species<br>richness` = paste(median(V.obs, na.rm = T),
+                                                             " (", 
+                                                             quantile(V.obs, 0.25, na.rm = T),
+                                                             ", ",
+                                                             quantile(V.obs, 0.75, na.rm = T),
                                                              ")",
                                                              sep = "")
               

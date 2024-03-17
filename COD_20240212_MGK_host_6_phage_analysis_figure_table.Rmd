@@ -155,7 +155,7 @@ v_h_phyloseq_rel <- phyloseq$viral_host_rel
 
 ```{r}           
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(data) #%>% .[colSums(.) !=0]
+        otu_table <- otu_table(v_phyloseq) #%>% .[colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -923,7 +923,18 @@ c_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+        scale_fill_manual(values = c('#ccebc5',# Bacteroides
+                                     "#80b1d3",# Centipeda
+                                     "#fdb462", # Enterococcus
+                                     '#fccde5', # Fusobacterium
+                                     "#bc80bd", # Leptotrichia
+                                     "#b3de69", # Paujensenia
+                                     '#fb8072', # Prevotella
+                                     "#08306b",# Staphyloccocus
+                                     "#cb181d", # Streptococcus
+                                     "#d9d9d9", #Tannelrella
+                                     "darkgrey" #Others
+                                     )) +
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         facet_wrap ( ~ treatment,
                     scales= "free_x", nrow=1) +
@@ -959,7 +970,18 @@ d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+                scale_fill_manual(values = c('#8dd3c7',# Anaerococcus
+                                     "#80b1d3",# Bacillus
+                                     "#B2DF8A", # Corynebacterium
+                                     '#6baed6', # Cutibacterium
+                                     "#bebada", # Dolosigranulum
+                                     "#ffed6f", # Escherichia
+                                     '#fb8072', # Klebsiella
+                                     "#8c96c6",# Lawsonella
+                                     "#006d2c", # Pseudomonas
+                                     "#54278f", #Stagphylococcus
+                                     "darkgrey" #Others
+                                     )) +
 #        scale_x_discrete(drop=) +
         facet_wrap(~ treatment,  nrow = 1, drop = T, scales = "free_x") +
         ggtitle("D    Nasal swabs (viral host genus)")
@@ -992,7 +1014,18 @@ e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+                        scale_fill_manual(values = c('#B2DF8A',# Actinomyces
+                                     "#fdb462", # Escherichia
+                                     "#8dd3c7",# Gemella
+                                     "#b3de69", # Granulicatella
+                                     '#80b1d3', # Pauljensenia
+                                     "#ffffb3", #Pseudomonas
+                                     "#bebada", # Rothia
+                                     "#fb8072", #Staphylococcus	
+                                     "#08519c", #Streptococcus	
+                                     "#fccde5", #UBA7748
+                                     "darkgrey" #Others
+                                     )) +
         facet_wrap(~ treatment, scales= "free_x", nrow = 1) +
         ggtitle("F    Sputum (viral host genus)")
 
@@ -2191,11 +2224,11 @@ setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 
 
 
-filt_maaslin_all <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_maaslin_all.csv")
+filt_maaslin_all_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_maaslin_all.csv")
 #filt_maaslin_interaction <- read.csv("data/da_lmer_filt_maaslin_interaction.csv")
-filt_fit_data_bal <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_bal.csv")
-filt_fit_data_spt <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_spt.csv")
-filt_fit_data_ns <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_ns.csv")
+filt_fit_data_bal_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_bal.csv")
+filt_fit_data_spt_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_spt.csv")
+filt_fit_data_ns_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_ns.csv")
 #filt_fit_data_pos <- read.csv("data/da_lmer_filt_fit_data_pos.csv")
 
 ```
@@ -2233,37 +2266,37 @@ These calculations were made to write the details in the main text
 ```{r}
 
 cat("Factors affecting DA taxa (q<0.1)")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) > 1) %>% .$metadata %>% table
+filt_maaslin_all_v %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) > 1) %>% .$metadata %>% table
 
 cat("Number of positive & significant changes")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate > 0) %>% .$feature %>% unique
+filt_maaslin_all_v %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate > 0) %>% .$feature %>% unique
 
 cat("Number of negative & significant changes")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate < 0) %>% .$feature %>% unique
+filt_maaslin_all_v %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate < 0) %>% .$feature %>% unique
 
 cat("BAL highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_bal %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
+filt_fit_data_bal_v %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 cat("Sputum highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
+filt_fit_data_spt_v %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 cat("NS highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_ns %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
+filt_fit_data_ns_v %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 
 
 cat("NS taxa (q<0.1)")
-filt_fit_data_bal %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+filt_fit_data_bal_v %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
 
 cat("NS taxa (q<0.1)")
-filt_fit_data_ns %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+filt_fit_data_ns_v %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
 
 cat("Sputum taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+filt_fit_data_spt_v %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
 
 
 cat("Sputum taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
+filt_fit_data_spt_v %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
 
 
 
@@ -2363,9 +2396,9 @@ make_sig_table8 <- function(data) {
 
 
 #filt_fit_data_pos <- make_sig_table(filt_fit_data_pos)
-filt_fit_data_bal <- make_sig_table(filt_fit_data_bal)
-filt_fit_data_ns <- make_sig_table(filt_fit_data_ns)
-filt_fit_data_spt <- make_sig_table(filt_fit_data_spt)
+filt_fit_data_bal <- make_sig_table(filt_fit_data_bal_v)
+filt_fit_data_ns <- make_sig_table(filt_fit_data_ns_v)
+filt_fit_data_spt <- make_sig_table(filt_fit_data_spt_v)
 
 
 
@@ -2376,7 +2409,7 @@ filt_fit_data_spt <- make_sig_table(filt_fit_data_spt)
 
 #Volcano plot
 
-figS7 <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = Estimate, col = metadata)) +
+figS7 <- ggplot(filt_maaslin_all_v, aes(y = -log10(qval), x = Estimate, col = metadata)) +
         theme_classic(base_family = "sans") +
         #labs(tag = "A") +
         geom_point(size = 2, alpha = 0.3, stroke = 0) +
@@ -2433,11 +2466,11 @@ setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 
 
 
-filt_maaslin_all <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_maaslin_all.csv")
+filt_maaslin_all_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_maaslin_all.csv")
 #filt_maaslin_interaction <- read.csv("data/da_lmer_filt_maaslin_interaction.csv")
-filt_fit_data_bal <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_bal.csv")
-filt_fit_data_spt <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_spt.csv")
-filt_fit_data_ns <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_ns.csv")
+filt_fit_data_bal_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_bal.csv")
+filt_fit_data_spt_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_spt.csv")
+filt_fit_data_ns_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_ns.csv")
 #filt_fit_data_pos <- read.csv("data/da_lmer_filt_fit_data_pos.csv")
 
 ```
@@ -2475,37 +2508,37 @@ These calculations were made to write the details in the main text
 ```{r}
 
 cat("Factors affecting DA taxa (q<0.1)")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) > 1) %>% .$metadata %>% table
+filt_maaslin_all_v_h %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) > 1) %>% .$metadata %>% table
 
 cat("Number of positive & significant changes")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate > 0) %>% .$feature %>% unique
+filt_maaslin_all_v_h %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate > 0) %>% .$feature %>% unique
 
 cat("Number of negative & significant changes")
-filt_maaslin_all %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate < 0) %>% .$feature %>% unique
+filt_maaslin_all_v_h %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate < 0) %>% .$feature %>% unique
 
 cat("BAL highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_bal %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
+filt_fit_data_bal_v_h %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 cat("Sputum highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
+filt_fit_data_spt_v_h %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 cat("NS highly changed taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_ns %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
+filt_fit_data_ns_v_h %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) >1 ) %>% .$metadata %>% table
 
 
 
 cat("NS taxa (q<0.1)")
-filt_fit_data_bal %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+filt_fit_data_bal_v_h %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
 
 cat("NS taxa (q<0.1)")
-filt_fit_data_ns %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+filt_fit_data_ns_v_h %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
 
 cat("Sputum taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
+filt_fit_data_spt_v_h %>% subset(., .$qval < 0.1 ) %>% .$feature %>% unique
 
 
 cat("Sputum taxa (q<0.1 & abs(.$coef) >1)")
-filt_fit_data_spt %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
+filt_fit_data_spt_v_h %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
 
 
 
@@ -2590,9 +2623,9 @@ make_sig_table8 <- function(data) {
 
 
 #filt_fit_data_pos <- make_sig_table(filt_fit_data_pos)
-filt_fit_data_bal <- make_sig_table18(filt_fit_data_bal)
-filt_fit_data_ns <- make_sig_table8(filt_fit_data_ns)
-filt_fit_data_spt <- make_sig_table(filt_fit_data_spt)
+filt_fit_data_bal <- make_sig_table18(filt_fit_data_bal_v_h)
+filt_fit_data_ns <- make_sig_table8(filt_fit_data_ns_v_h)
+filt_fit_data_spt <- make_sig_table(filt_fit_data_spt_v_h)
 
 
 filt_spt_sig <- subset_taxa(
@@ -2624,23 +2657,49 @@ filt_fit_data_bal$rel <- cbind(filt_bal_sig %>% otu_table %>% t, filt_bal_sig %>
 
 ```{r}
 
+
+
+species_italic <- function(data) {
+  names <- gsub("_", "~", data)
+  names <- ifelse(grepl("~", names), paste("italic('", gsub("~" , "')~", names),   sep = ""),
+                  paste("italic('", names, "')", sep = ""))
+  names <- ifelse(grepl("\\d", names),
+                  names %>% gsub("[italic(']", "", .) %>% gsub("[')]", "", .),
+                  names)
+  names
+}
+
+filt_maaslin_all_v_h$group <-  ifelse(filt_maaslin_all_v_h$Estimate > 0 & filt_maaslin_all_v_h$qval < 0.1, "more",
+                     ifelse(filt_maaslin_all_v_h$Estimate < 0 & filt_maaslin_all_v_h$qval < 0.1, "less",
+                            "insignificant"))
+
 #Volcano plot
 
-figS7_host <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = Estimate, col = metadata)) +
+figS7_host <- filt_maaslin_all_v_h %>% 
+        mutate(feature = species_italic(feature),
+                            feature = case_when(value == "Nasal"~ NA,
+                                              value == "BAL"~ NA,
+                                              value == "Sputum"~ NA,
+                                              qval > 0.1 ~ NA,
+                                              abs(Estimate) < 0.3 ~ NA,
+                                              .default = feature),
+                            label1 = case_when(group == "more" ~ feature,
+                                                       .default = NA),
+                            label2 = case_when(group == "less" ~ feature,
+                                                       .default = NA)
+                            ) %>%
+        ggplot(., aes(y = -log10(qval), x = Estimate, col = metadata)) +
         theme_classic(base_family = "sans") +
         #labs(tag = "A") +
-        geom_point(size = 2, alpha = 0.3, stroke = 0) +
+        geom_point(size = 2, alpha = 0.7, stroke = 0) +
         xlab("Change estimate of CLR-normalized RPKM") +
         ylab("-log<sub>10</sub>(*q*-value)") +
-        #ylim(c(-1, 35)) +
+        ylim(c(-1, 6)) +
+        xlim(c(-7, 8)) +
         geom_hline(yintercept = 1, col = "gray") +
         geom_vline(xintercept = 0, col = "gray") +
         labs(tag = "B")  +
         ggtitle("Viral host genus") +
-        annotate(family = "sans",
-                 geom='richtext',
-                 x=0, y=2,
-                 label = "<i>q</i>-value = 0.1, fold-change = 0") +
         theme(legend.position = "top", axis.title.y = ggtext::element_markdown(), legend.text = element_markdown()) +
         scale_color_manual(values = c("#a65628",
                                       "grey",
@@ -2663,9 +2722,32 @@ figS7_host <- ggplot(filt_maaslin_all, aes(y = -log10(qval), x = Estimate, col =
                                       "HostZERO",
                                       "MolYsis",
                                       "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        guides(col = guide_legend(title = "Factors", title.position = "top", nrow = 1))
+        guides(col = guide_legend(title = "Factors", title.position = "top", nrow = 1)) +
+                ggrepel::geom_text_repel(aes(label = label1),
+                                  point.padding = unit(0.5, "lines"),
+                                  #nudge_y = 10, box.padding = unit(0.35, "lines"),
+                                  na.rm = T,
+                                  parse = T,
+                                  max.overlaps = 34,
+                                  grob = "richtext",
+                                  show.legend = F,
+                                  size=3, segment.size=0.25, nudge_x=5, direction="y") +
+        ggrepel::geom_text_repel(aes(label = label2),
+                                   box.padding = unit(0.35, "lines"),
+                                  #point.padding = unit(0.5, "lines"),
+                                  na.rm = T,
+                                  parse = T,
+                                  max.overlaps = 34,
+                                  grob = "richtext",
+                                  show.legend = F,
+                                  #hjust=0,
+                                  size=3,
+                                  segment.size=0.25,
+                                  nudge_x=-5,
+                                  nudge_y = 2,
+                                  direction="y")
 
-figS7
+figS7_host
 
 ```
 
@@ -2714,8 +2796,8 @@ f5b_host <- merge(filt_fit_data_bal$rel %>%
         #colors for qvalues
         #xlab("Experimental group") +
         #ylab("Species") +
-        labs(tag = "B")  +
-        ggtitle("BAL (viral host genus)") +
+        #labs(tag = "B")  +
+        ggtitle("B  BAL (viral host)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
@@ -2778,8 +2860,8 @@ f5c_host <- merge(filt_fit_data_ns$rel %>%
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
         ylab("Species") +
-        labs(tag = "D")  +
-        ggtitle("Nasal swab (viral host genus)") +
+        #labs(tag = "D")  +
+        ggtitle("Nasal (viral host)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
@@ -2842,8 +2924,8 @@ f5d_host <- merge(filt_fit_data_spt$rel %>%
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
         #ylab("Species") +
-        labs(tag = "F")  +
-        ggtitle("Sputum (viral host genus)") +
+        #labs(tag = "F")  +
+        ggtitle("F  Sputum (viral host)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
@@ -3357,7 +3439,18 @@ b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.title = element_text(size = 6),
               axis.text.x = element_text(color = "white")) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+        scale_fill_manual(values = c("#A6CEE3",
+                                     "#1F78B4",
+                                     "#B2DF8A",
+                                     "#33A02C",
+                                     "#FB9A99",
+                                     "#E31A1C",
+                                     "#FDBF6F",
+                                     "#FF7F00",
+                                     "#CAB2D6",
+                                     "#6A3D9A",
+                                     "#FFFF99")) +
+        
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         facet_wrap ( ~ treatment,
                     scales= "free_x", nrow=1) +
@@ -3409,8 +3502,19 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
+
+        scale_fill_manual(values = c('#8dd3c7',# Alloprevotella
+                                     "#B2DF8A",# Candida
+                                     "#33A02C",
+                                     '#ffffb3', # Cupriavidus
+                                     '#bebada', # Lactobacillus
+                                     "#08519c", # Staphylococcus
+                                     "#08306b",
+                                     "#cb181d",# Streptococcus
+                                     "#a50f15",
+                                     "#67000d",
+                                     "darkgrey" #Others
+                                     )) +
         facet_wrap ( ~ treatment,
                     scales= "free_x", nrow=1) +
         ggtitle("A    BAL (microbial species)")
@@ -3458,7 +3562,20 @@ d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+        
+        scale_fill_manual(values = c('#8dd3c7',# Anaerococcus
+                                     "#B2DF8A",# Corynebacterium
+                                     "#33A02C",
+                                     '#ffffb3', # Cupriavidus
+                                     "#6baed6", # Cutibacterium
+                                     "#1F78B4",
+                                     '#bebada', # Dolosigranulum
+                                     '#fb8072', # Malassezia
+                                     "#54278f",# Straphyloccocus
+                                     "#3f007d",
+                                     "darkgrey" #Others
+                                     )) +
+        
 #        scale_x_discrete(drop=) +
         facet_wrap(~ treatment,  nrow = 1, drop = T, scales = "free_x") +
         ggtitle("C    Nasal swabs (microbial species)")
@@ -3504,7 +3621,19 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
-        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
+        
+        scale_fill_manual(values = c('#B2DF8A',# Actinomyces
+                                     "#33A02C",
+                                     "#8dd3c7", #Gemella
+                                     '#ffffb3', # Pseudomonas
+                                     '#bebada', # Rothia
+                                     '#fb8072', # Staphylococcus
+                                     "#4292c6",# Streptococcus
+                                     "#2171b5",
+                                     "#08519c",
+                                     "#08306b",
+                                     "darkgrey" #Others
+                                     )) +
         facet_wrap(~ treatment, scales= "free_x", nrow = 1) +
         ggtitle("E    Sputum (microbial species)")
 
@@ -3534,7 +3663,7 @@ ggarrange(fig2_y, fig2_vh)
 
 ```{r}
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3_updated.png",   # The directory you want to save the file in
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_updated.png",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
     height = 225, # The height of the plot in inches
     units = "mm",
@@ -4090,7 +4219,7 @@ fig3
 
 ```{r}
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_updated.png",   # The directory you want to save the file in
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3_updated.png",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
     height = 225, # The height of the plot in inches
     units = "mm",
@@ -4110,34 +4239,48 @@ dev.off()
 
 ```{r}
 
-
-figS7 <- 
-
 species_italic <- function(data) {
-  names <- gsub("_", " ", data)
+  names <- gsub("_", "~", data)
   names <- gsub("[]]|[[]", "", names)
-  names <- gsub(" sp", " sp.", names)
-  names <- gsub(" sp.", "* sp.", names)
+  names <- gsub("X.Collinsella.", "Collinsella", names)
+  names <- gsub("~sp", "')~'sp.'", names)
   names <- gsub(" group", "", names)
-  names <- ifelse(grepl("[*]", names), paste("*", names, sep = ""), paste("*", names, "*", sep = ""))
-  names
+  names <- ifelse(grepl("')", names), paste("italic('", names, sep = ""),
+                  paste("italic('", names, "')", sep = ""))
+  names <- ifelse(grepl("sp[.]", names), names,
+                  gsub("~", " ", names))
+    names
 }
 
-filt_maaslin_all %>% mutate(feature = species_italic(feature),
+species_italic(filt_maaslin_all$feature)
+# Example usage
+filt_maaslin_all$italic <- species_italic(filt_maaslin_all$feature)
+
+
+filt_maaslin_all$group <-  ifelse(filt_maaslin_all$Estimate > 0 & filt_maaslin_all$qval < 0.1, "more",
+                     ifelse(filt_maaslin_all$Estimate < 0 & filt_maaslin_all$qval < 0.1, "less",
+                            "insignificant"))
+
+figS7 <- filt_maaslin_all %>% mutate(feature = species_italic(feature),
                             feature = case_when(value == "Nasal"~ NA,
                                               value == "BAL"~ NA,
                                               value == "Sputum"~ NA,
-                                              qval > 0.000001 ~ NA,
-                                              abs(Estimate) < 1 ~ NA,
-                                              .default = feature)
+                                              qval > 0.01 ~ NA,
+                                              abs(Estimate) < 2 ~ NA,
+                                              .default = feature),
+                            label1 = case_when(group == "more" ~ feature,
+                                                       .default = NA),
+                            label2 = case_when(group == "less" ~ feature,
+                                                       .default = NA)
                             ) %>%
-        ggplot(., aes(y = -log10(qval), x = Estimate, col = metadata, label = feature)) +
+        ggplot(., aes(y = -log10(qval), x = Estimate, col = metadata)) +
         theme_classic(base_family = "sans") +
         #labs(tag = "A") +
-        geom_point(size = 2, alpha = 0.3, stroke = 0) +
+        geom_point(size = 2, alpha = 0.7, stroke = 0) +
         xlab("Change estimate of CLR-normalized read counts") +
         ylab("-log<sub>10</sub>(*q*-value)") +
-        #ylim(c(-1, 35)) +
+        ylim(c(-1, 25)) +
+        xlim(c(-20, 22)) +
         geom_hline(yintercept = 1, col = "gray") +
         geom_vline(xintercept = 0, col = "gray") +
         labs(tag = "A")  +
@@ -4169,31 +4312,56 @@ filt_maaslin_all %>% mutate(feature = species_italic(feature),
                                       "MolYsis",
                                       "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
         guides(col = guide_legend(title = "Factors", title.position = "top", nrow = 1)) +
-        ggrepel::geom_text_repel(na.rm = T)
+        ggrepel::geom_text_repel(aes(label = label1),
+                                  point.padding = unit(0.5, "lines"),
+                                  #nudge_y = 10, box.padding = unit(0.35, "lines"),
+                                  na.rm = T,
+                                  parse = T,
+                                  max.overlaps = 34,
+                                  grob = "richtext",
+                                  show.legend = F,
+                                  size=3, segment.size=0.25, nudge_x=15, direction="y") +
+        ggrepel::geom_text_repel(aes(label = label2),
+                                   box.padding = unit(0.35, "lines"),
+                                  #point.padding = unit(0.5, "lines"),
+                                  na.rm = T,
+                                  parse = T,
+                                  max.overlaps = 34,
+                                  grob = "richtext",
+                                  show.legend = F,
+                                  #hjust=0,
+                                  size=3,
+                                  segment.size=0.25,
+                                  nudge_x=-10,
+                                  nudge_y = 10,
+                                  direction="y")
+        
+
+ggarrange(figS7, figS7_host,
+          common.legend = T, ncol = 1,align = "hv")
+figS7_host
+```
+
+```{r}
 
 
-
-filt_maaslin_all %>% mutate(feature = species_italic(feature),
-                            feature = case_when(value == "Nasal"~ NA,
-                                              value == "BAL"~ NA,
-                                              value == "Sputum"~ NA,
-                                              qval > 0.000001 ~ NA,
-                                              abs(Estimate) < 1 ~ NA,
-                                              .default = feature)
-                            ) %>%
-        ggplot(., aes(y = -log10(qval), x = Estimate, col = metadata)) +
-        theme_classic(base_family = "sans") +
-        #labs(tag = "A") +
-        geom_point(size = 2, alpha = 0.3, stroke = 0) +
-        ggrepel::geom_label_repel(aes(y = -log10(qval), x = Estimate, label = feature), na.rm = T)
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_updated.png",   # The directory you want to save the file in
+    width = 170, # The width of the plot in inches
+    height = 225, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
 
 
 ggarrange(figS7, figS7_host,
-          common.legend = T, ncol = 1)
+          common.legend = T, ncol = 1,align = "hv")
 
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
 ```
-
-
 
 
 ### Updated figure 4
@@ -4300,8 +4468,8 @@ f5b <- merge(filt_fit_data_bal$rel %>%
         #colors for qvalues
         #xlab("Experimental group") +
         #ylab("Species") +
-        labs(tag = "A")  +
-        ggtitle("BAL (microbial species)") +
+        #labs(tag = "A")  +
+        ggtitle("A  BAL (microbe)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
@@ -4363,9 +4531,9 @@ f5c <- merge(filt_fit_data_ns$rel %>%
         #colors for qvalues
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
-        ylab("Species") +
-        labs(tag = "C")  +
-        ggtitle("Nasal swab (microbial species)") +
+        #ylab("Species") +
+        #labs(tag = "C")  +
+        ggtitle("C  Nasal swab (microbe)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
@@ -4428,8 +4596,8 @@ f5d <- merge(filt_fit_data_spt$rel %>%
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
         #ylab("Species") +
-        labs(tag = "E")  +
-        ggtitle("Sputum (microbial species)") +
+        #labs(tag = "E")  +
+        ggtitle("E  Sputum (microbe)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
@@ -4470,6 +4638,22 @@ fig4 <- ggarrange(f5c %>% lemon::g_legend() %>% as_ggplot,
                   ncol=1, heights = c(1.5, 12),
                   align = "v")
 
+
+
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS8_updated.png",   # The directory you want to save the file in
+    width = 170, # The width of the plot in inches
+    height = 225, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+fig4
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
 
 fig4
 

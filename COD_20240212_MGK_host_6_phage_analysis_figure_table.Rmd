@@ -155,7 +155,7 @@ v_h_phyloseq_rel <- phyloseq$viral_host_rel
 
 ```{r}           
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(v_phyloseq) #%>% .[colSums(.) !=0]
+        otu_table <- otu_table(v_phyloseq) %>% .[, colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -2308,7 +2308,7 @@ filt_fit_data_spt_v %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
 
 **Fig. S8.** Volcano plot of differential abundance of microbes by each treatment with a model MaAsLin (relative abundance of each taxa ~ sample type + lyPMA + Benzonase + HostZERO + MolYsis + QIAamp, random effect = subject id).
 
-```{r warning=FALSE, message=FALSE, "MaAslin Function continued2"}
+```{r warning=FALSE, message=FALSE}
 
 #Making significance table for figure
         # Define a function to make species names italicized
@@ -2478,7 +2478,7 @@ filt_fit_data_ns_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_m
 ### MaAsLin output (raw data)
 
 ```{r}
-filt_maaslin_all
+filt_maaslin_all_v_h
 ```
 
 ### MaAsLin output (stratified)
@@ -2486,19 +2486,19 @@ filt_maaslin_all
 BAL stratified MaAsLin result
 
 ```{r}
-filt_fit_data_bal
+filt_fit_data_bal_v_h
 ```
 
 Nasal stratified MaAsLin result
 
 ```{r}
-filt_fit_data_ns
+filt_fit_data_ns_v_h
 ```
 
 Sputum stratified MaAsLin result
 
 ```{r}
-filt_fit_data_spt
+filt_fit_data_spt_v_h
 ```
 
 ### Number of taxa on some conditions
@@ -2550,7 +2550,7 @@ filt_fit_data_spt_v_h %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
 
 **Fig. S8.** Volcano plot of differential abundance of microbes by each treatment with a model MaAsLin (relative abundance of each taxa ~ sample type + lyPMA + Benzonase + HostZERO + MolYsis + QIAamp, random effect = subject id).
 
-```{r warning=FALSE, message=FALSE, "MaAslin Function continued2"}
+```{r warning=FALSE, message=FALSE}
 
 #Making significance table for figure
         # Define a function to make species names italicized
@@ -2968,15 +2968,17 @@ fig4 <- ggarrange(f5c_host %>% lemon::g_legend() %>% as_ggplot,
 fig4
 
 ```
+
+
 ### Table S8. List of DA taxa
 
 **Table S8.** List of differentially abundant taxa identified by MaAsLin (Beghini et al., 2021). Significant associations (q-value < 0.1) that is showing high change ( | log2(fold-change) | > 0.5) were listed.
 
 ```{r, warning=FALSE, message=FALSE}
 
-filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 4) 
+filt_maaslin_all_v %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 4) 
 
-tableS8 <- filt_maaslin_all %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 4) %>% dplyr::select(c("feature", "metadata", "Estimate", "qval")) %>%
+tableS8 <- filt_maaslin_all_v %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 4) %>% dplyr::select(c("feature", "metadata", "Estimate", "qval")) %>%
         mutate(feature = paste("<i>", gsub("_", " ", feature), sep = "") %>%
                        gsub(" sp", "</i> sp.", .) %>% gsub(" group", "", .)) %>%
         mutate(feature = case_when(!grepl("</i>", feature) ~ paste(feature, "</i>", sep = ""),
@@ -3004,9 +3006,9 @@ tableS8
 
 ```
 
-# List of updated figures
+## Microbial - viral correlation
 
-### File wrangling 
+### Microbial file wrangling 
 
 ```{r}
 setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
@@ -3023,7 +3025,7 @@ filt_fit_data_ns <- read.csv("data/da_lmer_filt_fit_data_ns.csv")
 
 
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(data) %>% .[colSums(.) !=0]
+        otu_table <- otu_table(data) %>% .[, colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -3289,7 +3291,7 @@ phyloseq$phyloseq_path_rpk <- prune_taxa(subset(red_flag_function, red_flag_func
 #Calculation of alpha diversity indices for filtered samples
 
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(data) %>% .[colSums(.) !=0]
+        otu_table <- otu_table(data) %>% .[, colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -3311,6 +3313,215 @@ sample_data(phyloseq_decontam$phyloseq_count) <- sample_data(alpha_diversity(phy
 sample_data <- sample_data(phyloseq$phyloseq_count)
 
 ```
+
+# Microbial filtering
+
+All data
+
+```{r}
+#OTU table of microbial output
+otu_bac <- phyloseq$phyloseq_rel %>%
+        otu_table(., taxa_are_rows = F) %>%
+        data.frame(., check.names = F) 
+
+#Changing viral taxa name into their host genus
+taxa_names(v_h_phyloseq_rel) <- v_h_phyloseq_rel %>%
+        tax_table %>% 
+        data.frame %>% 
+        .$Genus
+
+#OTU table of viral output
+otu_v_h <- v_h_phyloseq_rel %>%
+        otu_table(., taxa_are_rows = F) %>%
+        data.frame(., check.names = F)
+
+#Calculation of Spearman correlation matrix
+spearman_corr <- Hmisc::rcorr(as.matrix(t(bind_rows(otu_bac, otu_v_h))), # 2 OTU tables were binned into 1. 
+                              type="spearman") #bind_rows were used as 1 viral output is missing 1 sample
+                                                # 
+#Making a function that makes correlation matrix into tidy flat data (long format)
+flattenCorrMatrix <- function(cormat, pmat) {
+        cormat <- cormat %>% reshape2::melt() %>% rename(r = value)
+        pmat <- pmat %>% reshape2::melt() %>% rename(p = value)
+        cormat$p <- pmat$p
+        cormat
+}
+
+
+
+
+#Making a flat table with adjusted p-values.
+flat_corr <- flattenCorrMatrix(spearman_corr$r, spearman_corr$P) %>%
+        mutate(qval = qvalue::qvalue(`p`)$qvalue,
+               p_bh = p.adjust(p = `p`, method = "BH"),
+               p_b = p.adjust(p = `p`, method = "bonferroni"),
+               fdr = p.adjust(p = `p`, method = "fdr")) %>%
+        subset(., .$Var1 %in% taxa_names(v_h_phyloseq_rel)) %>%
+        subset(., !(.$Var2 %in% taxa_names(v_h_phyloseq_rel)))# %>%
+        #subset(., .$p_b < 0.05) # bonferroni & 0.001 criteria was used as their correction was the strongest
+      
+heatmap_corr <- flat_corr %>% select(c("Var1", "Var2", "r")) %>%
+        spread(., Var2, r) %>% 
+        column_to_rownames("Var1") %>%
+        as.matrix(.)
+
+
+#pdf(file ="figures/FIG3C.pdf",
+#    width = 13, height = 9)
+ComplexHeatmap::Heatmap(heatmap_corr,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "white"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_names_rot = 45,
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        #col=colorRamp2(c(-.2, 0, .4), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman\n(rho)"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+#dev.off()
+
+
+
+```
+
+p-Bonferroni < 0.5 removed data
+
+```{r}
+
+
+#Making a flat table with adjusted p-values.
+flat_corr <- flattenCorrMatrix(spearman_corr$r, spearman_corr$P) %>%
+        mutate(qval = qvalue::qvalue(`p`)$qvalue,
+               p_bh = p.adjust(p = `p`, method = "BH"),
+               p_b = p.adjust(p = `p`, method = "bonferroni"),
+               fdr = p.adjust(p = `p`, method = "fdr")) %>%
+        subset(., .$Var1 %in% taxa_names(v_h_phyloseq_rel)) %>%
+        subset(., !(.$Var2 %in% taxa_names(v_h_phyloseq_rel))) %>%
+        mutate(r = case_when(p_b > 0.05 ~ 0,
+                             .default = r)) # bonferroni & 0.001 criteria was used as their correction was the strongest
+
+heatmap_corr <- flat_corr %>% select(c("Var1", "Var2", "r")) %>%
+        spread(., Var2, r) %>% 
+        column_to_rownames("Var1") %>%
+        #filter(all_vars(!is.na(.))) %>%
+        as.matrix(.) 
+
+
+
+#pdf(file ="figures/FIG3C.pdf",
+#    width = 13, height = 9)
+ComplexHeatmap::Heatmap(heatmap_corr,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "grey"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_names_rot = 45,
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        col=circlize::colorRamp2(c(-1, 0, 1), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman\n(rho)"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+#dev.off()
+
+
+
+```
+
+### bacterial genus - viral host
+
+```{r}
+
+#genus level phyloseq object
+phyloseq_m_genus <- tax_glom(phyloseq$phyloseq_count, taxrank = "Genus") %>% transform_sample_counts(., function(x){x/sum(x)})
+
+taxa_names(phyloseq_m_genus) <- phyloseq_m_genus %>% tax_table() %>% data.frame() %>% .$Genus %>% gsub("g__", "", .) %>% gsub("_XIII_Incertae_Sedis_unclassified", "", .)
+
+#OTU table of microbial output
+otu_bac <- phyloseq_m_genus %>%
+        otu_table(., taxa_are_rows = F) %>%
+        data.frame(., check.names = F) 
+
+#Changing viral taxa name into their host genus
+taxa_names(v_h_phyloseq_rel) <- v_h_phyloseq_rel %>%
+        tax_table %>% 
+        data.frame %>% 
+        .$Genus %>%
+        paste0("v_", .)
+
+#OTU table of viral output
+otu_v_h <- v_h_phyloseq_rel %>%
+        otu_table(., taxa_are_rows = F) %>%
+        data.frame(., check.names = F)
+
+#Calculation of Spearman correlation matrix
+spearman_corr <- Hmisc::rcorr(as.matrix(t(bind_rows(otu_bac, otu_v_h))), # 2 OTU tables were binned into 1. 
+                              type="spearman") #bind_rows were used as 1 viral output is missing 1 sample
+                                                # 
+#Making a function that makes correlation matrix into tidy flat data (long format)
+flattenCorrMatrix <- function(cormat, pmat) {
+        cormat <- cormat %>% reshape2::melt() %>% rename(r = value)
+        pmat <- pmat %>% reshape2::melt() %>% rename(p = value)
+        cormat$p <- pmat$p
+        cormat
+}
+
+
+#Making a flat table with adjusted p-values.
+flat_corr <- flattenCorrMatrix(spearman_corr$r, spearman_corr$P) %>%
+        mutate(qval = qvalue::qvalue(`p`)$qvalue,
+               p_bh = p.adjust(p = `p`, method = "BH"),
+               p_b = p.adjust(p = `p`, method = "bonferroni"),
+               fdr = p.adjust(p = `p`, method = "fdr")) %>%
+        subset(., grepl("v_", .$Var1)) %>%
+        subset(.,  !grepl("v_", .$Var2)) %>%
+        mutate(r = case_when(p_b > 0.05 ~ 0,
+                             .default = r)) # bonferroni & 0.001 criteria was used as their correction was the strongest
+heatmap_corr <- flat_corr %>% select(c("Var1", "Var2", "r")) %>%
+        spread(., Var2, r) %>% 
+        column_to_rownames("Var1") %>%
+        as.matrix(.)#
+rownames(heatmap_corr) <- rownames(heatmap_corr) %>% gsub("v_", "", .)
+
+#pdf(file ="figures/FIG3C.pdf",
+#    width = 13, height = 9)
+
+
+
+ComplexHeatmap::Heatmap(heatmap_corr,
+                        column_order = colnames(heatmap_corr) %>% order,
+                        row_order = rownames(heatmap_corr) %>% order,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "grey"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_names_rot = 45,
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        row_title = "Viral host",
+        column_title =  "Microbial genus",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        col=circlize::colorRamp2(c(-1, 0, 1), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman\n(rho)"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+#dev.off()
+
+
+
+```
+
+# List of updated figures
 
 ### Updated barplot
 

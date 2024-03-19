@@ -3006,7 +3006,7 @@ tableS8
 
 ```
 
-## Microbial - viral correlation
+## Microbial - viral host correlation
 
 ### Microbial file wrangling 
 
@@ -3314,9 +3314,10 @@ sample_data <- sample_data(phyloseq$phyloseq_count)
 
 ```
 
-# Microbial filtering
+### bacterial species - viral host genus without filtering
 
-All data
+All data without p-value based filtering
+
 
 ```{r}
 #OTU table of microbial output
@@ -3389,7 +3390,9 @@ ComplexHeatmap::Heatmap(heatmap_corr,
 
 ```
 
-p-Bonferroni < 0.5 removed data
+### bacterial species - viral host genus
+
+p-Bonferroni < 0.5 removed (noted was white) data
 
 ```{r}
 
@@ -3437,6 +3440,8 @@ ComplexHeatmap::Heatmap(heatmap_corr,
 ```
 
 ### bacterial genus - viral host
+
+Data with p-Bonferroni filtering
 
 ```{r}
 

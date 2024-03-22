@@ -33,7 +33,7 @@ editor_options:
 
 path_working <- 
         ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
-               "/home/bagel/minsik/",
+               "/mnt/240_intel/Dropbox/",
                ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
                       "/Volumes/macdrive/Dropbox/", 
                       "/Users/minsikkim/Dropbox (Personal)"))

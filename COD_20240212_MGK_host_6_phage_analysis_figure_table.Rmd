@@ -2572,6 +2572,9 @@ species_italic <- function(data) {
   names <- gsub(" sp.", "* sp.", names)
   names <- gsub(" group", "", names)
   names <- ifelse(grepl("[*]", names), paste("*", names, sep = ""), paste("*", names, "*", sep = ""))
+  names <- ifelse(grepl("\\d", names),
+                  names %>% gsub("[*]", "", .),
+                  names)
   rownames(data) <- names
   data
 }
@@ -2661,7 +2664,7 @@ figS7_host <- filt_maaslin_all_v_h %>%
                                               value == "BAL"~ NA,
                                               value == "Sputum"~ NA,
                                               qval > 0.1 ~ NA,
-                                              abs(Estimate) < 0.3 ~ NA,
+                                              #abs(Estimate) < 0.3 ~ NA,
                                               .default = feature),
                             label1 = case_when(group == "more" ~ feature,
                                                        .default = NA),
@@ -2949,8 +2952,8 @@ fig4
 ```{r, warning=FALSE, message=FALSE}
 
 DA_vh_all <- filt_maaslin_all_v_h %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.1)  %>% .$feature %>% unique
-        
-        
+DA_vh_all <- filt_maaslin_all_v_h %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.1 & abs(.$Estimate)> 0.3)  %>% .$feature %>% unique
+
 DA_vh_strtfd <- c(
         filt_fit_data_bal_v_h %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.1)  %>% .$feature %>% unique,
         filt_fit_data_ns_v_h %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.1)  %>% .$feature %>% unique,
@@ -5480,7 +5483,9 @@ species_italic <- function(data) {
 
 
 
-col_labels <- colnames(heatmap_corr) %>% .[order(.)] %>% species_italic()
+col_labels <- colnames(heatmap_corr) %>% 
+        #.[order(.)] %>% 
+        species_italic()
 
 
 
@@ -5498,6 +5503,14 @@ row_labels <- rownames(heatmap_corr) %>%
         #.[order(.)] %>% 
         species_italic()
 
+
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS15.png",   # The directory you want to save the file in
+    width = 170, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
 
 
 ComplexHeatmap::Heatmap(heatmap_corr, 
@@ -5522,7 +5535,7 @@ ComplexHeatmap::Heatmap(heatmap_corr,
           grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
                       grid::gpar(fontsize = 7, col="white"))})
 
-
+dev.off()
 
 ```
 

@@ -27,6 +27,15 @@ phyloseq <- readRDS("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_202402
 
 #Changing taxa name
 
+tax_table(phyloseq$viral_host_rpkm) <- tax_table(phyloseq$viral_host_rpkm) %>% data.frame %>% 
+        mutate(Genus = gsub("_A|_B", "", Genus)) %>% as.matrix %>% tax_table()
+
+tax_table(phyloseq$viral_host_rel) <- tax_table(phyloseq$viral_host_rel) %>% data.frame %>% 
+        mutate(Genus = gsub("_A|_B", "", Genus)) %>% as.matrix %>% tax_table()
+
+phyloseq$viral_host_rpkm <- tax_glom(physeq = phyloseq$viral_host_rpkm, taxrank = "Genus")
+phyloseq$viral_host_rel <- tax_glom(physeq = phyloseq$viral_host_rel, taxrank = "Genus")
+
 taxa_names(phyloseq$viral_host_rpkm) <- tax_table(phyloseq$viral_host_rel) %>% data.frame %>% .$Genus
 taxa_names(phyloseq$viral_host_rel) <- tax_table(phyloseq$viral_host_rel) %>% data.frame %>% .$Genus
 
@@ -451,7 +460,7 @@ lmer_taxa_all <- lmer_taxa_all %>%
 #lmer_taxa_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table
 
 lmer_taxa_bal <- lmer_taxa_bal %>%
-        mutate(qval = qvalue::qvalue(`Pr(>|t|)`)$qvalue,
+        mutate(qval = qvalue::qvalue(`Pr(>|t|)`, lambda = 0)$qvalue,
                p_bh = p.adjust(p = `Pr(>|t|)`, method = "BH"))  
 
 lmer_taxa_ns <-  lmer_taxa_ns %>% 
@@ -725,8 +734,9 @@ lmer_taxa_all <- lmer_taxa_all %>%
 
 #lmer_taxa_all %>% subset(., .$qval < 0.1) %>% .$metadata %>% table
 
+
 lmer_taxa_bal <- lmer_taxa_bal %>%
-        mutate(qval = qvalue::qvalue(`Pr(>|t|)`)$qvalue,
+        mutate(qval = qvalue::qvalue(`Pr(>|t|)`, lambda = 0)$qvalue,
                p_bh = p.adjust(p = `Pr(>|t|)`, method = "BH"))  
 
 lmer_taxa_ns <-  lmer_taxa_ns %>% 

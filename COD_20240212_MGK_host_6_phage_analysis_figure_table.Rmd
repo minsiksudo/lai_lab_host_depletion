@@ -43,7 +43,7 @@ path_library <-
                "/home/bagel/R/x86_64-pc-linux-gnu-library/4.1/",
                "/Library/Frameworks/R.framework/Resources/library/")
 
-str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car", "mediation", "lemon", "qvalue")
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gamm4", "reshape2", "kableExtra", "knitr", "ggtree", "car", "mediation", "lemon", "qvalue", "gridtext")
         
 YAML_header <-
 '---
@@ -920,6 +920,7 @@ c_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.03, 0.97),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
@@ -938,7 +939,8 @@ c_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         facet_wrap ( ~ treatment,
                     scales= "free_x", nrow=1) +
-        ggtitle("B    BAL (viral host genus)")
+        ggtitle("BAL (viral host genus)") +
+        labs(tag = "B")
 
 
 d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
@@ -967,6 +969,7 @@ d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.03, 0.97),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
@@ -984,7 +987,8 @@ d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
                                      )) +
 #        scale_x_discrete(drop=) +
         facet_wrap(~ treatment,  nrow = 1, drop = T, scales = "free_x") +
-        ggtitle("D    Nasal swabs (viral host genus)")
+        ggtitle("Nasal swabs (viral host genus)") +
+        labs(tag = "D")
 
 e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
                               sample_type == "Sputum")) %>%
@@ -1012,6 +1016,7 @@ e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
+              plot.tag.position = c(0.03, 0.97),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
                         scale_fill_manual(values = c('#B2DF8A',# Actinomyces
@@ -1027,7 +1032,8 @@ e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
                                      "darkgrey" #Others
                                      )) +
         facet_wrap(~ treatment, scales= "free_x", nrow = 1) +
-        ggtitle("F    Sputum (viral host genus)")
+        ggtitle("Sputum (viral host genus)") +
+        labs(tag = "F")
 
 
 fig2_vh <- ggarrange(c_vh, c_vh %>% lemon::g_legend() %>% as_ggplot,
@@ -1109,11 +1115,11 @@ f3a_v <- ggplot(subset(sample_data(v_phyloseq) %>%
         theme_classic (base_size = 12, base_family = "sans") + 
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using 
         scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using 
-
-        ggtitle("B   Viral alpha diversity") +
-
+        ggtitle("Viral alpha diversity") +
+        labs(tag = "B") +
         theme(plot.tag = element_text(size = 15),
               axis.text.x = element_blank(),
+              plot.tag.position = c(0.03, 0.97),
               axis.ticks.x = element_blank(),
               legend.position = "top") +
         facet_wrap(~sample_type, nrow = 1) + 
@@ -2151,9 +2157,11 @@ f3b2_box_v <- horn_dist_long_within_sampleid_from_control %>%
         theme_classic (base_size = 12, base_family = "sans") + 
         theme(plot.tag = element_text(size = 15),
               axis.text.y = element_blank(),
+              plot.tag.position = c(0.03, 0.97),
               axis.ticks.y = element_blank(),
               legend.position = "none") +
-        ggtitle("D   Viral beta diversity") +
+        ggtitle("Viral beta diversity") +
+        labs(tag = "D") +
         geom_vline(xintercept = 0, col = "black", linetype="dotted") +
         #coord_cartesian(xlim=c(-0.5, 1)) +
         #geom_text(aes(x = 0, label = treatment), hjust = 0, nudge_x = -.55, size = 3, color = "black", family = "sans") +
@@ -2236,7 +2244,7 @@ filt_fit_data_ns_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_mac
 ### MaAsLin output (raw data)
 
 ```{r}
-filt_maaslin_all
+filt_maaslin_all_v
 ```
 
 ### MaAsLin output (stratified)
@@ -2244,19 +2252,19 @@ filt_maaslin_all
 BAL stratified MaAsLin result
 
 ```{r}
-filt_fit_data_bal
+filt_fit_data_bal_v
 ```
 
 Nasal stratified MaAsLin result
 
 ```{r}
-filt_fit_data_ns
+filt_fit_data_ns_v
 ```
 
 Sputum stratified MaAsLin result
 
 ```{r}
-filt_fit_data_spt
+filt_fit_data_spt_v
 ```
 
 ### Number of taxa on some conditions
@@ -2555,7 +2563,9 @@ filt_fit_data_spt_v_h %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
 #Making significance table for figure
         # Define a function to make species names italicized
 # Make a significance table for each figure (top 20 taxa)
+ 
 species_italic <- function(data) {
+  names <- gsub("_A|_B", "", rownames(data))
   names <- gsub("_", " ", rownames(data))
   names <- gsub("[]]|[[]", "", names)
   names <- gsub(" sp", " sp.", names)
@@ -2565,6 +2575,7 @@ species_italic <- function(data) {
   rownames(data) <- names
   data
 }
+
 species_revise <- function(data) {
   data$feature <- gsub("Saccharomyces_cerevisiae_x_Saccharomyces_kudriavzevii", "S._cerevisiae x S._kudriavzevii", data$feature)
   data$feature <- gsub("Pseudomonas_aeruginosa_group", "Pseudomonas_aeruginosa", data$feature)
@@ -2576,42 +2587,11 @@ species_revise <- function(data) {
 
 
 
-make_sig_table <- function(data) {
+make_sig_table <- function(data, number) {
   sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
   sig_data <- species_revise(sig_data)
   sig_data$min <- apply(sig_data %>% dplyr::select(c("lypma", "benzonase", "molysis", "host_zero", "qiaamp")), 1, FUN = min)
-  sig_data <- sig_data[order(sig_data$min),] %>% dplyr::select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:20,]
-  sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
-  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>%
-          column_to_rownames(var = "feature") %>% species_italic %>% dplyr::select(-c("-")) %>%
-          rename(lyPMA = lypma,  Benzonase = benzonase, `HostZERO` = host_zero, MolYsis = molysis, QIAamp = qiaamp)
-  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame(check.names = F)
-  return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
-}
-
-
-
-
-make_sig_table18 <- function(data) {
-  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
-  sig_data <- species_revise(sig_data)
-  sig_data$min <- apply(sig_data %>% dplyr::select(c("lypma", "benzonase", "molysis", "host_zero", "qiaamp")), 1, FUN = min)
-  sig_data <- sig_data[order(sig_data$min),] %>% dplyr::select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:18,]
-  sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
-  sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>%
-          column_to_rownames(var = "feature") %>% species_italic %>% dplyr::select(-c("-")) %>%
-          rename(lyPMA = lypma,  Benzonase = benzonase, `HostZERO` = host_zero, MolYsis = molysis, QIAamp = qiaamp)
-  sig_data_sig <- ifelse(sig_data_italic < 0.1, "*", NA) %>% data.frame(check.names = F)
-  return(list(data = sig_data, data_italic = sig_data_italic, data_sig = sig_data_sig))
-}
-
-
-
-make_sig_table8 <- function(data) {
-  sig_data <- spread(data[order(data$qval), c("feature", "metadata", "qval")], metadata, qval)
-  sig_data <- species_revise(sig_data)
-  sig_data$min <- apply(sig_data %>% dplyr::select(c("lypma", "benzonase", "molysis", "host_zero", "qiaamp")), 1, FUN = min)
-  sig_data <- sig_data[order(sig_data$min),] %>% dplyr::select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:8,]
+  sig_data <- sig_data[order(sig_data$min),] %>% dplyr::select("feature", "lypma", "benzonase", "host_zero", "molysis", "qiaamp") %>% .[1:number,]
   sig_data[["feature"]] <- ifelse(sig_data[["feature"]] == "X.Collinsella._massiliensis", "[Collinsella]_massiliensis", sig_data[["feature"]])
   sig_data_italic <- sig_data %>% rownames_to_column(var = "-") %>%
           column_to_rownames(var = "feature") %>% species_italic %>% dplyr::select(-c("-")) %>%
@@ -2623,9 +2603,9 @@ make_sig_table8 <- function(data) {
 
 
 #filt_fit_data_pos <- make_sig_table(filt_fit_data_pos)
-filt_fit_data_bal <- make_sig_table18(filt_fit_data_bal_v_h)
-filt_fit_data_ns <- make_sig_table8(filt_fit_data_ns_v_h)
-filt_fit_data_spt <- make_sig_table(filt_fit_data_spt_v_h)
+filt_fit_data_bal <- make_sig_table(filt_fit_data_bal_v_h, 17)
+filt_fit_data_ns <- make_sig_table(filt_fit_data_ns_v_h, 8)
+filt_fit_data_spt <- make_sig_table(filt_fit_data_spt_v_h, 20)
 
 
 filt_spt_sig <- subset_taxa(
@@ -2651,7 +2631,7 @@ filt_fit_data_bal$rel <- cbind(filt_bal_sig %>% otu_table %>% t, filt_bal_sig %>
         .[row.names(filt_fit_data_bal$data_italic),] %>%
         mutate_all(~na_if(., 0)) %>% rownames_to_column("feature") %>% subset(., !grepl("NA", .$feature))
 
-
+#filt_fit_data_bal$rel$feature <- gsub("", "", filt_fit_data_bal$rel$feature )
 ```
 
 
@@ -2660,7 +2640,7 @@ filt_fit_data_bal$rel <- cbind(filt_bal_sig %>% otu_table %>% t, filt_bal_sig %>
 
 
 species_italic <- function(data) {
-  names <- gsub("_", "~", data)
+  names <- gsub("_A|_B", "", data)
   names <- ifelse(grepl("~", names), paste("italic('", gsub("~" , "')~", names),   sep = ""),
                   paste("italic('", names, "')", sep = ""))
   names <- ifelse(grepl("\\d", names),
@@ -2796,10 +2776,12 @@ f5b_host <- merge(filt_fit_data_bal$rel %>%
         #colors for qvalues
         #xlab("Experimental group") +
         #ylab("Species") +
-        #labs(tag = "B")  +
-        ggtitle("B  BAL (viral host)") +
+        labs(tag = "B", title = "BAL (viral host)")  +
+        #ggtitle("B  BAL (viral host)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
+              plot.title = element_text(hjust = 1),
+              plot.tag.position = c(0.05, 0.95),
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
@@ -2818,12 +2800,8 @@ f5b_host <- merge(filt_fit_data_bal$rel %>%
                                    order = 1,
                                    nrow = 1)
                ) + 
-        scale_x_discrete(labels=c("control" = "Untreated",
-                                  "lypma" = "lyPMA",
-                                  "benzonase" = "Benzonase",
-                                  "host_zero" = "Host-zero",
-                                  "molysis" = "MolYsis",
-                                  "qiaamp" = "QIAamp")
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                labels=c("U", "L", "B", "H", "M","Q")
                          )
 
 f5c_host <- merge(filt_fit_data_ns$rel %>%
@@ -2858,12 +2836,14 @@ f5c_host <- merge(filt_fit_data_ns$rel %>%
         theme_classic(base_family = "sans") +
         #colors for qvalues
         gradient_fill(c("#006d2c", "#edf8fb")) +
-        xlab("Experimental group") +
-        ylab("Species") +
-        #labs(tag = "D")  +
-        ggtitle("Nasal (viral host)") +
+        #xlab("Experimental group") +
+        ylab("Viral host genus") +
+        labs(tag = "D", title = "Nasal swab (viral host)")  +
+        #ggtitle("D Nasal swab (viral host)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
+              plot.title = element_text(hjust = 1),
+              plot.tag.position = c(0.05, 0.95),
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
@@ -2883,12 +2863,8 @@ f5c_host <- merge(filt_fit_data_ns$rel %>%
                                    order = 1,
                                    nrow = 1),
                ) + 
-        scale_x_discrete(labels=c("control" = "Untreated",
-                                  "lypma" = "lyPMA",
-                                  "benzonase" = "Benzonase",
-                                  "host_zero" = "Host-zero",
-                                  "molysis" = "MolYsis",
-                                  "qiaamp" = "QIAamp")
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                labels=c("U", "L", "B", "H", "M","Q")
                          )
 
 f5d_host <- merge(filt_fit_data_spt$rel %>%
@@ -2922,18 +2898,19 @@ f5d_host <- merge(filt_fit_data_spt$rel %>%
         theme_classic(base_family = "sans") +
         #colors for qvalues
         gradient_fill(c("#006d2c", "#edf8fb")) +
-        xlab("Experimental group") +
+        #xlab("Experimental group") +
         #ylab("Species") +
-        #labs(tag = "F")  +
-        ggtitle("F  Sputum (viral host)") +
+        labs(tag = "F", title = "Sputum (viral host)")  +
+        #ggtitle("F  Sputum (viral host)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
+              plot.title = element_text(hjust = -4),
+              plot.tag.position = c(0.05, 0.95),
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
-              #axis.title.x = element_blank(),
-              axis.title.x = element_text(margin = margin(t = 0)),
               axis.title.y = element_blank(),
+              axis.title.x = element_blank(),
               plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
@@ -2948,12 +2925,8 @@ f5d_host <- merge(filt_fit_data_spt$rel %>%
                                    order = 1,
                                    nrow = 1),
                ) + 
-        scale_x_discrete(labels=c("control" = "Untreated",
-                                  "lypma" = "lyPMA",
-                                  "benzonase" = "Benzonase",
-                                  "host_zero" = "Host-zero",
-                                  "molysis" = "MolYsis",
-                                  "qiaamp" = "QIAamp")
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                labels=c("U", "L", "B", "H", "M","Q")
                          )
 
 fig4 <- ggarrange(f5c_host %>% lemon::g_legend() %>% as_ggplot,
@@ -2970,39 +2943,19 @@ fig4
 ```
 
 
-### Table S8. List of DA taxa
+### List of DA host
 
-**Table S8.** List of differentially abundant taxa identified by MaAsLin (Beghini et al., 2021). Significant associations (q-value < 0.1) that is showing high change ( | log2(fold-change) | > 0.5) were listed.
 
 ```{r, warning=FALSE, message=FALSE}
 
-filt_maaslin_all_v %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 4) 
-
-tableS8 <- filt_maaslin_all_v %>% subset(., .$qval < 0.1 & abs(.$Estimate) > 4) %>% dplyr::select(c("feature", "metadata", "Estimate", "qval")) %>%
-        mutate(feature = paste("<i>", gsub("_", " ", feature), sep = "") %>%
-                       gsub(" sp", "</i> sp.", .) %>% gsub(" group", "", .)) %>%
-        mutate(feature = case_when(!grepl("</i>", feature) ~ paste(feature, "</i>", sep = ""),
-                                   .default = feature))%>% 
-        rename(Taxa = "feature",
-                     `Fixed effect` = "metadata",
-                     "Change estimate of CLR transformed count" = "Estimate",
-                     `<i>q<i/>-value` = "qval") %>% 
-        mutate(`Fixed effect` = case_when(
-                         `Fixed effect` == "sample_type" ~ "Sample type",
-                         `Fixed effect` == "lypma" ~ "lyPMA",
-                         `Fixed effect` == "host_zero" ~ "HostZERO",
-                         `Fixed effect` == "benzonase" ~ "Benzonase",
-                         `Fixed effect` == "molysis" ~ "MolYsis",
-                         `Fixed effect` == "qiaamp" ~ "QIAamp",
-                         .default = `Fixed effect`),
-               "Change estimate of CLR transformed count" = round(`Change estimate of CLR transformed count`, 3),
-               `<i>q<i/>-value` = round(`<i>q<i/>-value`, 3)) %>%
-        remove_rownames() %>% 
-        kbl(format = "html", escape = FALSE) %>%
-        kable_styling(full_width = 0, html_font = "sans")
-
-tableS8
-
+DA_vh_all <- filt_maaslin_all_v_h %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.1)  %>% .$feature %>% unique
+        
+        
+DA_vh_strtfd <- c(
+        filt_fit_data_bal_v_h %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.1)  %>% .$feature %>% unique,
+        filt_fit_data_ns_v_h %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.1)  %>% .$feature %>% unique,
+        filt_fit_data_spt_v_h %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.1)  %>% .$feature %>% unique
+)  %>% unique
 
 ```
 
@@ -3015,13 +2968,13 @@ setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 phyloseq_unfiltered <- read_rds("/Volumes/macdrive/Dropbox/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 phyloseq <- phyloseq_unfiltered
 filt_maaslin_all <- read.csv("data/da_lmer_filt_maaslin_all.csv")
+
 #filt_maaslin_interaction <- read.csv("data/da_lmer_filt_maaslin_interaction.csv")
-filt_fit_data_bal <- read.csv("data/da_lmer_filt_fit_data_bal.csv")
-filt_fit_data_spt <- read.csv("data/da_lmer_filt_fit_data_spt.csv")
-filt_fit_data_ns <- read.csv("data/da_lmer_filt_fit_data_ns.csv")
+filt_fit_data_bal_m <- read.csv("data/da_lmer_filt_fit_data_bal.csv")
+filt_fit_data_spt_m <- read.csv("data/da_lmer_filt_fit_data_spt.csv")
+filt_fit_data_ns_m <- read.csv("data/da_lmer_filt_fit_data_ns.csv")
 #filt_fit_data_pos <- read.csv("data/da_lmer_filt_fit_data_pos.csv")
 #Stratified by sample type
-
 
 
 alpha_diversity <- function(data) {
@@ -3603,7 +3556,6 @@ a <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         #            scales= "free_x", nrow=2) +
         
 
-
 b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                               sample_type == "Neg.") %>%
         subset_samples(.,
@@ -3652,6 +3604,7 @@ b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.05, 0.95),
               legend.title = element_text(size = 6),
               axis.text.x = element_text(color = "white")) +
         guides(fill=guide_legend(title="Top 10 species")) +
@@ -3670,7 +3623,7 @@ b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         facet_wrap ( ~ treatment,
                     scales= "free_x", nrow=1) +
-        ggtitle("E    Negative control")
+        ggtitle("Negative control")
 
 c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                               sample_type == "BAL") %>%
@@ -3715,6 +3668,7 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.03, 0.97),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
@@ -3733,7 +3687,8 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                                      )) +
         facet_wrap ( ~ treatment,
                     scales= "free_x", nrow=1) +
-        ggtitle("A    BAL (microbial species)")
+        ggtitle("BAL (microbial species)") +
+        labs(tag = "A")
 
 
 d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
@@ -3775,6 +3730,7 @@ d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.03, 0.97),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
@@ -3794,7 +3750,8 @@ d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         
 #        scale_x_discrete(drop=) +
         facet_wrap(~ treatment,  nrow = 1, drop = T, scales = "free_x") +
-        ggtitle("C    Nasal swabs (microbial species)")
+        ggtitle("Nasal swabs (microbial species)") +
+        labs(tag = "C")
 
 e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                               sample_type == "Sputum") %>% 
@@ -3834,6 +3791,7 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.03, 0.97),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
@@ -3851,7 +3809,8 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                                      "darkgrey" #Others
                                      )) +
         facet_wrap(~ treatment, scales= "free_x", nrow = 1) +
-        ggtitle("E    Sputum (microbial species)")
+        ggtitle("Sputum (microbial species)") +
+        labs(tag = "E")
 
 
 fig2 <- ggarrange(c, c %>% lemon::g_legend() %>% as_ggplot,
@@ -3921,6 +3880,437 @@ dev.off()
 
 ```
 
+
+
+### Updated barplot version 2
+
+```{r}
+
+
+
+#{taxa_names(v_h_phyloseq_rel) <-  tax_table(v_h_phyloseq_rel) %>% data.frame %>% .$Genus
+#v_h_phyloseq_rel
+#} %>%
+v_h_phyloseq_rel_renamed <- v_h_phyloseq_rel
+taxa_names(v_h_phyloseq_rel_renamed) <-  tax_table(v_h_phyloseq_rel) %>% data.frame %>% .$Genus
+
+
+my_plot_bar = function (physeq, x = "Sample", y = "Abundance", fill = NULL, title = NULL, 
+                        facet_grid = NULL) {
+    mdf = psmelt(physeq)
+    p = ggplot(mdf, aes_string(x = x, y = y, fill = fill))
+    p = p + geom_bar(stat = "identity")
+    p = p + theme(axis.text.x = element_text(angle = -90, hjust = 0)) +
+            scale_x_discrete(drop = F)
+    if (!is.null(facet_grid)) {
+        p <- p + facet_grid(facet_grid)
+    }
+    if (!is.null(title)) {
+        p <- p + ggtitle(title)
+    }
+    return(p)
+}
+
+c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "BAL") %>%
+                transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
+        ) %>%
+        cbind(species20 = "[Other]") %>%
+        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "BAL") %>%
+                                      transform_sample_counts(.,
+                                                              function(x){ifelse(is.na(x),
+                                                                                 0, 
+                                                                                 x)})
+                              ) %>%
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[, 9] <- gsub("s__", " ", .[, 9])
+   .[, 9] <- gsub("_", " ", .[, 9])
+   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
+   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
+   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
+   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
+   .[, 9] <- ifelse(grepl("Other",.[, 9]),
+                    "Other",
+                    ifelse(grepl("</i>",  .[, 9]),
+                           paste("<i>",  .[, 9], sep = ""),
+                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
+                            gsub("s__", "", .) %>%
+                            gsub("_", " ", .)
+   )
+   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "BAL") %>%
+           transform_sample_counts(., function(x){ifelse(is.na(x), 0, x)})
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E"))
+   phyloseq_temp
+  } %>% 
+        my_plot_bar(., x = "treatment", fill="species20") + 
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              plot.tag.position = c(0.03, 0.97),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 species")) +
+        scale_fill_manual(values = c('#8dd3c7',# Alloprevotella
+                                     "#B2DF8A",# Candida
+                                     "#33A02C",
+                                     '#ffffb3', # Cupriavidus
+                                     '#bebada', # Lactobacillus
+                                     "#08519c", # Staphylococcus
+                                     "#08306b",
+                                     "#cb181d",# Streptococcus
+                                     "#a50f15",
+                                     "#67000d",
+                                     "darkgrey" #Others
+                                     )) +
+        facet_wrap ( ~ subject_id,
+                    scales= "free_x", nrow=1) +
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        ggtitle("BAL (microbial species)") +
+        labs(tag = "A")
+
+
+d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "Nasal") %>% 
+           subset_samples(., S.obs != 0)) %>%
+        cbind(species20 = "[Other]") %>%
+        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "Nasal") %>% 
+           subset_samples(., S.obs != 0)) %>%
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[, 9] <- gsub("s__", " ", .[, 9])
+   .[, 9] <- gsub("_", " ", .[, 9])
+   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
+   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
+   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
+   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
+   .[, 9] <- ifelse(grepl("Other",.[, 9]),
+                    "Other",
+                    ifelse(grepl("</i>",  .[, 9]),
+                           paste("<i>",  .[, 9], sep = ""),
+                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
+                            gsub("s__", "", .) %>%
+                            gsub("_", " ", .)
+   )
+   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "Nasal") %>% 
+           subset_samples(., S.obs != 0)
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")) %>%
+           as.character()
+   sample_data(phyloseq_temp)$treatment_order <- sample_data(phyloseq_temp)$treatment %>% 
+           as.numeric() %>%
+           as.character()
+   phyloseq_temp
+  } %>% 
+        my_plot_bar(., x = "treatment_order", fill="species20") + 
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              plot.tag.position = c(0.03, 0.97),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 species")) +
+        
+        scale_fill_manual(values = c('#8dd3c7',# Anaerococcus
+                                     "#B2DF8A",# Corynebacterium
+                                     "#33A02C",
+                                     '#ffffb3', # Cupriavidus
+                                     "#6baed6", # Cutibacterium
+                                     "#1F78B4",
+                                     '#bebada', # Dolosigranulum
+                                     '#fb8072', # Malassezia
+                                     "#54278f",# Straphyloccocus
+                                     "#3f007d",
+                                     "darkgrey" #Others
+                                     )) +
+        
+#        scale_x_discrete(drop=) +
+        facet_wrap(~ subject_id,  nrow = 1, drop = T, scales = "free_x") +
+        scale_x_discrete(breaks = c("1", "2", "3", "4", "5", "6"),
+                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        ggtitle("Nasal swabs (microbial species)") +
+        labs(tag = "C")
+
+e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "Sputum") %>% 
+           subset_samples(., S.obs != 0)) %>%
+        cbind(species20 = "[Other]") %>%
+        {top20species <- head(taxa_sums(subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "Sputum") %>% 
+           subset_samples(., S.obs != 0)) %>%
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[, 9] <- gsub("s__", " ", .[, 9])
+   .[, 9] <- gsub("_", " ", .[, 9])
+   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
+   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
+   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
+   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
+   .[, 9] <- ifelse(grepl("Other",.[, 9]),
+                    "Other",
+                    ifelse(grepl("</i>",  .[, 9]),
+                           paste("<i>",  .[, 9], sep = ""),
+                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
+                            gsub("s__", "", .) %>%
+                            gsub("_", " ", .)
+   )
+   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
+                              sample_type == "Sputum") %>% 
+           subset_samples(., S.obs != 0)
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E"))
+   phyloseq_temp
+  } %>%
+        my_plot_bar(., x = "treatment", fill="species20")+
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              plot.tag.position = c(0.03, 0.97),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 species")) +
+        
+        scale_fill_manual(values = c('#B2DF8A',# Actinomyces
+                                     "#33A02C",
+                                     "#8dd3c7", #Gemella
+                                     '#ffffb3', # Pseudomonas
+                                     '#bebada', # Rothia
+                                     '#fb8072', # Staphylococcus
+                                     "#4292c6",# Streptococcus
+                                     "#2171b5",
+                                     "#08519c",
+                                     "#08306b",
+                                     "darkgrey" #Others
+                                     )) +
+        facet_wrap(~ subject_id, scales= "free_x", nrow = 1) +
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        ggtitle("Sputum (microbial species)") +
+        labs(tag = "E")
+
+
+c_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "BAL")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "BAL")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- ifelse(grepl("Other",.[, 7]),
+                         "Other",
+                         paste0("*", .[, 7], "*")
+                         )
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "BAL") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E")) %>%
+           as.character()
+   phyloseq_temp
+  } %>% 
+        my_plot_bar(., x = "treatment", fill="species20") + 
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              plot.tag.position = c(0.03, 0.97),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
+        scale_fill_manual(values = c('#ccebc5',# Bacteroides
+                                     "#80b1d3",# Centipeda
+                                     "#fdb462", # Enterococcus
+                                     '#fccde5', # Fusobacterium
+                                     "#bc80bd", # Leptotrichia
+                                     "#b3de69", # Paujensenia
+                                     '#fb8072', # Prevotella
+                                     "#08306b",# Staphyloccocus
+                                     "#cb181d", # Streptococcus
+                                     "#d9d9d9", #Tannelrella
+                                     "darkgrey" #Others
+                                     )) +
+        #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
+        facet_wrap ( ~ subject_id,
+                    scales= "free_x", nrow=1) +
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        ggtitle("BAL (viral host genus)") +
+        labs(tag = "B")
+
+
+d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- ifelse(grepl("Other",.[, 7]),
+                         "Other",
+                         paste0("*", .[, 7], "*")
+                         )
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")) %>%
+           as.character()
+   sample_data(phyloseq_temp)$treatment_order <- sample_data(phyloseq_temp)$treatment %>% 
+           as.numeric() %>%
+           as.character()
+   phyloseq_temp
+  } %>% 
+        my_plot_bar(., x = "treatment_order", fill="species20") + 
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.03, 0.97),
+              legend.title = element_text(size = 6),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
+                scale_fill_manual(values = c('#8dd3c7',# Anaerococcus
+                                     "#80b1d3",# Bacillus
+                                     "#B2DF8A", # Corynebacterium
+                                     '#6baed6', # Cutibacterium
+                                     "#bebada", # Dolosigranulum
+                                     "#ffed6f", # Escherichia
+                                     '#fb8072', # Klebsiella
+                                     "#8c96c6",# Lawsonella
+                                     "#006d2c", # Pseudomonas
+                                     "#54278f", #Stagphylococcus
+                                     "darkgrey" #Others
+                                     )) +
+#        scale_x_discrete(drop=) +
+        facet_wrap(~ subject_id,  nrow = 1, drop = T, scales = "free_x") +
+        scale_x_discrete(breaks = c("1", "2", "3", "4", "5", "6"),
+                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        ggtitle("Nasal swabs (viral host genus)") +
+        labs(tag = "D")
+
+e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Sputum")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Sputum")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- ifelse(grepl("Other",.[, 7]),
+                         "Other",
+                         paste0("*", .[, 7], "*")
+                         )
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Sputum") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E"))
+   phyloseq_temp
+  } %>%
+        my_plot_bar(., x = "treatment", fill="species20")+
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.03, 0.97),
+              legend.title = element_text(size = 6),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
+                        scale_fill_manual(values = c('#B2DF8A',# Actinomyces
+                                     "#fdb462", # Escherichia
+                                     "#8dd3c7",# Gemella
+                                     "#b3de69", # Granulicatella
+                                     '#80b1d3', # Pauljensenia
+                                     "#ffffb3", #Pseudomonas
+                                     "#bebada", # Rothia
+                                     "#fb8072", #Staphylococcus	
+                                     "#08519c", #Streptococcus	
+                                     "#fccde5", #UBA7748
+                                     "darkgrey" #Others
+                                     )) +
+        facet_wrap(~ subject_id, nrow = 1) +
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        ggtitle("Sputum (viral host genus)") +
+        labs(tag = "F")
+
+
+
+```
+
+
+
+
+
+```{r}
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_updated_v2.png",   # The directory you want to save the file in
+    width = 170, # The width of the plot in inches
+    height = 225, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+
+
+fig2_updated <- ggarrange(c, c %>% lemon::g_legend() %>% as_ggplot,
+                  c_vh, c_vh %>% lemon::g_legend() %>% as_ggplot,
+                  d, d %>% lemon::g_legend() %>% as_ggplot,
+                  d_vh, d_vh %>% lemon::g_legend() %>% as_ggplot,
+                  e, e %>% lemon::g_legend() %>% as_ggplot,
+                  e_vh, e_vh %>% lemon::g_legend() %>% as_ggplot,
+                  #a, a %>% lemon::g_legend() %>% as_ggplot,
+                  #b, b %>% lemon::g_legend() %>% as_ggplot,
+                  ncol=2,nrow=6, widths = c(3, 1),
+                  legend = "none",
+                  align = "hv")
+
+
+annotate_figure(fig2_updated,
+                left = text_grob("Relative abundance",
+                                 rot = 90,
+                                 family = "sans", 
+                                 size = 11),
+                bottom = text_grob("Treatment",
+                                 rot = 0,
+                                 family = "sans", 
+                                 size = 11)
+)
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+
+```
+
+
+
 ### Updated alpha and beta-diversity plot 
 
 
@@ -3943,8 +4333,10 @@ f3a <- ggplot(subset(sample_data(phyloseq$phyloseq_count) %>%
         theme_classic (base_size = 12, base_family = "sans") + 
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using 
         scale_fill_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using 
-        ggtitle("A   Microbial alpha diversity") +
+        ggtitle("Microbial alpha diversity") +
+        labs(tag = "A") +
         theme(plot.tag = element_text(size = 15),
+              plot.tag.position = c(0.03, 0.97),
               axis.text.x = element_blank(),
               axis.ticks.x = element_blank(),
               legend.position = "top") +
@@ -4295,10 +4687,11 @@ f3b2_box <- horn_dist_long_within_sampleid_from_control %>%
         theme_classic (base_size = 12, base_family = "sans") + 
         theme(plot.tag = element_text(size = 15),
               axis.text.y = element_blank(),
+              plot.tag.position = c(0.03, 0.97),
               axis.ticks.y = element_blank(),
               legend.position = "none") +
-        #labs(tag = "C") +
-        ggtitle("C   Microbial beta diversity") +
+        labs(tag = "C") +
+        ggtitle("Microbial beta diversity") +
         geom_vline(xintercept = 0, col = "black", linetype="dotted") +
         #coord_cartesian(xlim=c(-0.5, 1)) +
         #geom_text(aes(x = 0, label = treatment), hjust = 0, nudge_x = -.55, size = 3, color = "black", family = "sans") +
@@ -4620,9 +5013,9 @@ make_sig_table <- function(data) {
 
 
 #filt_fit_data_pos <- make_sig_table(filt_fit_data_pos)
-filt_fit_data_bal <- make_sig_table(filt_fit_data_bal)
-filt_fit_data_ns <- make_sig_table(filt_fit_data_ns)
-filt_fit_data_spt <- make_sig_table(filt_fit_data_spt)
+filt_fit_data_bal <- make_sig_table(filt_fit_data_bal_m)
+filt_fit_data_ns <- make_sig_table(filt_fit_data_ns_m)
+filt_fit_data_spt <- make_sig_table(filt_fit_data_spt_m)
 
 #filt_pos_sig <- subset_taxa(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock"),
 #                                       taxa_names(subset_samples(phyloseq_unfiltered$phyloseq_rel, sample_type == "Mock")) %in% filt_fit_data_pos$data$feature)
@@ -4685,9 +5078,12 @@ f5b <- merge(filt_fit_data_bal$rel %>%
         #xlab("Experimental group") +
         #ylab("Species") +
         #labs(tag = "A")  +
-        ggtitle("A  BAL (microbe)") +
+        labs(tag = "A", title = "BAL (microbe)")  +
+#        ggtitle("A  BAL (microbe)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
+              plot.title = element_text(hjust = 1),
+              plot.tag.position = c(0.05, 0.95),
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
@@ -4706,12 +5102,8 @@ f5b <- merge(filt_fit_data_bal$rel %>%
                                    order = 1,
                                    nrow = 1)
                ) + 
-        scale_x_discrete(labels=c("control" = "Untreated",
-                                  "lypma" = "lyPMA",
-                                  "benzonase" = "Benzonase",
-                                  "host_zero" = "Host-zero",
-                                  "molysis" = "MolYsis",
-                                  "qiaamp" = "QIAamp")
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                labels=c("U", "L", "B", "H", "M","Q")
                          )
 
 f5c <- merge(filt_fit_data_ns$rel %>%
@@ -4747,11 +5139,14 @@ f5c <- merge(filt_fit_data_ns$rel %>%
         #colors for qvalues
         gradient_fill(c("#006d2c", "#edf8fb")) +
         xlab("Experimental group") +
-        #ylab("Species") +
+        ylab("Microbial species") +
         #labs(tag = "C")  +
-        ggtitle("C  Nasal swab (microbe)") +
+        labs(tag = "C", title = "Nasal swab (microbe)")  +
+        #ggtitle("C  Nasal swab (microbe)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
+              plot.title = element_text(hjust = 1),
+              plot.tag.position = c(0.05, 0.95),
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
@@ -4771,12 +5166,8 @@ f5c <- merge(filt_fit_data_ns$rel %>%
                                    order = 1,
                                    nrow = 1),
                ) + 
-        scale_x_discrete(labels=c("control" = "Untreated",
-                                  "lypma" = "lyPMA",
-                                  "benzonase" = "Benzonase",
-                                  "host_zero" = "Host-zero",
-                                  "molysis" = "MolYsis",
-                                  "qiaamp" = "QIAamp")
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                labels=c("U", "L", "B", "H", "M","Q")
                          )
 
 f5d <- merge(filt_fit_data_spt$rel %>%
@@ -4810,18 +5201,22 @@ f5d <- merge(filt_fit_data_spt$rel %>%
         theme_classic(base_family = "sans") +
         #colors for qvalues
         gradient_fill(c("#006d2c", "#edf8fb")) +
-        xlab("Experimental group") +
+        #xlab("Experimental group") +
         #ylab("Species") +
         #labs(tag = "E")  +
-        ggtitle("E  Sputum (microbe)") +
+        labs(tag = "E", title = "Sputum (microbe)")  +
+        #ggtitle("E  Sputum (microbe)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
+              plot.title = element_text(hjust = 1),
+              plot.tag.position = c(0.05, 0.95),
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
               #axis.title.x = element_blank(),
-              axis.title.x = element_text(margin = margin(t = 0)),
+              #axis.title.x = element_text(margin = margin(t = 0)),
               axis.title.y = element_blank(),
+              axis.title.x = element_blank(),
               plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
@@ -4836,12 +5231,8 @@ f5d <- merge(filt_fit_data_spt$rel %>%
                                    order = 1,
                                    nrow = 1),
                ) + 
-        scale_x_discrete(labels=c("control" = "Untreated",
-                                  "lypma" = "lyPMA",
-                                  "benzonase" = "Benzonase",
-                                  "host_zero" = "Host-zero",
-                                  "molysis" = "MolYsis",
-                                  "qiaamp" = "QIAamp")
+        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                labels=c("U", "L", "B", "H", "M","Q")
                          )
 
 
@@ -4855,7 +5246,11 @@ fig4 <- ggarrange(f5c %>% lemon::g_legend() %>% as_ggplot,
                   align = "v")
 
 
-
+annotate_figure(fig4,
+                bottom = text_grob("Treatment method",
+                                 rot = 0,
+                                 family = "sans", 
+                                 size = 11))
 
 png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS8_updated.png",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
@@ -4864,18 +5259,359 @@ png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figu
     res = 600
 ) #fixing multiple page issue
 
-fig4
+
+annotate_figure(fig4,
+                bottom = text_grob("Treatment method",
+                                 rot = 0,
+                                 family = "sans", 
+                                 size = 11, hjust = -0.2))
 # alpha diversity plots
 #ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
 #          ncol = 1) # alpha diversity plots
 
 dev.off()
 
-fig4
+
 
 
 ```
 
+### New figure (correlation plot)
+
+### bacterial species - viral host genus
+
+list of DA microbial species
+
+```{r}
+
+DA_m_all <- filt_maaslin_all %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.01 & abs(Estimate) > 2)  %>% .$feature %>% unique
+        
+        
+DA_m_strtfd <- c(
+        filt_fit_data_bal_m %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.01 & abs(Estimate) > 2)  %>% .$feature %>% unique,
+        filt_fit_data_ns_m %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.01 & abs(Estimate) > 2)  %>% .$feature %>% unique,
+        filt_fit_data_spt_m %>% subset(., .$metadata != "sample_type") %>% subset(., .$qval < 0.01 & abs(Estimate) > 2)  %>% .$feature %>% unique
+)  %>% unique 
+
+```
+
+```{r}
+#OTU table of microbial output, subsetted by DA taxa
+
+otu_bac <- phyloseq$phyloseq_rel %>%
+        subset_taxa(., Species %in% paste0("s__", DA_m_all)) %>% 
+        otu_table(., taxa_are_rows = F) %>%
+        data.frame(., check.names = F) 
+
+#Changing viral taxa name into their host genus
+taxa_names(v_h_phyloseq_rel) <- v_h_phyloseq_rel %>%
+        tax_table %>% 
+        data.frame %>% 
+        .$Genus
+tax_table(v_h_phyloseq_rel)
+#OTU table of viral output
+otu_v_h <- v_h_phyloseq_rel %>%
+        subset_taxa(., Genus %in% DA_vh_all) %>% 
+        otu_table(., taxa_are_rows = F) %>%
+        data.frame(., check.names = F)
+
+#Calculation of Spearman correlation matrix
+spearman_corr <- Hmisc::rcorr(as.matrix(t(bind_rows(otu_bac, otu_v_h))), # 2 OTU tables were binned into 1. 
+                              type="spearman") #bind_rows were used as 1 viral output is missing 1 sample
+                                                # 
+#Making a function that makes correlation matrix into tidy flat data (long format)
+flattenCorrMatrix <- function(cormat, pmat) {
+        cormat <- cormat %>% reshape2::melt() %>% rename(r = value)
+        pmat <- pmat %>% reshape2::melt() %>% rename(p = value)
+        cormat$p <- pmat$p
+        cormat
+}
+
+
+
+
+#Making a flat table with adjusted p-values.
+flat_corr <- flattenCorrMatrix(spearman_corr$r, spearman_corr$P) %>%
+        mutate(qval = qvalue::qvalue(`p`)$qvalue,
+               p_bh = p.adjust(p = `p`, method = "BH"),
+               p_b = p.adjust(p = `p`, method = "bonferroni"),
+               fdr = p.adjust(p = `p`, method = "fdr")) %>%
+        subset(., .$Var1 %in% taxa_names(v_h_phyloseq_rel)) %>%
+        subset(., !(.$Var2 %in% taxa_names(v_h_phyloseq_rel)))# %>%
+        #subset(., .$p_b < 0.05) # bonferroni & 0.001 criteria was used as their correction was the strongest
+      
+heatmap_corr <- flat_corr %>% select(c("Var1", "Var2", "r")) %>%
+        spread(., Var2, r) %>% 
+        column_to_rownames("Var1") %>%
+        as.matrix(.)
+
+
+#pdf(file ="figures/FIG3C.pdf",
+#    width = 13, height = 9)
+ComplexHeatmap::Heatmap(heatmap_corr,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "white"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_names_rot = 45,
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        #col=colorRamp2(c(-.2, 0, .4), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman\n(rho)"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+#dev.off()
+
+
+
+
+
+
+
+
+#Making a flat table with adjusted p-values.
+flat_corr <- flattenCorrMatrix(spearman_corr$r, spearman_corr$P) %>%
+        mutate(qval = qvalue::qvalue(`p`)$qvalue,
+               p_bh = p.adjust(p = `p`, method = "BH"),
+               p_b = p.adjust(p = `p`, method = "bonferroni"),
+               fdr = p.adjust(p = `p`, method = "fdr")) %>%
+        subset(., .$Var1 %in% taxa_names(v_h_phyloseq_rel)) %>%
+        subset(., !(.$Var2 %in% taxa_names(v_h_phyloseq_rel))) %>%
+        mutate(r_sig = case_when(p_b > 0.05 ~ 0,
+                             .default = r)) # bonferroni & 0.001 criteria was used as their correction was the strongest
+
+heatmap_corr <- flat_corr %>% select(c("Var1", "Var2", "r")) %>%
+        spread(., Var2, r) %>% 
+        column_to_rownames("Var1") %>%
+        #filter(all_vars(!is.na(.))) %>%
+        as.matrix(.) 
+
+heatmap_corr_sig <- flat_corr %>% select(c("Var1", "Var2", "r_sig")) %>%
+        spread(., Var2, r_sig) %>% 
+        column_to_rownames("Var1") %>%
+        #filter(all_vars(!is.na(.))) %>%
+        as.matrix(.) 
+
+
+
+#pdf(file ="figures/FIG3C.pdf",
+#    width = 13, height = 9)
+ComplexHeatmap::Heatmap(heatmap_corr,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "grey"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_names_rot = 45,
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        col=circlize::colorRamp2(c(-1, 0, 1), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman\n(rho)"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+#dev.off()
+
+
+
+ComplexHeatmap::Heatmap(heatmap_corr, 
+                        column_order = colnames(heatmap_corr) %>% order,
+                        row_order = rownames(heatmap_corr) %>% order,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "grey"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_names_rot = 45,
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        row_title = "Viral host genus",
+        column_title =  "Microbial species",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        col=circlize::colorRamp2(c(-1, 0, 1), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman correlation coefficient (rho)",  title_position = "leftcenter-rot"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+
+
+ComplexHeatmap::Heatmap(heatmap_corr_sig, 
+                        column_order = colnames(heatmap_corr) %>% order,
+                        row_order = rownames(heatmap_corr) %>% order,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "grey"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_names_rot = 45,
+        
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        row_title = "Viral host genus",
+        column_title =  "Microbial species",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        col=circlize::colorRamp2(c(-1, 0, 1), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman correlation coefficient (rho)",  title_position = "leftcenter-rot"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+
+
+```
+
+
+```{r}
+
+
+species_italic <- function(data) {
+  names <- gsub("_", " ", data)
+  names <- gsub("[]]|[[]", "", names)
+  names <- gsub(" sp", " sp.", names)
+  names <- gsub(" sp.", "* sp.", names)
+  names <- gsub(" group", "", names)
+  names <- ifelse(grepl("[*]", names), paste("*", names, sep = ""), paste("*", names, "*", sep = ""))
+  names
+  
+}
+
+
+
+col_labels <- colnames(heatmap_corr) %>% .[order(.)] %>% species_italic()
+
+
+
+species_italic <- function(data) {
+  names <- gsub("_A|_B", "", data)
+  names <- ifelse(grepl("~", names), paste("italic('", gsub("~" , "')~", names),   sep = ""),
+                  paste("*", names, "*", sep = ""))
+  names <- ifelse(grepl("\\d", names),
+                  names %>% gsub("[*]", "", .),
+                  names)
+  names
+}
+
+row_labels <- rownames(heatmap_corr) %>%
+        #.[order(.)] %>% 
+        species_italic()
+
+
+
+ComplexHeatmap::Heatmap(heatmap_corr, 
+                        column_order = colnames(heatmap_corr) %>% order,
+                        row_order = rownames(heatmap_corr) %>% order,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "grey"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_labels = ComplexHeatmap::gt_render(col_labels),
+        row_labels = ComplexHeatmap::gt_render(row_labels),
+        column_names_rot = 45,
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        row_title = "Viral host genus",
+        column_title =  "Microbial species",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        col=circlize::colorRamp2(c(-1, 0, 1), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman correlation coefficient (rho)",  title_position = "leftcenter-rot"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+
+
+
+```
+
+### bacterial genus - viral host
+
+Data with p-Bonferroni filtering
+
+```{r}
+
+#genus level phyloseq object
+phyloseq_m_genus <- tax_glom(phyloseq$phyloseq_count, taxrank = "Genus") %>% transform_sample_counts(., function(x){x/sum(x)})
+
+taxa_names(phyloseq_m_genus) <- phyloseq_m_genus %>% tax_table() %>% data.frame() %>% .$Genus %>% gsub("g__", "", .) %>% gsub("_XIII_Incertae_Sedis_unclassified", "", .)
+
+#OTU table of microbial output
+otu_bac <- phyloseq_m_genus %>%
+        otu_table(., taxa_are_rows = F) %>%
+        data.frame(., check.names = F) 
+
+#Changing viral taxa name into their host genus
+taxa_names(v_h_phyloseq_rel) <- v_h_phyloseq_rel %>%
+        tax_table %>% 
+        data.frame %>% 
+        .$Genus %>%
+        paste0("v_", .)
+
+#OTU table of viral output
+otu_v_h <- v_h_phyloseq_rel %>%
+        otu_table(., taxa_are_rows = F) %>%
+        data.frame(., check.names = F)
+
+#Calculation of Spearman correlation matrix
+spearman_corr <- Hmisc::rcorr(as.matrix(t(bind_rows(otu_bac, otu_v_h))), # 2 OTU tables were binned into 1. 
+                              type="spearman") #bind_rows were used as 1 viral output is missing 1 sample
+                                                # 
+#Making a function that makes correlation matrix into tidy flat data (long format)
+flattenCorrMatrix <- function(cormat, pmat) {
+        cormat <- cormat %>% reshape2::melt() %>% rename(r = value)
+        pmat <- pmat %>% reshape2::melt() %>% rename(p = value)
+        cormat$p <- pmat$p
+        cormat
+}
+
+
+#Making a flat table with adjusted p-values.
+flat_corr <- flattenCorrMatrix(spearman_corr$r, spearman_corr$P) %>%
+        mutate(qval = qvalue::qvalue(`p`)$qvalue,
+               p_bh = p.adjust(p = `p`, method = "BH"),
+               p_b = p.adjust(p = `p`, method = "bonferroni"),
+               fdr = p.adjust(p = `p`, method = "fdr")) %>%
+        subset(., grepl("v_", .$Var1)) %>%
+        subset(.,  !grepl("v_", .$Var2)) %>%
+        mutate(r = case_when(p_b > 0.05 ~ 0,
+                             .default = r)) # bonferroni & 0.001 criteria was used as their correction was the strongest
+heatmap_corr <- flat_corr %>% select(c("Var1", "Var2", "r")) %>%
+        spread(., Var2, r) %>% 
+        column_to_rownames("Var1") %>%
+        as.matrix(.)#
+rownames(heatmap_corr) <- rownames(heatmap_corr) %>% gsub("v_", "", .)
+
+#pdf(file ="figures/FIG3C.pdf",
+#    width = 13, height = 9)
+
+
+
+ComplexHeatmap::Heatmap(heatmap_corr,
+                        column_order = colnames(heatmap_corr) %>% order,
+                        row_order = rownames(heatmap_corr) %>% order,
+                        na_col = "grey",
+        rect_gp = grid::gpar(col = "grey"),
+        row_names_gp = grid::gpar(fontsize = 10),
+        column_names_gp = grid::gpar(fontsize = 10),
+        column_names_rot = 45,
+        column_dend_side = "bottom",
+        column_names_side = "top",
+        row_title = "Viral host",
+        column_title =  "Microbial genus",
+        clustering_method_rows = "average",
+        clustering_method_columns = "average",
+        col=circlize::colorRamp2(c(-1, 0, 1), c("navy", "white", "red")),
+        heatmap_legend_param = list(title = "Spearman\n(rho)"),
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid::grid.text(sprintf("%.2f", heatmap_corr[i, j]), x, y, gp =
+                      grid::gpar(fontsize = 7, col="white"))})
+#dev.off()
+
+
+
+```
 
 
 

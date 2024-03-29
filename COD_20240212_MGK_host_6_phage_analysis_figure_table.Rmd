@@ -3959,6 +3959,8 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               plot.tag.position = c(0.03, 0.97),
+              #axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+              axis.text.x = element_blank(),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
         scale_fill_manual(values = c('#8dd3c7',# Alloprevotella
@@ -3975,8 +3977,8 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                                      )) +
         facet_wrap ( ~ subject_id,
                     scales= "free_x", nrow=1) +
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        #scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+        #                 labels = c("U", "L", "B", "H", "M", "Q")) +
         ggtitle("BAL (microbial species)") +
         labs(tag = "A")
 
@@ -4025,6 +4027,8 @@ d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               plot.tag.position = c(0.03, 0.97),
+              #axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+              axis.text.x = element_blank(),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
         
@@ -4042,9 +4046,9 @@ d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                                      )) +
         
 #        scale_x_discrete(drop=) +
-        facet_wrap(~ subject_id,  nrow = 1, drop = T, scales = "free_x") +
+        facet_grid(~ subject_id, drop = T, scales = "free", space = "free") +
         scale_x_discrete(breaks = c("1", "2", "3", "4", "5", "6"),
-                         labels = c("U", "L", "B", "H", "M", "Q")) +
+                         labels = c("Untreated", "lyPMA", "Benzonase", "HostZero", "MolYsis", "QIAamp")) +
         ggtitle("Nasal swabs (microbial species)") +
         labs(tag = "C")
 
@@ -4088,6 +4092,8 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
               plot.tag.position = c(0.03, 0.97),
+              #axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+              axis.text.x = element_blank(),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 species")) +
         
@@ -4104,11 +4110,10 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                                      "darkgrey" #Others
                                      )) +
         facet_wrap(~ subject_id, scales= "free_x", nrow = 1) +
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        #scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+        #                 labels = c("U", "L", "B", "H", "M", "Q")) +
         ggtitle("Sputum (microbial species)") +
         labs(tag = "E")
-
 
 c_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
                               sample_type == "BAL")) %>%
@@ -4137,6 +4142,7 @@ c_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7),
               plot.tag.position = c(0.03, 0.97),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
@@ -4155,8 +4161,8 @@ c_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         facet_wrap ( ~ subject_id,
                     scales= "free_x", nrow=1) +
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        #scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+        #                 labels = c("U", "L", "B", "H", "M", "Q")) +
         ggtitle("BAL (viral host genus)") +
         labs(tag = "B")
 
@@ -4192,6 +4198,7 @@ d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
               legend.key.size = unit(3, "mm"),
               plot.tag.position = c(0.03, 0.97),
               legend.title = element_text(size = 6),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
                 scale_fill_manual(values = c('#8dd3c7',# Anaerococcus
@@ -4207,9 +4214,9 @@ d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
                                      "darkgrey" #Others
                                      )) +
 #        scale_x_discrete(drop=) +
-        facet_wrap(~ subject_id,  nrow = 1, drop = T, scales = "free_x") +
+        facet_grid(~ subject_id, drop = T, scales = "free", space = "free") +
         scale_x_discrete(breaks = c("1", "2", "3", "4", "5", "6"),
-                         labels = c("U", "L", "B", "H", "M", "Q")) +
+                         labels = c("Untreated", "lyPMA", "Benzonase", "HostZero", "MolYsis", "QIAamp")) +
         ggtitle("Nasal swabs (viral host genus)") +
         labs(tag = "D")
 
@@ -4239,6 +4246,7 @@ e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
               plot.tag.position = c(0.03, 0.97),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
@@ -4255,8 +4263,8 @@ e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
                                      "darkgrey" #Others
                                      )) +
         facet_wrap(~ subject_id, nrow = 1) +
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                         labels = c("U", "L", "B", "H", "M", "Q")) +
+        #scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+        #                 labels = c("U", "L", "B", "H", "M", "Q")) +
         ggtitle("Sputum (viral host genus)") +
         labs(tag = "F")
 
@@ -4287,7 +4295,8 @@ fig2_updated <- ggarrange(c, c %>% lemon::g_legend() %>% as_ggplot,
                   e_vh, e_vh %>% lemon::g_legend() %>% as_ggplot,
                   #a, a %>% lemon::g_legend() %>% as_ggplot,
                   #b, b %>% lemon::g_legend() %>% as_ggplot,
-                  ncol=2,nrow=6, widths = c(3, 1),
+                  ncol=2,nrow=6,
+                  widths = c(3, 1), heights = c(2, 2.72, 2, 2.72, 2, 2.72),
                   legend = "none",
                   align = "hv")
 

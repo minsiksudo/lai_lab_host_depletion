@@ -4142,7 +4142,7 @@ c_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
               legend.title = element_text(size = 6),
-              axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7, color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
               plot.tag.position = c(0.03, 0.97),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
@@ -4198,7 +4198,8 @@ d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
               legend.key.size = unit(3, "mm"),
               plot.tag.position = c(0.03, 0.97),
               legend.title = element_text(size = 6),
-              axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+              legend.position = 'none',
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7, color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
                 scale_fill_manual(values = c('#8dd3c7',# Anaerococcus
@@ -4214,11 +4215,101 @@ d_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
                                      "darkgrey" #Others
                                      )) +
 #        scale_x_discrete(drop=) +
-        facet_grid(~ subject_id, drop = T, scales = "free", space = "free") +
+        #
         scale_x_discrete(breaks = c("1", "2", "3", "4", "5", "6"),
                          labels = c("Untreated", "lyPMA", "Benzonase", "HostZero", "MolYsis", "QIAamp")) +
         ggtitle("Nasal swabs (viral host genus)") +
         labs(tag = "D")
+
+d_vh <- ggplotGrob(d_vh + facet_grid(~ subject_id, drop = T, scales = "free", space = "free"))
+#https://stackoverflow.com/questions/45843759/ggplot2-coloring-axis-text-on-a-faceted-plot
+#d_vh$grobs[[22]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")
+
+#Customizing text colors of d_
+
+d_vh$grobs[[22]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[23]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[22]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#a6cee3")
+d_vh$grobs[[23]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#a6cee3")
+
+d_vh$grobs[[24]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[25]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[26]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[27]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[24]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#33a02c", "#b2df8a", "#1f78b4")
+d_vh$grobs[[25]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#33a02c", "#b2df8a", "#1f78b4")
+d_vh$grobs[[26]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#33a02c", "#b2df8a", "#1f78b4")
+d_vh$grobs[[27]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#33a02c", "#b2df8a", "#1f78b4")
+
+
+
+d_vh$grobs[[28]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[28]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c","#fb9a99", "#33a02c", "#b2df8a")
+
+d_vh$grobs[[29]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[29]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#1f78b4", "#a6cee3")
+
+d_vh$grobs[[30]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[31]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d_vh$grobs[[30]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#a6cee3")
+d_vh$grobs[[31]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#a6cee3")
+
+
+
+d_vh_legend <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal")) %>%
+        cbind(species20 = "Other") %>%
+        {top20species <- head(taxa_sums(subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal")) %>% 
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 10)
+        .[top20species, "species20"] <- as.character(.[top20species, "Genus"])
+        .[, 7] <- ifelse(grepl("Other",.[, 7]),
+                         "Other",
+                         paste0("*", .[, 7], "*")
+                         )
+        phyloseq_temp <- subset_samples(v_h_phyloseq_rel_renamed,
+                              sample_type == "Nasal") 
+        tax_table(phyloseq_temp) <- tax_table(.) 
+   sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
+           factor(labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")) %>%
+           as.character()
+   sample_data(phyloseq_temp)$treatment_order <- sample_data(phyloseq_temp)$treatment %>% 
+           as.numeric() %>%
+           as.character()
+   phyloseq_temp
+  } %>% 
+        my_plot_bar(., x = "treatment_order", fill="species20") + 
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              plot.tag.position = c(0.03, 0.97),
+              legend.title = element_text(size = 6),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7, color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
+              axis.title.x = element_blank()) +
+        guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
+                scale_fill_manual(values = c('#8dd3c7',# Anaerococcus
+                                     "#80b1d3",# Bacillus
+                                     "#B2DF8A", # Corynebacterium
+                                     '#6baed6', # Cutibacterium
+                                     "#bebada", # Dolosigranulum
+                                     "#ffed6f", # Escherichia
+                                     '#fb8072', # Klebsiella
+                                     "#8c96c6",# Lawsonella
+                                     "#006d2c", # Pseudomonas
+                                     "#54278f", #Stagphylococcus
+                                     "darkgrey" #Others
+                                     )) +
+#        scale_x_discrete(drop=) +
+        #
+        scale_x_discrete(breaks = c("1", "2", "3", "4", "5", "6"),
+                         labels = c("Untreated", "lyPMA", "Benzonase", "HostZero", "MolYsis", "QIAamp")) +
+        ggtitle("Nasal swabs (viral host genus)") +
+        labs(tag = "D") +
+        facet_grid(~ subject_id, drop = T, scales = "free", space = "free")
+
 
 e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
                               sample_type == "Sputum")) %>%
@@ -4246,7 +4337,7 @@ e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
               plot.tag.position = c(0.03, 0.97),
-              axis.text.x = element_text(angle = 45, hjust=1, size = 7),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7, color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
               legend.title = element_text(size = 6),
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Top 10 viral host at genus level", ncol = 2)) +
@@ -4290,7 +4381,7 @@ png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figu
 fig2_updated <- ggarrange(c, c %>% lemon::g_legend() %>% as_ggplot,
                   c_vh, c_vh %>% lemon::g_legend() %>% as_ggplot,
                   d, d %>% lemon::g_legend() %>% as_ggplot,
-                  d_vh, d_vh %>% lemon::g_legend() %>% as_ggplot,
+                  d_vh %>% as_ggplot, d_vh_legend %>% lemon::g_legend() %>% as_ggplot,
                   e, e %>% lemon::g_legend() %>% as_ggplot,
                   e_vh, e_vh %>% lemon::g_legend() %>% as_ggplot,
                   #a, a %>% lemon::g_legend() %>% as_ggplot,

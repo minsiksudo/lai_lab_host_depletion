@@ -4378,7 +4378,7 @@ png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figu
 
 
 
-fig2_updated <- ggarrange(c, c %>% lemon::g_legend() %>% as_ggplot,
+fig2_updated <- ggarrange(c, ggarrange(ggplot() + theme_void(), c %>% lemon::g_legend() %>% as_ggplot, ncol = 1, heights = c(1, 4)),
                   c_vh, c_vh %>% lemon::g_legend() %>% as_ggplot,
                   d, d %>% lemon::g_legend() %>% as_ggplot,
                   d_vh %>% as_ggplot, d_vh_legend %>% lemon::g_legend() %>% as_ggplot,

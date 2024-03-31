@@ -2274,7 +2274,7 @@ These calculations were made to write the details in the main text
 ```{r}
 
 cat("Factors affecting DA taxa (q<0.1)")
-filt_maaslin_all_v %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) > 1) %>% .$metadata %>% table
+filt_maaslin_all_v %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
 
 cat("Number of positive & significant changes")
 filt_maaslin_all_v %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate > 0) %>% .$feature %>% unique
@@ -2516,7 +2516,7 @@ These calculations were made to write the details in the main text
 ```{r}
 
 cat("Factors affecting DA taxa (q<0.1)")
-filt_maaslin_all_v_h %>% subset(., .$qval < 0.1 ) %>% subset(., abs(.$Estimate) > 1) %>% .$metadata %>% table
+filt_maaslin_all_v_h %>% subset(., .$qval < 0.1 ) %>% .$metadata %>% table
 
 cat("Number of positive & significant changes")
 filt_maaslin_all_v_h %>% subset(., .$qval < 0.1 ) %>% subset(., .$Estimate > 0) %>% .$feature %>% unique

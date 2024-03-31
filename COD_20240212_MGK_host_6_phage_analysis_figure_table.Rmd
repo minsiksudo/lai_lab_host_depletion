@@ -2788,6 +2788,7 @@ f5b_host <- merge(filt_fit_data_bal$rel %>%
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
+              axis.text.x = element_blank(),
               axis.title.y = element_blank(),
               axis.title.x = element_blank(),
               plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
@@ -2802,10 +2803,7 @@ f5b_host <- merge(filt_fit_data_bal$rel %>%
                                    title.position = "top",
                                    order = 1,
                                    nrow = 1)
-               ) + 
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                labels=c("U", "L", "B", "H", "M","Q")
-                         )
+               )
 
 f5c_host <- merge(filt_fit_data_ns$rel %>%
               gather(treatment,
@@ -2849,6 +2847,7 @@ f5c_host <- merge(filt_fit_data_ns$rel %>%
               plot.tag.position = c(0.05, 0.95),
               #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
               #Element markdown for taxa name italicizing
+              axis.text.x = element_blank(),
               axis.text.y = ggtext::element_markdown(size = 8),
               axis.title.x = element_blank(),
               plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
@@ -2865,10 +2864,7 @@ f5c_host <- merge(filt_fit_data_ns$rel %>%
                                    title.position = "top",
                                    order = 1,
                                    nrow = 1),
-               ) + 
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                labels=c("U", "L", "B", "H", "M","Q")
-                         )
+               ) 
 
 f5d_host <- merge(filt_fit_data_spt$rel %>%
               gather(treatment,
@@ -2909,7 +2905,7 @@ f5d_host <- merge(filt_fit_data_spt$rel %>%
               legend.position = "top",
               plot.title = element_text(hjust = -4),
               plot.tag.position = c(0.05, 0.95),
-              #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              axis.text.x = element_text(angle = 45, hjust=1, color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
               axis.title.y = element_blank(),
@@ -2927,19 +2923,19 @@ f5d_host <- merge(filt_fit_data_spt$rel %>%
                                    title.position = "top",
                                    order = 1,
                                    nrow = 1),
-               ) + 
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                labels=c("U", "L", "B", "H", "M","Q")
-                         )
+               ) #+ 
+        #scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+        #        labels=c("U", "L", "B", "H", "M","Q")
+        #                 )
 
 fig4 <- ggarrange(f5c_host %>% lemon::g_legend() %>% as_ggplot,
                   f5b_host,
                   f5c_host,
                   f5d_host,
                   #b, b %>% lemon::g_legend() %>% as_ggplot,
-                  ncol=1, heights = c(1.5, 4, 4, 4),
+                  ncol=1, heights = c(1.5, 4, 4, 6),
                   legend = "none",
-                  align = "hv")
+                  align = "v")
 
 fig4
 
@@ -5192,6 +5188,7 @@ f5b <- merge(filt_fit_data_bal$rel %>%
               axis.text.y = ggtext::element_markdown(size = 8),
               axis.title.y = element_blank(),
               axis.title.x = element_blank(),
+              axis.text.x = element_blank(),
               plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
         scale_fill_manual(values = c("grey", "red"), aes(y = feature,
                       x = treatment,
@@ -5204,10 +5201,7 @@ f5b <- merge(filt_fit_data_bal$rel %>%
                                    title.position = "top",
                                    order = 1,
                                    nrow = 1)
-               ) + 
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                labels=c("U", "L", "B", "H", "M","Q")
-                         )
+               ) 
 
 f5c <- merge(filt_fit_data_ns$rel %>%
               gather(treatment,
@@ -5254,6 +5248,7 @@ f5c <- merge(filt_fit_data_ns$rel %>%
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
               axis.title.x = element_blank(),
+              axis.text.x = element_blank(),
               plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
         #Adding significance asterisks
         scale_fill_manual(values = c("red", "grey"), aes(y = feature,
@@ -5268,10 +5263,7 @@ f5c <- merge(filt_fit_data_ns$rel %>%
                                    title.position = "top",
                                    order = 1,
                                    nrow = 1),
-               ) + 
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                labels=c("U", "L", "B", "H", "M","Q")
-                         )
+               )
 
 f5d <- merge(filt_fit_data_spt$rel %>%
               gather(treatment,
@@ -5313,11 +5305,11 @@ f5d <- merge(filt_fit_data_spt$rel %>%
               legend.position = "top",
               plot.title = element_text(hjust = 1),
               plot.tag.position = c(0.05, 0.95),
-              #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+              axis.text.x = element_text(angle = 45, hjust=1, color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
               #Element markdown for taxa name italicizing
               axis.text.y = ggtext::element_markdown(size = 8),
-              #axis.title.x = element_blank(),
-              #axis.title.x = element_text(margin = margin(t = 0)),
+              
+              #axis.text.x = element_blank(),
               axis.title.y = element_blank(),
               axis.title.x = element_blank(),
               plot.margin = unit(c(0,0.2,0,1), 'lines'))  +
@@ -5333,17 +5325,16 @@ f5d <- merge(filt_fit_data_spt$rel %>%
                                    title.position = "top",
                                    order = 1,
                                    nrow = 1),
-               ) + 
-        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-                labels=c("U", "L", "B", "H", "M","Q")
-                         )
-
+               ) #+ 
+#        scale_x_discrete(breaks = c("Untreated", "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
+                #labels=c("U", "L", "B", "H", "M","Q")
+                #         )
 
 
 fig4 <- ggarrange(f5c %>% lemon::g_legend() %>% as_ggplot,
                   ggarrange(
-                          ggarrange(f5b, f5c, f5d, legend = "none", ncol = 1, align = "hv"),
-                          ggarrange(f5b_host, f5c_host, f5d_host, legend = "none", ncol = 1, align = "hv"),
+                          ggarrange(f5b, f5c, f5d, legend = "none", ncol = 1, align = "v", heights = c(4, 4, 5.2)),
+                          ggarrange(f5b_host, f5c_host, f5d_host, legend = "none", ncol = 1, align = "v", heights = c(4, 4, 5.2)),
                           ncol = 2, widths = c(2.5,2)),
                   ncol=1, heights = c(1.5, 12),
                   align = "v")
@@ -5378,6 +5369,9 @@ dev.off()
 
 
 ```
+
+
+
 
 ### New figure (correlation plot)
 

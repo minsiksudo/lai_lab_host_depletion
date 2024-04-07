@@ -470,7 +470,7 @@ sample_data(phyloseq_tv)$treatment <-
 ```{r}           
 
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(data) %>% .[, colSums(.) !=0]
+        otu_table <- otu_table(data) #%>% .[, colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -508,6 +508,23 @@ sample_data(phyloseq_unfiltered$phyloseq_path_rpk)$V.obs <-
         .[sample_names(phyloseq_unfiltered$phyloseq_count),]
 
 phyloseq <- phyloseq_unfiltered
+
+
+
+alpha_diversity <- function(data) {
+        otu_table <- otu_table(data) %>% .[, colSums(.) !=0]
+        S.obs <- rowSums(t(otu_table) != 0)
+        sample_data <- sample_data(data)
+        data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
+        data_shannon <- vegan::diversity(t(otu_table), index = "shannon") # calculate Shannon index using vegan package
+        data_hill <- exp(data_shannon)                           # calculate Hills index
+        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, aggregate = TRUE) # dominance (Berger-Parker index), etc.
+        data_invsimpson <- vegan::diversity(t(otu_table), index = "invsimpson")                          # calculate Shannon index using vegan package
+        alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
+        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
+}
+
+
 
 sample_data(phyloseq_unfiltered$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_rel))
 sample_data(phyloseq_unfiltered$phyloseq_count) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_count)) 
@@ -2930,16 +2947,19 @@ c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
            factor(labels = c("A", "B", "C", "D", "E"))
    phyloseq_temp
   } %>% 
-        my_plot_bar(., x = "subject_id", fill="gram_stain") + 
+        my_plot_bar(., x = "treatment", fill="gram_stain") + 
         ylab("") +
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(),
               axis.title.y = element_blank(),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7,
+                                         color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
+
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Gram-stain")) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
-        facet_wrap ( ~ treatment,
+        facet_wrap ( ~ subject_id,
                     scales= "free_x", nrow=1) +
         ggtitle("A  BAL")
 
@@ -2976,23 +2996,54 @@ d <- tax_table(subset_samples(phyloseq$phyloseq_rel,
    sample_data(phyloseq_temp)$subject_id <- sample_data(phyloseq_temp)$subject_id %>% 
            factor(labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")) %>% 
            as.character()
+   sample_data(phyloseq_temp)$treatment_order <- sample_data(phyloseq_temp)$treatment %>% 
+           as.numeric() %>%
+           as.character()
    phyloseq_temp
-  } %>%
-        my_plot_bar(., x = "subject_id", fill="gram_stain") + 
+  } %>% 
+        my_plot_bar(., x = "treatment_order", fill="gram_stain") + 
         theme_classic(base_size = 11, base_family = "sans") +
-        theme(legend.text = element_markdown(),
+        theme(legend.position = "none",
               axis.title.x = element_blank(),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7,
+                                         color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
               axis.title.y = element_blank()) +
         guides(fill=guide_legend(title="Gram-stain")) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-#        scale_x_discrete(drop=) +
-        facet_wrap(~ treatment,  nrow = 1, drop = T, scale = "free_x") +
-        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
-        #            scales= "free_x", nrow=2) +
+        scale_x_discrete(breaks = c("1", "2", "3", "4", "5", "6"),
+                         labels = c("Untreated", "lyPMA", "Benzonase", "HostZero", "MolYsis", "QIAamp")) +
         ggtitle("B  Nasal swabs")
 
+d <- ggplotGrob(d + facet_grid(~ subject_id, drop = T, scales = "free", space = "free"))
 
 
+
+d$grobs[[22]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[23]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[22]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#a6cee3")
+d$grobs[[23]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#a6cee3")
+
+d$grobs[[24]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[25]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[26]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[27]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[24]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#33a02c", "#b2df8a", "#1f78b4")
+d$grobs[[25]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#33a02c", "#b2df8a", "#1f78b4")
+d$grobs[[26]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#33a02c", "#b2df8a", "#1f78b4")
+d$grobs[[27]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#33a02c", "#b2df8a", "#1f78b4")
+
+
+
+d$grobs[[28]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[28]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c","#fb9a99", "#33a02c", "#b2df8a")
+
+d$grobs[[29]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[29]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#1f78b4", "#a6cee3")
+
+d$grobs[[30]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[31]]$children[[2]]$grobs[[2]]$children[[1]]$label
+d$grobs[[30]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#a6cee3")
+d$grobs[[31]]$children[[2]]$grobs[[2]]$children[[1]]$gp$col <- c("#e31a1c", "#fb9a99", "#a6cee3")
 
 
 
@@ -3030,22 +3081,26 @@ e <- tax_table(subset_samples(phyloseq$phyloseq_rel,
            factor(labels = c("A", "B", "C", "D", "E"))
    phyloseq_temp
   } %>%
-        my_plot_bar(., x = "subject_id", fill="gram_stain")+
+        my_plot_bar(., x = "treatment", fill="gram_stain")+
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(),
               axis.title.y = element_blank(),
+              axis.text.x = element_text(angle = 45, hjust=1, size = 7, 
+                                         color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
+
               axis.title.x = element_blank()) +
         guides(fill=guide_legend(title="Gram-stain")) +
         #scale_x_discrete(drop=F) +
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
-        facet_wrap(~ treatment, scales= "free_x", nrow = 1) +
+        facet_wrap ( ~ subject_id,
+                    scales= "free_x", nrow=1) +
         #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
         #            scales= "free_x", nrow=2) +
         ggtitle("C  Sputum")
 
 
 
-figS6 <- ggarrange(c, d, e, ncol = 1, common.legend = T, legend = "top")
+figS6 <- ggarrange(c, d %>% as_ggplot, e, ncol = 1, common.legend = T, legend = "top")
 
 
 
@@ -3053,12 +3108,16 @@ annotate_figure(figS6,
                 left = text_grob("Relative abundance",
                                  rot = 90,
                                  family = "sans", 
+                                 size = 11),
+                bottom = text_grob("Treatment",
+                                 rot = 0,
+                                 family = "sans", 
                                  size = 11)
 )
 
 
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS6.png",   # The directory you want to save the file in
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS6_updated.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 200, # The height of the plot in inches
     units = "mm",
@@ -3070,8 +3129,13 @@ annotate_figure(figS6,
                 left = text_grob("Relative abundance",
                                  rot = 90,
                                  family = "sans", 
+                                 size = 11),
+                bottom = text_grob("Treatment",
+                                 rot = 0,
+                                 family = "sans", 
                                  size = 11)
 )
+
 
 # alpha diversity plots
 #ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
@@ -4215,10 +4279,10 @@ LMER raw result - BAL
 
 ```{r}
 
-sr_lmer_bal_v <- lmer(V.obs ~ treatment + (1|subject_id),
+sr_lmer_bal_v <- lmerTest::lmer(V.obs ~ treatment + (1|subject_id),
                     data = sample_data %>% 
                             data.frame %>% 
-                            subset(., .$sample_type %in% c("BAL") & S.obs != 0))
+                           subset(., .$sample_type %in% c("BAL")))
 sr_lmer_bal_v %>% summary()
         
 ```
@@ -4227,7 +4291,7 @@ LMER raw result - Nasal
 
 ```{r}
 
-sr_lmer_ns_v <- lmer(V.obs ~ treatment + (1|subject_id),
+sr_lmer_ns_v <- lmerTest::lmer(V.obs ~ treatment + (1|subject_id),
                    data = sample_data %>% 
                            data.frame %>% 
                            subset(., .$sample_type %in% c("Nasal")))
@@ -4237,7 +4301,7 @@ sr_lmer_ns_v %>% summary()
 LMER raw result - Sputum
 
 ```{r}
-sr_lmer_spt_v <- lmer(V.obs ~ treatment + (1|subject_id),
+sr_lmer_spt_v <- lmerTest::lmer(V.obs ~ treatment + (1|subject_id),
                     data = sample_data %>% 
                             data.frame %>% 
                             subset(., .$sample_type %in% c("Sputum")))
@@ -6014,10 +6078,9 @@ detach_package(lmerTest) #lmerTest induces error
 
 ## all treatment groups
 
-
-
 sample_data_respiratory <- subset(phyloseq_unfiltered$phyloseq_count %>% 
-        subset_samples(S.obs != 0 & sample_type %in% c("Mock", 
+        subset_samples(#S.obs != 0 & 
+                               sample_type %in% c("Mock", 
                                                        "BAL", "Nasal", "Sputum")) %>% sample_data %>% data.frame, 
                                   sample_data$sample_type == "Sputum" | sample_data$sample_type == "BAL" | sample_data$sample_type == "Nasal") %>%
         subset(., !is.na(.$V.obs))
@@ -7933,10 +7996,10 @@ fig_rarefraction <- phyloseq$phyloseq_count %>%
 ggplot(., aes(x = Final_reads/1000000, y = S.obs, col = treatment)) +
         geom_point() +
         theme_classic(base_family = "sans") +
-        xlab("Final reads x 10<sup>6</sup>") +
-        ylab("Species richness") +
+        #xlab("Final reads x 10<sup>6</sup>") +
+        ylab("Microbial species richness") +
         labs(tag = "A") +
-        theme(axis.title.x = element_markdown(), legend.position = "top") +
+        theme(axis.title.x = element_blank(), legend.position = "top") +
         guides(col = guide_legend(title = "Treatment", title.position = "top", nrow = 1)) +
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
                           name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
@@ -7951,24 +8014,41 @@ ggplot(., aes(x = Final_reads/1000000, y = S.obs, col = treatment)) +
         theme_classic(base_family = "sans") +
         xlab("Final reads x 10<sup>6</sup>") +
         ylab("Functional richness") +
-        labs(tag = "B") +
+        labs(tag = "C") +
         theme(axis.title.x = element_markdown(), legend.position = "top") +
         guides(col = guide_legend(title = "Treatment", title.position = "top", nrow = 1)) +
         scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
                           name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
         facet_wrap(~sample_type, scales = "free", nrow = 1)
 
-ggarrange(fig_rarefraction, fig_rarefraction_function, common.legend = T, ncol = 1)
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS13.png",   # The directory you want to save the file in
+
+fig_rarefraction_viral <- phyloseq$phyloseq_count %>% 
+        sample_data %>% 
+        data.frame %>%
+        subset(., !is.na(.$treatment) & sample_type %in% c("BAL", "Nasal", "Sputum")) %>%
+ggplot(., aes(x = Final_reads/1000000, y = V.obs, col = treatment)) +
+        geom_point() +
+        theme_classic(base_family = "sans") +
+        #xlab("Final reads x 10<sup>6</sup>") +
+        ylab("Viral richness") +
+        labs(tag = "B") +
+        theme(axis.title.x = element_blank(), legend.position = "top",) +
+        guides(col = guide_legend(title = "Treatment", title.position = "top", nrow = 1)) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
+                          name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
+        facet_wrap(~sample_type, scales = "free", nrow = 1)
+
+ggarrange(fig_rarefraction, fig_rarefraction_viral, fig_rarefraction_function, common.legend = T, ncol = 1)
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS13_updated.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 180, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
 
-ggarrange(fig_rarefraction, fig_rarefraction_function, common.legend = T, ncol = 1)
-
+ggarrange(fig_rarefraction, fig_rarefraction_viral, fig_rarefraction_function, common.legend = T, ncol = 1)
 
 dev.off()
 
@@ -8557,49 +8637,6 @@ tableA3
 ```      
                
 
-##  {.unnumbered}
-
-## Viral outcome {.tabset}
-
-
-### Viral species richness (LMER)
-
-```{r}
-
-
-vr_lmer_bal <- lmer(V.obs ~ treatment + (1|subject_id),
-                    data = sample_data %>% 
-                            data.frame %>% 
-                            subset(., .$sample_type %in% c("BAL") & V.obs != 0))
-        
-
-
-vr_lmer_ns <- lmer(V.obs ~ treatment + (1|subject_id),
-                    data = sample_data %>% 
-                            data.frame %>% 
-                            subset(., .$sample_type %in% c("Nasal") & V.obs != 0))
-
-
-
-vr_lmer_spt <- lmer(S.obs ~ treatment + (1|subject_id),
-                    data = sample_data %>% 
-                            data.frame %>% 
-                            subset(., .$sample_type %in% c("Sputum") & S.obs != 0))
-
-                
-
-
-```
-
-
-### Viral beta-diversity (LMER)
-
-```{r}
-
-
-```
-
-
 
 # 3.6. Summary
 
@@ -9114,7 +9151,7 @@ summary_function_richness <-
 
 summary_viral_richness <-
         rbind(
-        vr_lmer_bal %>%
+        sr_lmer_bal_v %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -9153,7 +9190,7 @@ summary_viral_richness <-
                   "QIAamp"),] %>%
          dplyr::select(c("Species richness")),
         
-        vr_lmer_ns %>%
+        sr_lmer_ns_v %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 
@@ -9192,7 +9229,7 @@ summary_viral_richness <-
                   "QIAamp"),] %>%
          dplyr::select(c("Species richness")) ,
         
- vr_lmer_spt %>%
+ sr_lmer_spt_v %>%
         summary() %>%
         .$coefficients %>%
         data.frame(check.names = F) %>% 

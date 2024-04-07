@@ -155,7 +155,7 @@ v_h_phyloseq_rel <- phyloseq$viral_host_rel
 
 ```{r}           
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(v_phyloseq) %>% .[, colSums(.) !=0]
+        otu_table <- otu_table(v_phyloseq) #%>% .[, colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -1130,7 +1130,7 @@ dat_text <- data.frame(
   label = c(
           #"", "***", "***", "**", "***", #label for Mock
           "", "", "", "*", "", #label for BAL
-          "*", "", ".", "", "", 
+          "*", "", "", "", "", 
           "", "", "***", "***", "*"),
   sample_type = c(
           #"Mock", "Mock", "Mock", "Mock", "Mock", 
@@ -1196,29 +1196,6 @@ f3a_host <- ggplot(subset(sample_data(v_h_phyloseq_rel) %>%
               legend.position = "top") +
         facet_wrap(~sample_type, nrow = 1) + 
         guides(col = guide_legend(nrow = 1)) 
-
-dat_text <- data.frame(
-  label = c(
-          #"", "***", "***", "**", "***", #label for Mock
-          "", "", "", "*", "", #label for BAL
-          "*", "", ".", "", "", 
-          "", "", "***", "***", "*"),
-  sample_type = c(
-          #"Mock", "Mock", "Mock", "Mock", "Mock", 
-          "BAL", "BAL", "BAL", "BAL", "BAL", 
-          "Nasal", "Nasal", "Nasal", "Nasal", "Nasal", 
-          "Sputum", "Sputum", "Sputum", "Sputum", "Sputum"),
-  treatment     = c(
-          #"lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp", 
-          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
-          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp",
-          "lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp"),
-  S.obs = c(
-          #50, 30, 35, 33, 31,
-          2, 2, 2, 12, 2,
-          5, 1, 7, 1, 1,
-          1, 1, 25, 24, 20)
-)
 
 
 
@@ -2174,8 +2151,8 @@ dat_text <- data.frame(
   label = c(
           #"", "***", "***", "**", "***", #label for Mock
           "", "", "", "", "", #label for BAL
-          "", "***", "", ".", "**", 
-          "", ".", "**", "***", "**"),
+          "***", "", "", "", "**", 
+          "", "", "**", "***", "**"),
   sample_type = c(
           #"Mock", "Mock", "Mock", "Mock", "Mock", 
           "BAL", "BAL", "BAL", "BAL", "BAL", 
@@ -2189,8 +2166,8 @@ dat_text <- data.frame(
   dist = c(
           #50, 30, 35, 33, 31,
           0.9, 0, 0, 0, 0,
-          0.6, 0.4, 0, 0.73, 0.97,
-          0.8, 0.65, 1, 1.01, 0.99)
+          1.02, 0.4, 0, 0.73, 0.97,
+          0.8, 0.65, 1, 1.04, 0.99)
 )
 
 

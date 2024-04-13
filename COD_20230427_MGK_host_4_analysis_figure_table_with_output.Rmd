@@ -512,7 +512,7 @@ phyloseq <- phyloseq_unfiltered
 
 
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(data) %>% .[, colSums(.) !=0]
+        otu_table <- otu_table(data) # %>% .[, colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -1901,7 +1901,7 @@ red_flag_taxa
 #Calculation of alpha diversity indices for filtered samples
 
 alpha_diversity <- function(data) {
-        otu_table <- otu_table(data) %>% .[, colSums(.) !=0]
+        otu_table <- otu_table(data) #%>% .[, colSums(.) !=0]
         S.obs <- rowSums(t(otu_table) != 0)
         sample_data <- sample_data(data)
         data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
@@ -1967,6 +1967,12 @@ sample_data(phyloseq$phyloseq_count) <-
 
 table1 <- sample_data(phyloseq$phyloseq_count) %>% data.frame() %>% 
         dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL")) %>% 
+        mutate(S.obs = case_when(S.obs==0 ~ NA,
+                                 .default = S.obs),
+               F.obs = case_when(F.obs==0 ~ NA,
+                                 .default = F.obs),
+               V.obs = case_when(V.obs==0 ~ NA,
+                                 .default = V.obs)) %>% 
         group_by (sample_type, treatment) %>%
         summarise(`N` = n(),
             #      `Total DNA <br>ng/µL` = paste(format(round(median(picogreen_ng_ul),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(picogreen_ng_ul, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(picogreen_ng_ul, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
@@ -2008,25 +2014,25 @@ table1 <- sample_data(phyloseq$phyloseq_count) %>% data.frame() %>%
                                                                     big.mark = ","), 
                                                              ")",
                                                              sep = ""),
-             `Microbial<br>species<br>richness` = paste(median(S.obs, na.rm = T),
+             `Microbial<br>species<br>richness` = paste(median(S.obs, na.rm = T) %>% round,
                                                              " (", 
-                                                             quantile(S.obs, 0.25, na.rm = T),
+                                                             quantile(S.obs, 0.25, na.rm = T) %>% round,
                                                              ", ",
-                                                             quantile(S.obs, 0.75, na.rm = T),
+                                                             quantile(S.obs, 0.75, na.rm = T) %>% round,
                                                              ")",
                                                              sep = ""),
-            `Microbial function<br>richness` = paste(median(F.obs, na.rm = T),
+            `Microbial function<br>richness` = paste(median(F.obs, na.rm = T) %>% round,
                                                              " (", 
-                                                             quantile(F.obs, 0.25, na.rm = T),
+                                                             quantile(F.obs, 0.25, na.rm = T) %>% round,
                                                              ", ",
-                                                             quantile(F.obs, 0.75, na.rm = T),
+                                                             quantile(F.obs, 0.75, na.rm = T) %>% round,
                                                              ")",
                                                              sep = ""),
-                `Viral<br>species<br>richness` = paste(median(V.obs, na.rm = T),
+                `Viral<br>species<br>richness` = paste(median(V.obs, na.rm = T) %>% round,
                                                              " (", 
-                                                             quantile(V.obs, 0.25, na.rm = T),
+                                                             quantile(V.obs, 0.25, na.rm = T) %>% round,
                                                              ", ",
-                                                             quantile(V.obs, 0.75, na.rm = T),
+                                                             quantile(V.obs, 0.75, na.rm = T) %>% round,
                                                              ")",
                                                              sep = "")
               
@@ -6870,9 +6876,9 @@ f4a <- ggplot(subset(sample_data(phyloseq$phyloseq_path_rpk) %>%
 dat_text <- data.frame(
   label = c(
           #"**", "***", "***", "", "***", #label for Mock
-          "", "**", "***", "***", "**", #label for BAL
+          "", "*", "**", "***", "*", #label for BAL
           "", "", "***", "**", "***", 
-          "**", "***", "***", "***", "***"),
+          "*", "**", "***", "***", "***"),
   sample_type = c(
           #"Mock", "Mock", "Mock", "Mock", "Mock", 
           "BAL", "BAL", "BAL", "BAL", "BAL", 
@@ -7132,6 +7138,12 @@ pfr_lmer_mock %>% summary
 Raw result - BAL
 
 ```{r}
+
+
+
+dummy1 <- ((phyloseq$phyloseq_path_rpk %>% otu_table %>% data.frame(check.names = F)) != 0) %>% colSums()
+
+
 pfr_lmer_bal <- lm(S.obs ~ treatment, data = sample_data %>% data.frame %>% subset(., .$sample_type %in% c("BAL"))) 
 
 pfr_lmer_bal %>% summary

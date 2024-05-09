@@ -1,5 +1,5 @@
 ---
-title: "COD_20240212_HOST_6_phage_analysis_figure_table"
+title: "COD_20240509_HOST_7_ATS024_figure"
 author: "Minsik Kim"
 date: "2024-02-12"
 output:
@@ -5108,6 +5108,42 @@ figS7_host <- filt_maaslin_all_v_h %>%
 
 
 ```{r}
+
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_updated_small.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 120, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+
+ggarrange(figS7, figS7_host,
+          legend = "none",ncol = 1,align = "hv")
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_updated_small2.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 120, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+
+ggarrange(figS7, figS7_host,
+          legend = "none",ncol = 2,align = "hv")
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
 
 png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_updated.png",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches

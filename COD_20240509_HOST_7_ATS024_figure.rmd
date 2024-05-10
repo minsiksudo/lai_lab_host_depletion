@@ -798,8 +798,8 @@ figS7
 ```{r}
 
 
-filt_maaslin_all_v_h$group <-  ifelse(filt_maaslin_all_v_h$Estimate > 1 & filt_maaslin_all_v_h$qval < 0.1, "more",
-                     ifelse(filt_maaslin_all_v_h$Estimate < (-1) & filt_maaslin_all_v_h$qval < 0.1, "less",
+filt_maaslin_all_v_h$group <-  ifelse(filt_maaslin_all_v_h$Estimate > 0.5 & filt_maaslin_all_v_h$qval < 0.1, "more",
+                     ifelse(filt_maaslin_all_v_h$Estimate < (-0.5) & filt_maaslin_all_v_h$qval < 0.1, "less",
                             "insignificant"))
 
 figS7_host <- filt_maaslin_all_v_h %>% 
@@ -854,7 +854,7 @@ figS7_host <- filt_maaslin_all_v_h %>%
                                   #nudge_y = 10, box.padding = unit(0.35, "lines"),
                                  na.rm = T,
                                  parse = T,
-                                 max.overlaps = 10,
+                                 max.overlaps = 20,
                                  grob = "richtext",
                                  show.legend = F,
                                  #size=4, 
@@ -872,7 +872,7 @@ figS7_host <- filt_maaslin_all_v_h %>%
                                  grob = "richtext",
                                  show.legend = F,
                                  #hjust=0,
-                                 #size=4,
+                                 size=4,
                                  segment.size=0.25,
                                  nudge_x=-4,
                                  #nudge_y = 2,

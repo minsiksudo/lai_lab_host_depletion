@@ -2199,7 +2199,7 @@ f3b2_box_v
 ### Factors affecting DA taxa (main text)
 
 ```{r, warning=FALSE, message=FALSE}
-setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
+#setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 
 #filt_maaslin_all <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_maaslin_all.csv")
 #filt_fit_data_bal <- read.csv("data/mrkrmg_da_lmer_filt_fit_data_bal.csv")
@@ -2209,11 +2209,11 @@ setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 
 
 
-filt_maaslin_all_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_maaslin_all.csv")
+filt_maaslin_all_v <- read.csv("Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_maaslin_all.csv")
 #filt_maaslin_interaction <- read.csv("data/da_lmer_filt_maaslin_interaction.csv")
-filt_fit_data_bal_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_bal.csv")
-filt_fit_data_spt_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_spt.csv")
-filt_fit_data_ns_v <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_ns.csv")
+filt_fit_data_bal_v <- read.csv("Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_bal.csv")
+filt_fit_data_spt_v <- read.csv("Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_spt.csv")
+filt_fit_data_ns_v <- read.csv("Git/Host_depletion_macmini/data/mrkrmg_da_lmer_filt_fit_data_ns.csv")
 #filt_fit_data_pos <- read.csv("data/da_lmer_filt_fit_data_pos.csv")
 
 ```
@@ -2451,11 +2451,11 @@ setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 
 
 
-filt_maaslin_all_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_maaslin_all.csv")
+filt_maaslin_all_v_h <- read.csv("Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_maaslin_all.csv")
 #filt_maaslin_interaction <- read.csv("data/da_lmer_filt_maaslin_interaction.csv")
-filt_fit_data_bal_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_bal.csv")
-filt_fit_data_spt_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_spt.csv")
-filt_fit_data_ns_v_h <- read.csv("/Volumes/macdrive/Dropbox/Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_ns.csv")
+filt_fit_data_bal_v_h <- read.csv("Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_bal.csv")
+filt_fit_data_spt_v_h <- read.csv("Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_spt.csv")
+filt_fit_data_ns_v_h <- read.csv("Git/Host_depletion_macmini/data/mrkrmg_host_da_lmer_filt_fit_data_ns.csv")
 #filt_fit_data_pos <- read.csv("data/da_lmer_filt_fit_data_pos.csv")
 
 ```
@@ -2941,7 +2941,7 @@ DA_vh_strtfd <- c(
 
 ```{r}
 setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
-phyloseq_unfiltered <- read_rds("/Volumes/macdrive/Dropbox/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+phyloseq_unfiltered <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 phyloseq <- phyloseq_unfiltered
 filt_maaslin_all <- read.csv("data/da_lmer_filt_maaslin_all.csv")
 

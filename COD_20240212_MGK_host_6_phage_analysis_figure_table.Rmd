@@ -2441,7 +2441,7 @@ figS7
 ### Factors affecting DA taxa (main text)
 
 ```{r, warning=FALSE, message=FALSE}
-setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
+#setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 
 #filt_maaslin_all <- read.csv("data/mrkrmg_host_da_lmer_filt_maaslin_all.csv")
 #filt_fit_data_bal <- read.csv("data/mrkrmg_host_da_lmer_filt_fit_data_bal.csv")
@@ -2940,15 +2940,15 @@ DA_vh_strtfd <- c(
 ### Microbial file wrangling 
 
 ```{r}
-setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
+#setwd("Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git")
 phyloseq_unfiltered <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 phyloseq <- phyloseq_unfiltered
-filt_maaslin_all <- read.csv("data/da_lmer_filt_maaslin_all.csv")
+filt_maaslin_all <- read.csv("Git/Host_depletion_macmini/data/da_lmer_filt_maaslin_all.csv")
 
 #filt_maaslin_interaction <- read.csv("data/da_lmer_filt_maaslin_interaction.csv")
-filt_fit_data_bal_m <- read.csv("data/da_lmer_filt_fit_data_bal.csv")
-filt_fit_data_spt_m <- read.csv("data/da_lmer_filt_fit_data_spt.csv")
-filt_fit_data_ns_m <- read.csv("data/da_lmer_filt_fit_data_ns.csv")
+filt_fit_data_bal_m <- read.csv("Git/Host_depletion_macmini/data/da_lmer_filt_fit_data_bal.csv")
+filt_fit_data_spt_m <- read.csv("Git/Host_depletion_macmini/data/da_lmer_filt_fit_data_spt.csv")
+filt_fit_data_ns_m <- read.csv("Git/Host_depletion_macmini/data/da_lmer_filt_fit_data_ns.csv")
 #filt_fit_data_pos <- read.csv("data/da_lmer_filt_fit_data_pos.csv")
 #Stratified by sample type
 
@@ -4918,6 +4918,8 @@ fig3
 
 dev.off()
 
+
+
 ```
 
 ### Updated volcano plot
@@ -4974,7 +4976,10 @@ figS7 <- filt_maaslin_all %>% mutate(feature = species_italic(feature),
         #         geom='richtext',
         #         x=0, y=7,
         #         label = "<i>q</i>-value = 0.1, fold-change = 0") +
-        theme(legend.position = "top", axis.title.y = ggtext::element_markdown(), legend.text = element_markdown()) +
+        theme(legend.position = "top", 
+              plot.tag.position = c(0.03, 0.97),
+              axis.title.y = ggtext::element_markdown(), 
+              legend.text = element_markdown()) +
         scale_color_manual(values = c("#a65628",
                                       "grey",
                                       "#fb9a99",
@@ -4996,7 +5001,7 @@ figS7 <- filt_maaslin_all %>% mutate(feature = species_italic(feature),
                                       "HostZERO",
                                       "MolYsis",
                                       "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        guides(col = guide_legend(title = "Factors", title.position = "top", nrow = 1)) +
+        guides(col = guide_legend(title = "Factors", title.position = "left", nrow = 1)) +
         ggrepel::geom_text_repel(aes(label = label1),
                                   point.padding = unit(0.5, "lines"),
                                   #nudge_y = 10, box.padding = unit(0.35, "lines"),
@@ -5021,15 +5026,30 @@ figS7 <- filt_maaslin_all %>% mutate(feature = species_italic(feature),
                                   nudge_y = 10,
                                   direction="y")
         
-figS7
+
 ggarrange(figS7, figS7_host,
           common.legend = T, ncol = 1,align = "hv")
-figS7_host
+
 ```
 
 ### Creating figures for ATS poster..
 
 ```{r}
+
+
+species_italic <- function(data) {
+  names <- gsub("_A|_B", "", data)
+  names <- ifelse(grepl("~", names), paste("italic('", gsub("~" , "')~", names),   sep = ""),
+                  paste("italic('", names, "')", sep = ""))
+  names <- ifelse(grepl("\\d", names),
+                  names %>% gsub("[italic(']", "", .) %>% gsub("[')]", "", .),
+                  names)
+  names
+}
+
+filt_maaslin_all_v_h$group <-  ifelse(filt_maaslin_all_v_h$Estimate > 0.3 & filt_maaslin_all_v_h$qval < 0.1, "more",
+                     ifelse(filt_maaslin_all_v_h$Estimate < -0.3 & filt_maaslin_all_v_h$qval < 0.1, "less",
+                            "insignificant"))
 
 
 figS7_host <- filt_maaslin_all_v_h %>% 
@@ -5057,7 +5077,10 @@ figS7_host <- filt_maaslin_all_v_h %>%
         geom_vline(xintercept = 0, col = "gray") +
         labs(tag = "B")  +
         ggtitle("Viral host genus") +
-        theme(legend.position = "top", axis.title.y = ggtext::element_markdown(), legend.text = element_markdown()) +
+        theme(legend.position = "top", 
+              plot.tag.position = c(0.03, 0.97),
+              axis.title.y = ggtext::element_markdown(), 
+              legend.text = element_markdown()) +
         scale_color_manual(values = c("#a65628",
                                       "grey",
                                       "#fb9a99",
@@ -5079,7 +5102,7 @@ figS7_host <- filt_maaslin_all_v_h %>%
                                       "HostZERO",
                                       "MolYsis",
                                       "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        guides(col = guide_legend(title = "Factors", title.position = "top", nrow = 1)) +
+        guides(col = guide_legend(title = "Factors", title.position = "left", nrow = 1)) +
                 ggrepel::geom_text_repel(aes(label = label1),
                                   point.padding = unit(0.5, "lines"),
                                   #nudge_y = 10, box.padding = unit(0.35, "lines"),
@@ -5088,7 +5111,9 @@ figS7_host <- filt_maaslin_all_v_h %>%
                                   max.overlaps = 34,
                                   grob = "richtext",
                                   show.legend = F,
-                                  size=3, segment.size=0.25, nudge_x=5, direction="y") +
+                                  size=3, segment.size=0.25, nudge_x=5, 
+                                  #nudge_y=1, 
+                                  direction="y") +
         ggrepel::geom_text_repel(aes(label = label2),
                                    box.padding = unit(0.35, "lines"),
                                   #point.padding = unit(0.5, "lines"),
@@ -5098,11 +5123,16 @@ figS7_host <- filt_maaslin_all_v_h %>%
                                   grob = "richtext",
                                   show.legend = F,
                                   #hjust=0,
+                                 #hjust=5,
                                   size=3,
                                   segment.size=0.25,
                                   nudge_x=-5,
-                                  nudge_y = 2,
-                                  direction="y")
+                                  #nudge_y = 2,
+                                  direction="y"
+                                 )
+
+figS7_host
+
 
 ```
 
@@ -5425,8 +5455,6 @@ dev.off()
 
 
 ```
-
-
 
 
 ### New figure (correlation plot)

@@ -394,11 +394,11 @@ fs3a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "S
 fs3a
 
 
-#png(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS3.png",   # The directory you want to save the file in
+#tiff(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS3.tiff",   # The directory you want to save the file in
 #    width = 180, # The width of the plot in inches
 #    height = 170, # The height of the plot in inches
 #    units = "mm",
-#    res = 600
+#    res = 250
 #) #fixing multiple page issue
 
 #figS3
@@ -3814,11 +3814,11 @@ ggarrange(fig2_y, fig2_vh)
 
 ```{r}
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_updated.png",   # The directory you want to save the file in
+tiff(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_updated.tiff",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
     height = 225, # The height of the plot in inches
     units = "mm",
-    res = 600
+    res = 250
 ) #fixing multiple page issue
 
 
@@ -4342,11 +4342,11 @@ e_vh <- tax_table(subset_samples(v_h_phyloseq_rel_renamed,
 
 ```{r}
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_updated_v2.png",   # The directory you want to save the file in
+tiff(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_updated_v2.tiff",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
     height = 225, # The height of the plot in inches
     units = "mm",
-    res = 600
+    res = 250
 ) #fixing multiple page issue
 
 
@@ -4904,11 +4904,11 @@ fig3
 
 ```{r}
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3_updated.png",   # The directory you want to save the file in
+tiff(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure3_updated.tiff",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
     height = 225, # The height of the plot in inches
     units = "mm",
-    res = 600
+    res = 250
 ) #fixing multiple page issue
 fig3
 
@@ -5139,11 +5139,11 @@ figS7_host
 
 ```{r}
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_updated.png",   # The directory you want to save the file in
+tiff(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_updated.tiff",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
     height = 225, # The height of the plot in inches
     units = "mm",
-    res = 600
+    res = 250
 ) #fixing multiple page issue
 
 
@@ -5432,11 +5432,11 @@ annotate_figure(fig4,
                                  family = "sans", 
                                  size = 11))
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS8_updated.png",   # The directory you want to save the file in
+tiff(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS8_updated.tiff",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
     height = 225, # The height of the plot in inches
     units = "mm",
-    res = 600
+    res = 250
 ) #fixing multiple page issue
 
 
@@ -5683,11 +5683,11 @@ row_labels <- rownames(heatmap_corr) %>%
 
 
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS15.png",   # The directory you want to save the file in
+tiff(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS15.tiff",   # The directory you want to save the file in
     width = 170, # The width of the plot in inches
     height = 170, # The height of the plot in inches
     units = "mm",
-    res = 600
+    res = 250
 ) #fixing multiple page issue
 
 

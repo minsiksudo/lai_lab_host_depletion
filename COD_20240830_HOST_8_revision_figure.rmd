@@ -1,0 +1,323 @@
+---
+title: "COD_20240830_HOST_8_revision_figure"
+author: "Minsik Kim"
+date: "2024-08-30"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+        df_print: paged
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+## Loading packages
+
+```{r setup}
+#===============================================================================
+#BTC.LineZero.Header.1.1.0
+#===============================================================================
+#R Markdown environment setup and reporting utility.
+#===============================================================================
+#RLB.Dependencies:
+#   knitr, magrittr, pacman, rio, rmarkdown, rmdformats, tibble, yaml
+#===============================================================================
+#Input for document parameters, libraries, file paths, and options.
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/minsik/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Dropbox (Personal)"))
+
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R/x86_64-pc-linux-gnu-library/4.1/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
+str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "AMR")
+        
+YAML_header <-
+'---
+title: "COD_20240830_HOST_8_revision_figure"
+author: "Minsik Kim"
+date: "2024.08.30"
+output:
+    rmdformats::downcute:
+        downcute_theme: "chaos"
+        code_folding: hide
+        fig_width: 6
+        fig_height: 6
+---'
+seed <- "20230310"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Loads libraries, file paths, and other document options.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Boot <- function() {
+    .libPaths(path_library)
+
+    require(pacman)
+    pacman::p_load(c("knitr", "rmarkdown", "rmdformats", "yaml"))
+
+    knitr::opts_knit$set(root.dir = path_working)
+
+    str_libraries |> unique() |> sort() -> str_libraries
+    pacman::p_load(char = str_libraries)
+
+    set.seed(seed)
+}
+FUN.LineZero.Boot()
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#Outputs R environment report.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+FUN.LineZero.Report <- function() {
+    cat("Line Zero Environment:\n\n")
+    paste("R:", pacman::p_version(), "\n") |> cat()
+    cat("Libraries:\n")
+    for (str_libraries in str_libraries) {
+        paste(
+            "    ", str_libraries, ": ", pacman::p_version(package = str_libraries),
+            "\n", sep = ""
+        ) |> cat()
+    }
+    paste("\nOperating System:", pacman::p_detectOS(), "\n") |> cat()
+    paste("    Library Path:", path_library, "\n") |> cat()
+    paste("    Working Path:", path_working, "\n") |> cat()
+    paste("Seed:", seed, "\n\n") |> cat()
+    cat("YAML Header:\n")
+    cat(YAML_header)
+}
+FUN.LineZero.Report()
+
+
+```
+
+#Data cleaning description#
+
+1. Loading data 
+2. Merging all the output
+3. Tidifying metadata
+4. Save RDS file
+
+
+***1. Loading data***
+
+
+```{r warning=F, `Loading data`}
+#set working directory
+setwd("Project_SICAS2_microbiome/2_Protocols/host_depletion/")
+
+#Loading meta data
+        #Loading the data
+        sample_data1 <- read_excel("SOP_20220324_MGK_Host_extraction.xlsx", sheet = 2)
+        #Cryopreserved data
+        sample_data2 <- read_excel("SOP_20220404_MGK_Host_qPCR_cryopreserve.xlsx", sheet = 2)
+        #BAL and sputum data
+        sample_data3 <- read_excel("SOP_20220407_MGK_sputum_BAL_host_depletion.xlsx", sheet = 5)
+        #Additional BAl and NS data
+        sample_data4 <- read_excel("SOP_20220606_MGK_BAL_NB_host_depletion.xlsx", sheet = 2)
+        #control_data
+        sample_data5 <- read_excel("SOP_20230112_MGK_host_depletion_controls.xlsx", sheet = 2) %>% subset(., .$sample_type != "nasal_swab")
+        
+#Laoding the qPCR data
+        #Loading data  - host
+        qPCR_data_host <- function(data){
+                data %>% data.frame() %>% mutate(Quantity.Mean = case_when(
+                        is.na(Quantity.Mean) ~ Quantity,
+                        TRUE ~ Quantity.Mean)) %>%
+                rename(extraction_id = "Sample", DNA_host_well = Quantity.Mean) %>% select(c("extraction_id", "DNA_host_well"))
+        }
+        host_simple1 <- read_excel("SOP_20220324_MGK_Host_extraction.xlsx", sheet = 6) %>% qPCR_data_host()
+        host_simple2 <- read_excel("SOP_20220404_MGK_Host_qPCR_cryopreserve.xlsx", sheet = 5) %>% qPCR_data_host()
+        host_simple3 <- read_excel("SOP_20220407_MGK_sputum_BAL_host_depletion.xlsx", sheet = 6) %>% qPCR_data_host()
+        host_simple4 <- read_excel("SOP_20220606_MGK_BAL_NB_host_depletion.xlsx", sheet = 5) %>% qPCR_data_host()
+        host_simple5 <- read_excel("SOP_20230112_MGK_host_depletion_controls.xlsx", sheet = 9) %>% qPCR_data_host()
+
+#Loading data  - Bac
+        qPCR_data_bac <- function(data){
+                data %>% data.frame() %>% mutate(Quantity.Mean = case_when(
+                        is.na(Quantity.Mean) ~ Quantity,
+                        TRUE ~ Quantity.Mean)) %>%
+                rename(extraction_id = "Sample", DNA_bac_well = Quantity.Mean) %>% select(c("extraction_id", "DNA_bac_well"))
+        }
+        bac_simple1 <- read_excel("SOP_20220324_MGK_Host_extraction.xlsx", sheet = 7) %>% qPCR_data_bac()
+        bac_simple2 <- read_excel("SOP_20220404_MGK_Host_qPCR_cryopreserve.xlsx", sheet = 6) %>% qPCR_data_bac()
+        bac_simple3 <- read_excel("SOP_20220407_MGK_sputum_BAL_host_depletion.xlsx", sheet = 7) %>% qPCR_data_bac()
+        bac_simple4 <- read_excel("SOP_20220606_MGK_BAL_NB_host_depletion.xlsx", sheet = 6) %>% qPCR_data_bac()
+        bac_simple5 <- read_excel("SOP_20230112_MGK_host_depletion_controls.xlsx", sheet = 8) %>% qPCR_data_bac()
+
+```
+
+
+***Merging all the output***
+
+
+```{r, warning=F, `Merging all the outputs`}
+        #Mergineg sampledata, host and bacterial qPCR data
+        sample_results <- list()
+        for (i in 1:5) {
+                  sample_data <- get(paste0("sample_data", i))
+                  host_simple <- get(paste0("host_simple", i))
+                  bac_simple <- get(paste0("bac_simple", i))
+                  
+                  sample_results[[i]] <- merge(sample_data, host_simple, by = "extraction_id") %>%
+                                          merge(., bac_simple, by = "extraction_id") %>%
+                                          subset(., !duplicated(extraction_id, fromLast = T)) %>%
+                          mutate(collection_date = as.character(collection_date), extraction_date = as.character(extraction_date))
+        }
+
+        #Changing type of data
+        sample_results[[3]]$aliquot <- as.character(sample_results[[3]]$aliquot)
+        
+        sample_result <- dplyr::bind_rows(sample_results[[1]], sample_results[[2]], sample_results[[3]], sample_results[[4]], sample_results[[5]])
+
+```
+
+***Tidyfying data***
+
+1. Re-calculattion of DNA concentration (adjusting dilution factors, standard concentration, etc.)
+2. creating new column (treatment)
+
+
+```{r warning=F, `Caculation of DNA, assigning treatment groups`}
+
+#Specification at Zymo was 20, 2, 0.2, ... per well. 2 uL of standards were used.
+#qPCR standards were 10, 0.1, 0.01 ng / uL etc. 
+#Prior calculatoin was based on zymo's specification. (20 ng / uL, which is wrong). This need to be modified
+
+sample_result<- sample_result %>% 
+        mutate(DNA_bac_ng_uL = DNA_host_well/2, 
+               DNA_host_ng_uL = DNA_bac_well/2,
+               DNA_bac_gene_copies_uL = DNA_bac_ng_uL * 198349.73, 
+               DNA_bac_16S_copies_uL = DNA_bac_gene_copies_uL * 7, 
+               DNA_host_nondil = DNA_host_ng_uL * 10, DNA_bac_nondil = DNA_bac_ng_uL * 10, #qPCR was conducted for 10-fold diluted samples.
+               host_proportion = (DNA_host_nondil/(DNA_host_nondil + DNA_bac_nondil)))
+
+#Method and sample_type labels modification
+sample_result <- sample_result %>% mutate(
+        treatment = case_when(
+                sample_result$control == 1 ~ "control",
+                sample_result$lypma == 1 ~ "lyPMA",
+                sample_result$benzonase == 1 ~ "benzonase",
+                sample_result$qiaamp == 1 ~ "qiaamp",
+                sample_result$host_zero == 1 ~ "host_zero",
+                sample_result$molysis == 1 ~ "molysis",
+                TRUE ~ "control"),
+        sample_type = case_when(
+                sample_type == "host_depletion_negative_control" ~ "neg_depletion",
+                sample_type == "host_depletion_positive_control" ~ "pos_depletion",
+                TRUE ~ sample_type)
+)
+
+
+```
+
+
+```{r}
+
+sample_result %>% subset(., .$sample_type %in% c("BAL", "nasal_swab", "Sputum")) %>% view
+
+sample_result$treatment <- factor(sample_result$treatment, levels = c("control", "lyPMA", "benzonase", "host_zero", "molysis", "qiaamp"))
+sample_result$cryo_preserve <- factor(sample_result$cryo_preserve,
+                                      levels = c(0,1),
+                                      labels = c("Non-cryoprotected", "Cryoprotected"))
+
+sample_result$sample_type <- factor(sample_result$sample_type,
+                                      levels = c("BAL", "nasal_swab", "Sputum"),
+                                      labels = c("BAL", "Nasal swabs", "Sputum"))
+
+
+
+figr3_bacteria <- ggplot(sample_result %>% subset(., .$sample_type %in% c("BAL", "Nasal swabs", "Sputum")),
+                aes(x = sample_type, y = DNA_bac_nondil)) +
+        geom_jitter(aes(col = treatment, x = treatment),
+                    lwd = 0.2, alpha = 0.3, stroke = 0) +
+        stat_summary(aes(color = treatment, x = treatment),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        theme_classic (base_size = 12, base_family = "sans")+ 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), 
+                           name = "Treatment", 
+                           breaks = c("control", "lyPMA", "benzonase", "host_zero", "molysis", "qiaamp"),
+                           labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Treatment")+
+        theme(axis.title.y = element_markdown(),
+              plot.tag = element_text(size = 15),
+              axis.text.x = element_blank()) +
+        facet_grid(sample_type~cryo_preserve, scales = "free_y") +
+        ylab("log<sub>10</sub>(qPCR bacterial DNA)<br>(ng/μL)")+
+        labs(tag = "A")
+
+
+
+figr3_host <- ggplot(sample_result %>% subset(., .$sample_type %in% c("BAL", "Nasal swabs", "Sputum")),
+                aes(x = sample_type, y = DNA_host_nondil)) +
+        geom_jitter(aes(col = treatment, x = treatment),
+                    lwd = 0.2, alpha = 0.3, stroke = 0) +
+        stat_summary(aes(color = treatment, x = treatment),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        theme_classic (base_size = 12, base_family = "sans")+ 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), 
+                           name = "Treatment", 
+                           breaks = c("control", "lyPMA", "benzonase", "host_zero", "molysis", "qiaamp"),
+                           labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Treatment")+
+        theme(axis.title.y = element_markdown(),
+              plot.tag = element_text(size = 15),
+              axis.text.x = element_blank()) +
+        facet_grid(sample_type~cryo_preserve, scales = "free_y") +
+        ylab("log<sub>10</sub>(qPCR human DNA)<br>(ng/μL)") +
+        labs(tag = "B")
+
+
+
+
+
+figr3_host_prop <- ggplot(sample_result %>% subset(., .$sample_type %in% c("BAL", "Nasal swabs", "Sputum")),
+                aes(x = sample_type, y = DNA_host_nondil/(DNA_bac_nondil + DNA_host_nondil)*100)) +
+        geom_jitter(aes(col = treatment, x = treatment),
+                    lwd = 0.2, alpha = 0.3, stroke = 0) +
+        stat_summary(aes(color = treatment, x = treatment),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        theme_classic (base_size = 12, base_family = "sans")+ 
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), 
+                           name = "Treatment", 
+                           breaks = c("control", "lyPMA", "benzonase", "host_zero", "molysis", "qiaamp"),
+                           labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_x_discrete(name ="Treatment")+
+        theme(axis.title.y = element_markdown(),
+              plot.tag = element_text(size = 15),
+              axis.text.x = element_blank(), legend.position = "top") +
+        facet_grid(sample_type~cryo_preserve, scales = "free_y") +
+        ylab("Host DNA %")  +
+        labs(tag = "B")
+
+
+ggarrange(figr3_bacteria, figr3_host_prop, common.legend = T, ncol = 2)
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureR3_cryo_qPCR.png",   # The directory you want to save the file in
+    width = 190, # The width of the plot in inches
+    height = 170, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+ggarrange(figr3_bacteria, figr3_host_prop, common.legend = T, ncol = 2)
+
+#ggarrange(figr3_bacteria, figr3_host, figr3_host_prop, common.legend = T, ncol = 3)
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+```

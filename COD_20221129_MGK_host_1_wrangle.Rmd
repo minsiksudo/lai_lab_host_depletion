@@ -27,14 +27,20 @@ editor_options:
 #===============================================================================
 #Input for document parameters, libraries, file paths, and options.
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
-path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
-str_libraries <- c(
-    "readxl", "phyloseq", "tidyverse", "pacman", "yaml"
-)
 
-path_working <- "/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git"
-path_library <- "/Library/Frameworks/R.framework/Resources/library"
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/minsik/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Dropbox (Personal)"))
+
+path_library <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/R/x86_64-pc-linux-gnu-library/4.1/",
+               "/Library/Frameworks/R.framework/Resources/library/")
+
 str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "AMR")
         
 YAML_header <-
@@ -106,7 +112,7 @@ FUN.LineZero.Report()
 
 ```{r warning=F, `Loading data`}
 #set working directory
-setwd("/Users/minsikkim/Dropbox (Partners HealthCare)/Project_SICAS2_microbiome/2_Protocols/host_depletion/")
+setwd("Project_SICAS2_microbiome/2_Protocols/host_depletion/")
 
 #Loading meta data
         #Loading the data

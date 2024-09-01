@@ -646,6 +646,72 @@ dev.off()
 
 ```
 
+### Fig. S2. numbers
+
+```{r warning=F}
+
+table1_mock_and_neg <- sample_data(phyloseq$phyloseq_count) %>% data.frame() %>% 
+        #dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL")) %>% 
+        mutate(S.obs = case_when(S.obs==0 ~ NA,
+                                 .default = S.obs),
+               F.obs = case_when(F.obs==0 ~ NA,
+                                 .default = F.obs),
+               V.obs = case_when(V.obs==0 ~ NA,
+                                 .default = V.obs)) %>% 
+        group_by (sample_type) %>%
+        summarise(`N` = n(),
+            #      `Total DNA <br>ng/µL` = paste(format(round(median(picogreen_ng_ul),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(picogreen_ng_ul, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(picogreen_ng_ul, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
+               `Human DNA <br>pg/µL` = paste(format(round(median(DNA_host_ng_uL*1000),1), nsmall = 1, big.mark = ","), " (", format(round(quantile(DNA_host_ng_uL*1000, 0.25),1), nsmall = 1, big.mark = ","), ", ", format(round(quantile(DNA_host_ng_uL*1000, 0.75),1), nsmall = 1, big.mark = ","), ")", sep = ""),
+               `Bacterial DNA <br>pg/µL` = paste(format(round(median(DNA_bac_ng_uL*1000),1), nsmall = 1, big.mark = ","), " (", format(round(quantile(DNA_bac_ng_uL*1000, 0.25),1), nsmall = 1, big.mark = ","), ", ", format(round(quantile(DNA_bac_ng_uL*1000, 0.75),1), nsmall = 1, big.mark = ","), ")", sep = ""),
+              `QC'd reads<br>reads x 10<sup>6</sup>` = paste(format(round(median(Reads_after_trim/1000000),1), nsmall = 1, big.mark = ","), " (", format(round(quantile(Reads_after_trim/1000000, 0.25),1), nsmall = 1, big.mark = ","), ", ", format(round(quantile(Reads_after_trim/1000000, 0.75),1), nsmall = 1, big.mark = ","), ")", sep = ""),
+              `Host reads<br>%` = paste(format(round(median(sequencing_host_prop*100),1),
+                                                nsmall = 1, big.mark = ","),
+                                         " (",
+                                         format(round(quantile(sequencing_host_prop * 100,
+                                                               0.25),
+                                                      1),
+                                                nsmall = 1,
+                                                big.mark = ","), 
+                                         ", ", 
+                                         format(round(quantile(sequencing_host_prop * 100, 0.75),1), 
+                                                nsmall = 1, 
+                                                big.mark = ","), 
+                                         ")", 
+                                         sep = ""),
+             `Final reads<br>reads x 10<sup>6</sup>` = paste(format(round(median(Final_reads/1000000,
+                                                                                 na.rm = T),
+                                                                          1),
+                                                                    nsmall = 1, big.mark = ","),
+                                                             " (", 
+                                                             format(round(quantile(Final_reads/1000000,
+                                                                                            0.25,
+                                                                                            na.rm = T),
+                                                                                   1),
+                                                                             nsmall = 1,
+                                                                             big.mark = ","),
+                                                             ", ",
+                                                             format(round(quantile(Final_reads/1000000, 
+                                                                                   0.75, 
+                                                                                   na.rm = T),
+                                                                          1), 
+                                                                    nsmall = 1, 
+                                                                    big.mark = ","), 
+                                                             ")",
+                                                             sep = "")
+              
+            ) %>% 
+        data.frame(check.names = F) %>% 
+        arrange(sample_type) %>%
+        rename(`Sample` = sample_type) %>%
+        mutate_all(linebreak) %>% kbl(format = "html", escape = F) %>% kable_styling(full_width = 0, html_font = "sans")
+
+table1_mock_and_neg
+
+save_kable(table1_mock_and_neg, file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/table1_mock_neg.html", self_contained = T)
+
+
+
+```
 
 ### Fig. S2. sequencing results
 
@@ -654,7 +720,50 @@ dev.off()
 ```{r warning=F, QC1.5.0}
 #how were the samples failed in library prep?
 
+figS2_raw_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
+        ggplot(aes(x = reorder(baylor_other_id, -Raw_reads),
+                               y = Raw_reads/100000000,
+                               col = sample_type)) +
+                geom_point() +
+                theme_classic(base_family = "sans") +
+                theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
+                ylab("Raw reads X 10<sup>8</sup>") +
+                xlab("Samples") +
+        guides(col=guide_legend(title="Sample type")) +
+        scale_color_brewer(type = "qual", palette = 6) +
+        labs(tag = "A") #+
+        #ylim(c(0, 8.5))
+
+figS2_raw_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
+        ggplot(aes(x = reorder(baylor_other_id, -Raw_reads),
+                               y = log10(Raw_reads+1),
+                               col = sample_type)) +
+                geom_point() +
+                theme_classic(base_family = "sans") +
+                theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
+                ylab("log<sub>10</sub>(Raw reads)") +
+                xlab("Samples") +
+        guides(col=guide_legend(title="Sample type")) +
+        scale_color_brewer(type = "qual", palette = 6) +
+        labs(tag = "B") #+
+        #ylim(c(0, 8.5))
+
 figS2_final_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
+        ggplot(aes(x = reorder(baylor_other_id, -Final_reads),
+                               y = Final_reads/100000000,
+                               col = sample_type)) +
+                geom_point() +
+                theme_classic(base_family = "sans") +
+                theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
+                ylab("Final reads X 10<sup>8</sup>") +
+                xlab("Samples") +
+        guides(col=guide_legend(title="Sample type")) +
+        scale_color_brewer(type = "qual", palette = 6) +
+        labs(tag = "C") #+
+        #ylim(c(0, 8.5))
+
+
+figS2_final_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
         ggplot(aes(x = reorder(baylor_other_id, -Final_reads),
                                y = log10(Final_reads + 1),
                                col = sample_type)) +
@@ -665,11 +774,24 @@ figS2_final_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
-        labs(tag = "A") +
-        ylim(c(0, 8.5))
+        labs(tag = "D")
 
 
 figS2_total_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
+        ggplot(aes(x = reorder(baylor_other_id, -total_read),
+                               y = total_read/100000000,
+                               col = sample_type)) +
+                geom_point() +
+                theme_classic(base_family = "sans") +
+                theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
+                ylab("Sum of MetaPhlan mapped reads X 10<sup>8</sup>") +
+                xlab("Samples") +
+        guides(col=guide_legend(title="Sample type")) +
+        scale_color_brewer(type = "qual", palette = 6) +
+        labs(tag = "E")
+
+
+figS2_total_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
         ggplot(aes(x = reorder(baylor_other_id, -total_read),
                                y = log10(total_read + 1),
                                col = sample_type)) +
@@ -680,18 +802,16 @@ figS2_total_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
-        labs(tag = "B") +
-        ylim(c(0, 8.5))
+        labs(tag = "F") 
 
 
-
-figS2 <- ggarrange(figS2_final_reads, figS2_total_reads, ncol = 2, common.legend = T)
+figS2 <- ggarrange(figS2_raw_reads, figS2_raw_reads_log, figS2_final_reads, figS2_final_reads_log, ncol = 2, nrow = 3, common.legend = T)
 
 figS2
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2.png",   # The directory you want to save the file in
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2_revised.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
-    height = 90, # The height of the plot in inches
+    height = 270, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -4580,27 +4700,28 @@ Degree of freedom, effect size (residual, R2) and p-value of permutational ANOVA
 
 ```{r}
 set.seed(seed)
-horn_perm_all <- vegan::adonis2(distance(phyloseq_rel_nz, method="horn") ~ sample_type * treatment + subject_id,
+horn_perm_all <- vegan::adonis2(by = "terms",
+                                distance(phyloseq_rel_nz, method="horn") ~ sample_type * treatment + subject_id,
                                   data = phyloseq_rel_nz %>% sample_data %>% data.frame(check.names = F),
                                   permutations = 10000)
 set.seed(seed)
-horn_perm_ns <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_ns <- vegan::adonis2(by = "terms", distance(subset_samples(phyloseq_rel_nz, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                data = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>%
                                        sample_data %>% data.frame(check.names = F),
                                strata = subset_samples(phyloseq_rel_nz, sample_type == "Nasal") %>% 
                                        sample_data %>% data.frame(check.names = F) %>% .$subject_id, permutations = 10000)
 set.seed(seed)
-horn_perm_bal  <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_bal  <- vegan::adonis2(by = "terms", distance(subset_samples(phyloseq_rel_nz, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp,
                                  data = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>% sample_data %>% data.frame(check.names = F),
                                  strata = subset_samples(phyloseq_rel_nz, sample_type == "BAL") %>%
                                          sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
 set.seed(seed)
-horn_perm_spt <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_spt <- vegan::adonis2(by = "terms", distance(subset_samples(phyloseq_rel_nz, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                 data = subset_samples(phyloseq_rel_nz, sample_type == "Sputum") %>% sample_data %>% data.frame(check.names = F),
                                 strata = subset_samples(phyloseq_rel_nz, sample_type == "Sputum")
                                 %>% sample_data %>% data.frame(check.names = F) %>% .$subject_id,
-                                  permutations = 10000)
+                                  permutations = 10000) 
 
 ```
 
@@ -4662,7 +4783,6 @@ Raw result - BAL
 ```{r}
 horn_perm_spt
 ```
-
 
 
 **This table was additionally added to the manuscript as to determine bias after treatment with sputum**. 
@@ -7361,24 +7481,24 @@ phyloseq_rel_nz_f <- transform_sample_counts(phyloseq$phyloseq_path_rpk, functio
 
 
 set.seed(seed)
-horn_perm_inter_fun <- vegan::adonis2(distance(phyloseq_rel_nz_f, method="horn") ~ sample_type * treatment + subject_id,
+horn_perm_inter_fun <- vegan::adonis2(by = "terms", distance(phyloseq_rel_nz_f, method="horn") ~ sample_type * treatment + subject_id,
                                   data = phyloseq_rel_nz_f %>% sample_data %>% data.frame(check.names = F), 
                                   strata = phyloseq_rel_nz_f %>% sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
 set.seed(seed)
-horn_perm_ns_fun <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz_f, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_ns_fun <- vegan::adonis2(by = "terms", distance(subset_samples(phyloseq_rel_nz_f, sample_type == "Nasal"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                data = subset_samples(phyloseq_rel_nz_f, sample_type == "Nasal") %>%
                                        sample_data %>% data.frame(check.names = F),
                                strata = subset_samples(phyloseq_rel_nz_f, sample_type == "Nasal") %>% 
                                        sample_data %>% data.frame(check.names = F) %>% .$subject_id, permutations = 10000)
 set.seed(seed)
-horn_perm_bal_fun  <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz_f, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_bal_fun  <- vegan::adonis2(by = "terms", distance(subset_samples(phyloseq_rel_nz_f, sample_type == "BAL"), method="horn") ~  lypma + benzonase + host_zero + molysis + qiaamp,
                                  data = subset_samples(phyloseq_rel_nz_f, sample_type == "BAL") %>% sample_data %>% data.frame(check.names = F),
                                  strata = subset_samples(phyloseq_rel_nz_f, sample_type == "BAL") %>%
                                          sample_data %>% data.frame(check.names = F) %>% .$subject_id,
                                   permutations = 10000)
 set.seed(seed)
-horn_perm_spt_fun <- vegan::adonis2(distance(subset_samples(phyloseq_rel_nz_f, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
+horn_perm_spt_fun <- vegan::adonis2(by = "terms", distance(subset_samples(phyloseq_rel_nz_f, sample_type == "Sputum"), method="horn") ~ lypma + benzonase + host_zero + molysis + qiaamp,
                                 data = subset_samples(phyloseq_rel_nz_f, sample_type == "Sputum") %>% sample_data %>% data.frame(check.names = F),
                                 strata = subset_samples(phyloseq_rel_nz_f, sample_type == "Sputum")
                                 %>% sample_data %>% data.frame(check.names = F) %>% .$subject_id,
@@ -8000,6 +8120,61 @@ dev.off()
 **As a sanity check, rarefaction curves were generated and seemed to be saturated**
 
 ```{r}
+
+
+fig_rarefraction <- phyloseq$phyloseq_count %>% 
+        sample_data %>% 
+        data.frame %>%
+        subset(., !is.na(.$treatment) & sample_type %in% c("BAL", "Nasal", "Sputum")) %>%
+ggplot(., aes(x = log10(Final_reads/1000000), y = S.obs, col = treatment)) +
+        geom_point() +
+        theme_classic(base_family = "sans") +
+        #xlab("Final reads x 10<sup>6</sup>") +
+        ylab("Microbial species richness") +
+        labs(tag = "A") +
+        theme(axis.title.x = element_blank(), legend.position = "top") +
+        guides(col = guide_legend(title = "Treatment", title.position = "top", nrow = 1)) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
+                          name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
+        facet_wrap(~sample_type, scales = "free", nrow = 1)
+
+fig_rarefraction_function <- phyloseq$phyloseq_path_rpk %>% 
+        sample_data %>% 
+        data.frame %>%
+        subset(., !is.na(.$treatment) & sample_type %in% c("BAL", "Nasal", "Sputum")) %>%
+ggplot(., aes(x = log10(Final_reads/1000000), y = S.obs, col = treatment)) +
+        geom_point() +
+        theme_classic(base_family = "sans") +
+        xlab("log<sub>10</sub>(Final reads x 10<sup>6</sup>)") +
+        ylab("Functional richness") +
+        labs(tag = "C") +
+        theme(axis.title.x = element_markdown(), legend.position = "top") +
+        guides(col = guide_legend(title = "Treatment", title.position = "top", nrow = 1)) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
+                          name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
+        facet_wrap(~sample_type, scales = "free", nrow = 1)
+
+
+
+fig_rarefraction_viral <- phyloseq$phyloseq_count %>% 
+        sample_data %>% 
+        data.frame %>%
+        subset(., !is.na(.$treatment) & sample_type %in% c("BAL", "Nasal", "Sputum")) %>%
+ggplot(., aes(x = log10(Final_reads/1000000), y = V.obs, col = treatment)) +
+        geom_point() +
+        theme_classic(base_family = "sans") +
+        #xlab("Final reads x 10<sup>6</sup>") +
+        ylab("Viral richness") +
+        labs(tag = "B") +
+        theme(axis.title.x = element_blank(), legend.position = "top",) +
+        guides(col = guide_legend(title = "Treatment", title.position = "top", nrow = 1)) +
+        scale_color_manual(values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"),
+                          name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
+        facet_wrap(~sample_type, scales = "free", nrow = 1)
+
+ggarrange(fig_rarefraction, fig_rarefraction_viral, fig_rarefraction_function, common.legend = T, ncol = 1)
+
+
 
 fig_rarefraction <- phyloseq$phyloseq_count %>% 
         sample_data %>% 

@@ -8172,7 +8172,18 @@ ggplot(., aes(x = log10(Final_reads/1000000), y = V.obs, col = treatment)) +
                           name = "Treatment", labels = c("Untreated","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
         facet_wrap(~sample_type, scales = "free", nrow = 1)
 
+
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS13_log.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 180, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
 ggarrange(fig_rarefraction, fig_rarefraction_viral, fig_rarefraction_function, common.legend = T, ncol = 1)
+
+dev.off()
 
 
 

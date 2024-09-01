@@ -370,7 +370,7 @@ Host depletion effects on total viral reads measured by shotgun metagenomic sequ
 
 ```{r}
 
-fs3a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(Viral_reads))) +
+fs_viral_sr <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "Sputum")), aes(x = sample_type, y = log10(Viral_reads))) +
         geom_jitter(aes(col = treatment, x = treatment),
                     lwd = 0.2, alpha = 0.3, stroke = 0)+
         stat_summary(aes(color = treatment, x = treatment),
@@ -391,7 +391,7 @@ fs3a <- ggplot(sample_data %>% subset(., .$sample_type %in% c("BAL", "Nasal", "S
 
 
 
-fs3a
+fs_viral_sr
 
 
 #tiff(file = "/Users/minsikkim/Dropbox (Personal)/Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS3.tiff",   # The directory you want to save the file in
@@ -4901,6 +4901,8 @@ fig3 <- ggarrange(f3a, f3a_v, f3b2_box, f3b2_box_v, ncol = 2, nrow =  2, common.
 fig3
 
 ```
+
+
 
 ```{r}
 

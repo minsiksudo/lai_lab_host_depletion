@@ -28,6 +28,9 @@ editor_options:
 #Input for document parameters, libraries, file paths, and options.
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 
+knitr::opts_chunk$set(message=FALSE, warning = FALSE)
+
+
 
 path_working <- 
         ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
@@ -40,6 +43,7 @@ path_library <-
         ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
                "/home/bagel/R/x86_64-pc-linux-gnu-library/4.1/",
                "/Library/Frameworks/R.framework/Resources/library/")
+
 
 str_libraries <- c("readxl", "phyloseq", "tidyverse", "pacman", "yaml", "ggplot2", "vegan", "microbiome", "ggpubr", "viridis", "decontam", "gridExtra", "ggpubr", "lme4", "lmerTest", "writexl", "harrietr", "Maaslin2", "ggtext", "ggpmisc", "gridExtra", "gamm4", "reshape2", "AMR")
         
@@ -55,7 +59,7 @@ output:
         fig_width: 6
         fig_height: 6
 ---'
-seed <- "20230310"
+seed <- "20240912"
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #Loads libraries, file paths, and other document options.
@@ -132,7 +136,7 @@ setwd("Project_SICAS2_microbiome/2_Protocols/host_depletion/")
                 data %>% data.frame() %>% mutate(Quantity.Mean = case_when(
                         is.na(Quantity.Mean) ~ Quantity,
                         TRUE ~ Quantity.Mean)) %>%
-                rename(extraction_id = "Sample", DNA_host_well = Quantity.Mean) %>% select(c("extraction_id", "DNA_host_well"))
+                rename(extraction_id = "Sample", DNA_host_well = Quantity.Mean) %>% dplyr::select(c("extraction_id", "DNA_host_well"))
         }
         host_simple1 <- read_excel("SOP_20220324_MGK_Host_extraction.xlsx", sheet = 6) %>% qPCR_data_host()
         host_simple2 <- read_excel("SOP_20220404_MGK_Host_qPCR_cryopreserve.xlsx", sheet = 5) %>% qPCR_data_host()
@@ -145,7 +149,7 @@ setwd("Project_SICAS2_microbiome/2_Protocols/host_depletion/")
                 data %>% data.frame() %>% mutate(Quantity.Mean = case_when(
                         is.na(Quantity.Mean) ~ Quantity,
                         TRUE ~ Quantity.Mean)) %>%
-                rename(extraction_id = "Sample", DNA_bac_well = Quantity.Mean) %>% select(c("extraction_id", "DNA_bac_well"))
+                rename(extraction_id = "Sample", DNA_bac_well = Quantity.Mean) %>% dplyr::select(c("extraction_id", "DNA_bac_well"))
         }
         bac_simple1 <- read_excel("SOP_20220324_MGK_Host_extraction.xlsx", sheet = 7) %>% qPCR_data_bac()
         bac_simple2 <- read_excel("SOP_20220404_MGK_Host_qPCR_cryopreserve.xlsx", sheet = 6) %>% qPCR_data_bac()
@@ -218,6 +222,13 @@ sample_result <- sample_result %>% mutate(
 
 
 ```
+
+
+
+# C19. Cryoprotected vs non-cryoprotected
+
+C19.  Limited applicability of results to fresh samples. The study focused on frozen samples without cryoprotectants, which may limit the applicability of the findings to fresh samples or those preserved with cryoprotectants.…..
+
 
 
 ```{r}
@@ -320,4 +331,333 @@ ggarrange(figr3_bacteria, figr3_host_prop, common.legend = T, ncol = 2)
 
 dev.off()
 
+```
+
+
+
+### Loading phyloseq data
+
+```{r warning=F, message=FALSE, "Data loading"}
+# Loading files -----------------------------------------------------------
+#loading tidy phyloseq object
+phyloseq_unfiltered <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+
+#v_phyloseq <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu_Jessica.rds")
+v_phyloseq <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu.rds")
+
+sample_data <- sample_data(phyloseq_unfiltered$phyloseq_count)
+
+```
+
+
+### Alpha diversity indices
+
+```{r}           
+
+alpha_diversity <- function(data) {
+        otu_table <- otu_table(data) #%>% .[, colSums(.) !=0]
+        S.obs <- rowSums(t(otu_table) != 0)
+        sample_data <- sample_data(data)
+        data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
+        data_shannon <- vegan::diversity(t(otu_table), index = "shannon") # calculate Shannon index using vegan package
+        data_hill <- exp(data_shannon)                           # calculate Hills index
+        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, aggregate = TRUE) # dominance (Berger-Parker index), etc.
+        data_invsimpson <- vegan::diversity(t(otu_table), index = "invsimpson")                          # calculate Shannon index using vegan package
+        alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
+        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
+}
+sample_data(v_phyloseq$viral_reads) <- sample_data(alpha_diversity(v_phyloseq$viral_reads))
+#sample_data(v_phyloseq$viral_rpkm) <- sample_data(alpha_diversity(v_phyloseq$viral_rpkm))
+
+sample_data(phyloseq_unfiltered$phyloseq_count)$V.obs <- 
+        sample_data(v_phyloseq$viral_reads) %>% 
+        data.frame %>% 
+        dplyr::select("S.obs") %>% 
+#        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
+#                                 .default = S.obs)) %>%
+        .[sample_names(phyloseq_unfiltered$phyloseq_count),]
+
+sample_data(phyloseq_unfiltered$phyloseq_rel)$V.obs <- 
+        sample_data(v_phyloseq$viral_reads) %>% 
+        data.frame %>% 
+        dplyr::select("S.obs") %>% 
+#        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
+#                                 .default = S.obs)) %>%
+        .[sample_names(phyloseq_unfiltered$phyloseq_count),]
+
+sample_data(phyloseq_unfiltered$phyloseq_path_rpk)$V.obs <- 
+        sample_data(v_phyloseq$viral_reads) %>% 
+        data.frame %>% 
+        dplyr::select("S.obs") %>% 
+#        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
+#                                 .default = S.obs)) %>%
+        .[sample_names(phyloseq_unfiltered$phyloseq_count),]
+
+phyloseq <- phyloseq_unfiltered
+
+
+
+alpha_diversity <- function(data) {
+        otu_table <- otu_table(data) # %>% .[, colSums(.) !=0]
+        S.obs <- rowSums(t(otu_table) != 0)
+        sample_data <- sample_data(data)
+        data_evenness <- vegan::diversity(t(otu_table)) / log(vegan::specnumber(t(otu_table))) # calculate evenness index using vegan package
+        data_shannon <- vegan::diversity(t(otu_table), index = "shannon") # calculate Shannon index using vegan package
+        data_hill <- exp(data_shannon)                           # calculate Hills index
+        data_dominance <- microbiome::dominance(otu_table, index = "all", rank = 1, aggregate = TRUE) # dominance (Berger-Parker index), etc.
+        data_invsimpson <- vegan::diversity(t(otu_table), index = "invsimpson")                          # calculate Shannon index using vegan package
+        alpha_diversity <- cbind(S.obs, data_shannon, data_hill, data_invsimpson, data_evenness,data_dominance) # combine all indices in one data table
+        sample_data <- merge(data.frame(sample_data), alpha_diversity, by = 0, all = T) %>% column_to_rownames(var = "Row.names")
+}
+
+
+
+sample_data(phyloseq_unfiltered$phyloseq_rel) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_rel))
+sample_data(phyloseq_unfiltered$phyloseq_count) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_count)) 
+sample_data(phyloseq_unfiltered$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_path_rpk))  
+```
+
+
+# C10. Rarefaction curve
+
+
+
+## Calculating rarecurve with step = 1 {.tabset}
+
+
+```{r}
+
+phyloseq_nz_microbe <- phyloseq_unfiltered$phyloseq_count %>%
+        subset_samples(S.obs != 0 & sample_type %in% c(#"Mock", 
+                                                       "BAL", "Nasal", "Sputum"))
+
+# phyloseq_nz_function <- phyloseq_unfiltered$phyloseq_path_rpk %>%
+#         subset_samples(S.obs != 0 & sample_type %in% c(#"Mock", 
+#                                                        "BAL", "Nasal", "Sputum"))
+
+phyloseq_nz_v <- v_phyloseq$viral_reads %>%
+        subset_samples(S.obs != 0 & sample_type %in% c(#"Mock", 
+                                                       "BAL", "Nasal", "Sputum"))
+
+
+```
+
+### Calculating rarecurve with step = 1
+
+```{r}
+set.seed(seed)
+
+rare_microbe_1 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
+                          step = 1, color = "treatment", label = "subject_id", se = T)
+
+# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
+#                           step = 100000, color = "treatment", label = "subject_id", se = T)
+
+rare_v_1 <- phyloseq.extended::ggrare(phyloseq_nz_v,
+                          step = 1, color = "treatment", label = "subject_id", se = T)
+
+```
+
+
+## Calculating rarecurve with step = 20 
+
+```{r}
+set.seed(seed)
+
+rare_microbe_20 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
+                          step = 20, color = "treatment", label = "subject_id", se = T)
+
+# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
+#                           step = 100000, color = "treatment", label = "subject_id", se = T)
+
+rare_v_20 <- phyloseq.extended::ggrare(phyloseq_nz_v,
+                          step = 20, color = "treatment", label = "subject_id", se = T)
+
+```
+
+
+## Calculating rarecurve with step = 100
+
+```{r}
+set.seed(seed)
+
+
+rare_microbe_100 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
+                          step = 100, color = "treatment", label = "subject_id", se = T)
+
+# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
+#                           step = 100000, color = "treatment", label = "subject_id", se = T)
+
+rare_v_100 <- phyloseq.extended::ggrare(phyloseq_nz_v,
+                          step = 100, color = "treatment", label = "subject_id", se = T)
+
+```
+
+
+## Calculating rarecurve with step = 10000
+
+```{r}
+set.seed(seed)
+
+
+rare_microbe_10000 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
+                          step = 10000, color = "treatment", label = "subject_id", se = T)
+
+# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
+#                           step = 100000, color = "treatment", label = "subject_id", se = T)
+
+rare_v_10000 <- phyloseq.extended::ggrare(phyloseq_nz_v,
+                          step = 10000, color = "treatment", label = "subject_id", se = T)
+
+```
+
+
+
+
+```{r}
+{rare_microbe +
+        facet_wrap(~sample_type) +
+        scale_color_manual(
+                values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), 
+                name = "Treatment", 
+                labels = c("Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(
+                values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), 
+                name = "Treatment", 
+                labels = c("Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using        
+        #guides(fill = guide_legend()) +   
+        scale_x_continuous(trans='log10') +
+        theme_classic (base_size = 12, base_family = "sans")}%>%
+        gginnards::delete_layers(., "GeomText") +
+        ylab("Species richness") +
+        xlab("Reads")
+
+
+
+
+
+{rare_microbe +
+        facet_wrap(sample_type~subject_id, scale = "free") +
+        scale_color_manual(
+                values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), 
+                name = "Treatment", 
+                labels = c("Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        scale_fill_manual(
+                values = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3"), 
+                name = "Treatment", 
+                labels = c("Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) + #color using        
+        #guides(fill = guide_legend()) +   
+        scale_x_continuous(trans='log10') +
+        theme_classic (base_size = 12, base_family = "sans")}%>%
+        gginnards::delete_layers(., "GeomText") +
+        ylab("Species richness") +
+        xlab("Reads")
+
+
+
+rare_microbe +
+        facet_grid(sample_type~treatment)
+
+rare_microbe +
+        facet_wrap(~treatment)
+
+
+```
+
+
+```{r}
+plot_rarefaction_curves <- function(otu_table, metadata, group_vars, step = 1, summarize = FALSE) {
+  # Create grouping variable
+  metadata$Group <- interaction(metadata[, group_vars], drop = TRUE)
+  
+  # Run rarecurve
+  rare <- rarecurve(otu_table, step = step, sample = NULL, label = FALSE)
+  
+  # Extract data
+  rare_df <- rarecurve_to_df(rare)
+  
+  # Merge with metadata
+  rare_df <- left_join(rare_df, metadata, by = "SampleID")
+  
+  if (summarize) {
+    # Summarize data
+    summary_df <- rare_df %>%
+      group_by(Group, Sequences) %>%
+      summarize(
+        MeanSpecies = mean(Species),
+        SDSpecies = sd(Species),
+        .groups = 'drop'
+      )
+    
+    # Plot summarized data
+    p <- ggplot(summary_df, aes(x = Sequences, y = MeanSpecies, color = Group)) +
+      geom_line(size = 1) +
+      geom_ribbon(aes(ymin = MeanSpecies - SDSpecies, ymax = MeanSpecies + SDSpecies, fill = Group), alpha = 0.2) +
+      labs(
+        x = "Number of Sequences",
+        y = "Mean Species Richness",
+        title = "Mean Rarefaction Curves with Standard Deviation"
+      ) +
+      theme_minimal() +
+      theme(legend.title = element_blank())
+  } else {
+    # Plot individual curves
+    p <- ggplot(rare_df, aes(x = Sequences, y = Species, color = Group, group = SampleID)) +
+      geom_line(alpha = 0.7) +
+      labs(
+        x = "Number of Sequences",
+        y = "Species Richness",
+        title = "Rarefaction Curves Stratified by Group"
+      ) +
+      theme_minimal() +
+      theme(legend.title = element_blank())
+  }
+  
+  return(p)
+}
+
+# Usage
+p <- plot_rarefaction_curves(
+  otu_table = otu_table,
+  metadata = metadata,
+  group_vars = c("SampleType", "Treatment"),
+  step = 10,
+  summarize = TRUE
+)
+print(p)
+```
+
+
+
+
+
+# Bibliography
+
+```{r warning=FALSE}
+#===============================================================================
+#BTC.LineZero.Footer.1.1.0
+#===============================================================================
+#R markdown citation generator.
+#===============================================================================
+#RLB.Dependencies:
+#   magrittr, pacman, stringr
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#BTC.Dependencies:
+#   LineZero.Header
+#===============================================================================
+#Generates citations for each explicitly loaded library.
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+str_libraries <- c("r", str_libraries)
+for (str_libraries in str_libraries) {
+    str_libraries |>
+        pacman::p_citation() |>
+        print(bibtex = FALSE) |>sav
+        capture.output() %>%
+        .[-1:-3] %>% .[. != ""] |>
+        stringr::str_squish() |>
+        stringr::str_replace("_", "") |>
+        cat()
+    cat("\n")
+}
+#===============================================================================
 ```

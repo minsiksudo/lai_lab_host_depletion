@@ -486,7 +486,7 @@ sample_data(v_phyloseq$viral_rel) <- sample_data(alpha_diversity(v_phyloseq$vira
 sample_data(phyloseq_unfiltered$phyloseq_count)$V.obs <- 
         sample_data(v_phyloseq$viral_rel) %>% 
         data.frame %>% 
-        select("S.obs") %>% 
+        dplyr::select("S.obs") %>% 
 #        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
 #                                 .default = S.obs)) %>%
         .[sample_names(phyloseq_unfiltered$phyloseq_count),]
@@ -494,7 +494,7 @@ sample_data(phyloseq_unfiltered$phyloseq_count)$V.obs <-
 sample_data(phyloseq_unfiltered$phyloseq_rel)$V.obs <- 
         sample_data(v_phyloseq$viral_rel) %>% 
         data.frame %>% 
-        select("S.obs") %>% 
+        dplyr::select("S.obs") %>% 
 #        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
 #                                 .default = S.obs)) %>%
         .[sample_names(phyloseq_unfiltered$phyloseq_count),]
@@ -502,7 +502,7 @@ sample_data(phyloseq_unfiltered$phyloseq_rel)$V.obs <-
 sample_data(phyloseq_unfiltered$phyloseq_path_rpk)$V.obs <- 
         sample_data(v_phyloseq$viral_rel) %>% 
         data.frame %>% 
-        select("S.obs") %>% 
+        dplyr::select("S.obs") %>% 
 #        mutate(S.obs = case_when(is.na(S.obs) ~ 0,
 #                                 .default = S.obs)) %>%
         .[sample_names(phyloseq_unfiltered$phyloseq_count),]
@@ -648,16 +648,44 @@ dev.off()
 
 ### Fig. S2. numbers
 
+Peggy's comment on 20240912:
+
+`I think you need to distinguish between the host depletion negative (stratified by each method ie lyPMA, benzonase, etc) and sequencing negative controls.`
+
+`revise Table C12 in your R2R so that besides the row for negative control, also stratify by the type of negative control`
+
+`create a stacked barplot where you facet by type of negative control`
+
+Table updated- negative controls stratified by sample type
+
 ```{r warning=F}
 
 table1_mock_and_neg <- sample_data(phyloseq$phyloseq_count) %>% data.frame() %>% 
         #dplyr::filter(sample_type %in% c("Sputum", "Nasal", "BAL")) %>% 
-        mutate(S.obs = case_when(S.obs==0 ~ NA,
-                                 .default = S.obs),
-               F.obs = case_when(F.obs==0 ~ NA,
-                                 .default = F.obs),
-               V.obs = case_when(V.obs==0 ~ NA,
-                                 .default = V.obs)) %>% 
+        # mutate(S.obs = case_when(S.obs==0 ~ NA,
+        #                          .default = S.obs),
+        #        F.obs = case_when(F.obs==0 ~ NA,
+        #                          .default = F.obs),
+        #        V.obs = case_when(V.obs==0 ~ NA,
+        #                          .default = V.obs)) %>% 
+        mutate(sample_type = case_when(sample_type == "Neg." & treatment == "Untreated" ~ "Neg. (extraction)",
+                                       sample_type == "Neg." & treatment == "lyPMA" ~ "Neg. (lyPMA)",
+                                       sample_type == "Neg." & treatment == "Benzonase" ~ "Neg. (Benzonase)",
+                                       sample_type == "Neg." & treatment == "HostZERO" ~ "Neg. (HostZERO)",
+                                       sample_type == "Neg." & treatment == "MolYsis" ~ "Neg. (MolYsis)",
+                                       sample_type == "Neg." & treatment == "QIAamp" ~ "Neg. (QIAamp)",
+                                       .default = sample_type),
+               sample_type = factor(sample_type, 
+                                    levels = c("Neg. (extraction)",
+                                               "Neg. (lyPMA)",
+                                               "Neg. (Benzonase)",
+                                               "Neg. (HostZERO)",
+                                               "Neg. (MolYsis)",
+                                               "Neg. (QIAamp)",
+                                               "Mock",
+                                               "BAL",
+                                               "Nasal",
+                                               "Sputum"))) %>%
         group_by (sample_type) %>%
         summarise(`N` = n(),
             #      `Total DNA <br>ng/µL` = paste(format(round(median(picogreen_ng_ul),2), nsmall = 2, big.mark = ","), "<br>(", format(round(quantile(picogreen_ng_ul, 0.25),2), nsmall = 2, big.mark = ","), ", ", format(round(quantile(picogreen_ng_ul, 0.75),2), nsmall = 2, big.mark = ","), ")", sep = ""),
@@ -2233,6 +2261,9 @@ sample_data %>% subset(., .$S.obs != 0) %>% group_by(sample_type, treated) %>% s
 
 ### {-}
 
+
+
+
 # **3.3. Effects of treatments on taxonomic composition**
 
 
@@ -2312,7 +2343,18 @@ a <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
         #            scales= "free_x", nrow=2) +
         
+neg_bar_labels <- c(
+                    `Untreated` = "Extraction",
+                    `lyPMA` = "lyPMA",
+                    `Benzonase` = "Benzonase",
+                    `HostZERO` = "HostZERO",
+                    `MolYsis` = "MolYsis",
+                    `QIAamp` = "QIAamp"
+                    )
 
+plot_labeller <- function(variable,value){
+  return(neg_bar_labels[value])
+}
 
 b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                               sample_type == "Neg.") %>%
@@ -2358,7 +2400,7 @@ b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
   } %>% 
         my_plot_bar(., fill="species20") + 
         ylab("") +
-        xlab("Subject") +
+        xlab("Sample") +
         theme_classic(base_size = 11, base_family = "sans") +
         theme(legend.text = element_markdown(size = 6),
               legend.key.size = unit(3, "mm"),
@@ -2368,8 +2410,9 @@ b <- tax_table(subset_samples(phyloseq$phyloseq_rel,
         scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 11, name = "Paired"))) +
         #facet_wrap (~ treatment, scales = "free_x", nrow = 1) +
         facet_wrap ( ~ treatment,
-                    scales= "free_x", nrow=1) +
-        ggtitle("E    Negative control")
+                    scales= "free_x", nrow=1, labeller = plot_labeller
+                    ) +
+        ggtitle("Negative controls")
 
 c <- tax_table(subset_samples(phyloseq$phyloseq_rel,
                               sample_type == "BAL") %>%
@@ -2640,7 +2683,46 @@ tax_table(subset_samples(phyloseq$phyloseq_rel,
 ```
 There were **Cryptococcus neoformans**, however, it seems like they were assigned as **Cryptococcus gattii**.
 
+### Negative control plot for R2R
 
+Peggy's  on 20240912: create a stacked barplot where you facet by type of negative control
+
+
+```{r, warning=FALSE, message=FALSE}
+barplot_neg_microbe <- b        
+
+
+annotate_figure(barplot_neg_microbe,
+                left = text_grob("Relative abundance",
+                                 rot = 90,
+                                 family = "sans", 
+                                 size = 11))
+
+
+          
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureC12.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 80, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+
+annotate_figure(barplot_neg_microbe,
+                left = text_grob("Relative abundance",
+                                 rot = 90,
+                                 family = "sans", 
+                                 size = 11))
+
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+```
 
 ### Predicted function barplot
 

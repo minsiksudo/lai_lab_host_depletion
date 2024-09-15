@@ -422,7 +422,7 @@ sample_data(phyloseq_unfiltered$phyloseq_path_rpk) <- sample_data(alpha_diversit
 
 
 
-## Calculating rarecurve with step = 1 {.tabset}
+## Rarefaction curve calculation {.tabset}
 
 
 ```{r}
@@ -442,56 +442,6 @@ phyloseq_nz_v <- v_phyloseq$viral_reads %>%
 
 ```
 
-### Calculating rarecurve with step = 1
-
-```{r}
-set.seed(seed)
-
-rare_microbe_1 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
-                          step = 1, color = "treatment", label = "subject_id", se = T)
-
-# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
-#                           step = 100000, color = "treatment", label = "subject_id", se = T)
-
-rare_v_1 <- phyloseq.extended::ggrare(phyloseq_nz_v,
-                          step = 1, color = "treatment", label = "subject_id", se = T)
-
-```
-
-
-## Calculating rarecurve with step = 20 
-
-```{r}
-set.seed(seed)
-
-rare_microbe_20 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
-                          step = 20, color = "treatment", label = "subject_id", se = T)
-
-# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
-#                           step = 100000, color = "treatment", label = "subject_id", se = T)
-
-rare_v_20 <- phyloseq.extended::ggrare(phyloseq_nz_v,
-                          step = 20, color = "treatment", label = "subject_id", se = T)
-
-```
-
-
-## Calculating rarecurve with step = 100
-
-```{r}
-set.seed(seed)
-
-
-rare_microbe_100 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
-                          step = 100, color = "treatment", label = "subject_id", se = T)
-
-# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
-#                           step = 100000, color = "treatment", label = "subject_id", se = T)
-
-rare_v_100 <- phyloseq.extended::ggrare(phyloseq_nz_v,
-                          step = 100, color = "treatment", label = "subject_id", se = T)
-
-```
 
 
 ## Calculating rarecurve with step = 10000
@@ -508,6 +458,57 @@ rare_microbe_10000 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
 
 rare_v_10000 <- phyloseq.extended::ggrare(phyloseq_nz_v,
                           step = 10000, color = "treatment", label = "subject_id", se = T)
+
+```
+
+## Calculating rarecurve with step = 1000
+
+```{r}
+set.seed(seed)
+
+
+rare_microbe_1000 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
+                          step = 1000, color = "treatment", label = "subject_id", se = T)
+
+# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
+#                           step = 100000, color = "treatment", label = "subject_id", se = T)
+
+rare_v_1000 <- phyloseq.extended::ggrare(phyloseq_nz_v,
+                          step = 1000, color = "treatment", label = "subject_id", se = T)
+
+```
+
+## Calculating rarecurve with step = 500 
+
+```{r}
+set.seed(seed)
+
+rare_microbe_500 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
+                          step = 500, color = "treatment", label = "subject_id", se = T)
+
+# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
+#                           step = 100000, color = "treatment", label = "subject_id", se = T)
+
+rare_v_500 <- phyloseq.extended::ggrare(phyloseq_nz_v,
+                          step = 500, color = "treatment", label = "subject_id", se = T)
+
+```
+
+
+
+### Calculating rarecurve with step = 200
+
+```{r}
+set.seed(seed)
+
+rare_microbe_200 <- phyloseq.extended::ggrare(phyloseq_nz_microbe,
+                          step = 200, color = "treatment", label = "subject_id", se = T)
+
+# rare_function <- phyloseq.extended::ggrare(phyloseq_nz_function,
+#                           step = 100000, color = "treatment", label = "subject_id", se = T)
+
+rare_v_200 <- phyloseq.extended::ggrare(phyloseq_nz_v,
+                          step = 200, color = "treatment", label = "subject_id", se = T)
 
 ```
 

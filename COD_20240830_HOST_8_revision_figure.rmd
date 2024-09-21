@@ -340,12 +340,269 @@ dev.off()
 ```{r warning=F, message=FALSE, "Data loading"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
+
 phyloseq_unfiltered <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 #v_phyloseq <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu_Jessica.rds")
 v_phyloseq <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu.rds")
 
 sample_data <- sample_data(phyloseq_unfiltered$phyloseq_count)
+
+```
+
+
+### Loading library data from Juwan
+
+```{r}
+
+picogreen_1 <- readxl::read_excel("Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/4_Communications biology/data/DAR_20240920_JC_Pooling_Copy of P. Lai PQ Requests 9.19.2024.xlsx", 
+                   sheet = 1)
+
+picogreen_2 <- readxl::read_excel("Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/4_Communications biology/data/DAR_20240920_JC_Pooling_Copy of P. Lai PQ Requests 9.19.2024.xlsx", 
+                   sheet = 2) %>%
+        rename("picogreen_tem_ng_ul" = "Raw nucleic acids concentration (ng/ul)",
+               "picogreen_lib_ng_ul" = "libraries  concentration (ng/ul)",
+               "pooling_vol_ul" = "Pooling Volume For Target (ul)",
+               "pooling_total_DNA_ng" = "Pooling Total ng/sample")
+
+names(picogreen_1) <- names(picogreen_2)
+
+
+picogreen <- rbind(picogreen_1, picogreen_2)
+
+
+picogreen_host <- picogreen[lapply(
+        sample_data$baylor_other_id, 
+        function(id)
+                grep(id, picogreen$Sample_Name)) %>%
+        as.numeric, ]
+
+sample_data$picogreen_tem_ng_ul <- picogreen_host$picogreen_tem_ng_ul
+sample_data$picogreen_lib_ng_ul <- picogreen_host$picogreen_lib_ng_ul
+sample_data$pooling_vol_ul <- picogreen_host$pooling_vol_ul
+sample_data$pooling_total_DNA_ng <- picogreen_host$pooling_total_DNA_ng
+        
+
+```
+
+```{r}
+# Host Depletion Viability Experiments
+
+
+# Making dymo aliquot labels ----------------------------------------------
+filename_dymo <- "Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion/LOG_20240411_PSL_Dymo_Label.xlsx"
+dymo <- read_excel(filename_dymo , sheet = "HDV")
+dymo_long <- dymo %>%
+  pivot_longer(
+    cols = c(Number7:Number19),
+    values_to = "aliquot"
+  ) %>% 
+  mutate(aliquot = paste(Number6, aliquot, sep = " ")) %>%
+  select(-c(Number6, name)) 
+write_csv(dymo_long, "Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion/LOG_20240411_PSL_Dymo_Label_HDV_long.csv")
+
+
+# 20240822 Freezing + DNA/RNA Shield --------------------------------------
+
+rawdata.path.hdv <- "Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion"
+filename1 <- file.path(rawdata.path.hdv, "SOP_20240822_TAT_HDV_060-099_Viability_experiment_DNA-RNA_shield.xlsx")
+file1 <- read_excel(filename1, sheet = "DAR_CFU_count") 
+
+filename2 <- file.path(rawdata.path.hdv, "SOP_20240822_TAT_HDV_100-159_Viability_experiment_DNA-RNA_shield.xlsx")
+file2 <- read_excel(filename2, sheet = "DAR_CFU_count") 
+
+filename3 <- file.path(rawdata.path.hdv, "SOP_20240828_TAT_HDV_benzonase.xlsx")
+file3 <- read_excel(filename3, sheet = "DAR_CFU_Count") 
+
+filename4 <- file.path(rawdata.path.hdv, "SOP_20240829_TAT_HDV_HostZero.xlsx")
+file4 <- read_excel(filename4, sheet = "DAR_CFU_Count") 
+
+filename5 <- file.path(rawdata.path.hdv, "SOP_20240903_TAT_HDV_QIAamp.xlsx")
+file5 <- read_excel(filename5, sheet = "DAR_CFU_count") 
+
+filename6 <- file.path(rawdata.path.hdv, "SOP_20240904_TAT_HDV_lyPMA.xlsx")
+file6 <- read_excel(filename6, sheet = "DAR_CFU_count")
+
+filename7 <- file.path(rawdata.path.hdv, "SOP_20240905_TAT_HDV_fresh_frozen.xlsx") # repeat studies on S. aureus
+file7 <- read_excel(filename7, sheet = "DAR_CFU_count") %>%
+  select(expt_id:cfu_per_ml2)
+
+filename8 <- file.path(rawdata.path.hdv, "SOP_20240910_TAT_HDV_S_aureus_fresh_frozen_benzonase_QIAamp.xlsx")
+file8 <- read_excel(filename8, sheet = "DAR_CFU_count") %>%
+  select(expt_id:cfu_per_ml2)
+
+filename9 <- file.path(rawdata.path.hdv, "SOP_20240911_TAT_HDV_S_aureus_HostZero_lyPMA.xlsx")
+file9 <- read_excel(filename9, sheet = "DAR_CFU_count") %>%
+  select(expt_id:cfu_per_ml2)
+
+filename10 <- file.path(rawdata.path.hdv, "SOP_20240912_TAT_HDV_S_aureus_MolYsis.xlsx")
+file10 <- read_excel(filename10, sheet = "DAR_CFU_count") %>%
+  select(expt_id:cfu_per_ml2)
+
+filename11 <- file.path(rawdata.path.hdv, "SOP_20240917_TAT_HDV_P_aeruginosa_Achromobacter_fresh_Benzonase_QIAamp.xlsx")
+file11 <- read_excel(filename11, sheet = "DAR_CFU_count") %>%
+  select(expt_id:cfu_per_ml2)
+
+filename12 <- file.path(rawdata.path.hdv, "SOP_20240918_TAT_HDV_P_aeruginosa_Achromobacter_frozen_hostzero_lyPMA.xlsx")
+file12 <- read_excel(filename12, sheet = "DAR_CFU_count") %>%
+  select(expt_id:cfu_per_ml2)
+
+
+hdv_all <- bind_rows(file1, file2, file3, file4, file5, file6, file7, file8, file9, file10, file11, file12) %>%
+  filter(!is.na(num_colonies1) & !is.na(num_colonies2)) %>%
+  mutate(cfu_per_ml = ifelse(num_colonies2 > num_colonies1,
+                             (num_colonies2*1000/3)*dilution_factor2,
+                             (num_colonies1*1000/3)*dilution_factor1)) %>%
+  mutate(cfu_per_ml1 = (num_colonies1*1000/3)*dilution_factor1,
+         cfu_per_ml2 = (num_colonies2*1000/3)*dilution_factor2) %>%
+  # rowwise() %>%
+  # mutate(cfu_per_ml = max(c_across(c(cfu_per_ml1, cfu_per_ml2)), na.rm=TRUE)) %>% 
+  # mutate(cfu_per_ml = median(c_across(c(cfu_per_ml1, cfu_per_ml2)), na.rm=TRUE)) %>%
+  filter(treatment != "frozen_shield" & !is.na(treatment)) %>%
+  mutate(treatment2 = case_when(
+    treatment == "fresh" ~ "Unfrozen",
+    treatment == "frozen" ~ "Frozen",
+    treatment == "fresh_shield" ~ "Unfrozen DNA/RNA Shield",
+    treatment == "frozen_glycerol" ~ "Frozen Glycerol",
+    treatment %in% c("lyPMA", "lyPMA_frozen") ~ "Frozen lyPMA",
+    treatment == "lyPMA_glycerol" ~ "Frozen Glycerol lyPMA",
+    treatment %in% c("benzonase", "Benzonase", "benzonase_frozen") ~ "Frozen Benzonase",
+    treatment %in% c("Benzonase_glycerol", "benzonase_glycerol") ~ "Frozen Glycerol Benzonase",
+    treatment %in% c("hostzero", "hostzero_frozen") ~ "Frozen HostZERO",
+    treatment == "hostzero_glycerol" ~ "Frozen glycerol HostZERO",
+    treatment == "molysis_frozen" ~ "Frozen MolYsis",
+    treatment == "molysis_glycerol" ~ "Frozen Glycerol MolYsis",
+    treatment %in% c("QIAamp", "QIAamp_frozen") ~ "Frozen QIAamp",
+    treatment == "QIAamp_glycerol" ~ "Frozen Glycerol QIAamp",
+    TRUE ~ treatment
+  )) %>%
+  mutate(treatment2 = factor(treatment2, 
+                             ordered = TRUE, 
+                             levels = c("Unfrozen", "Unfrozen DNA/RNA Shield", "Frozen", "Frozen Glycerol", 
+                                        "Frozen lyPMA", "Frozen Glycerol lyPMA",
+                                        "Frozen Benzonase", "Frozen Glycerol Benzonase",
+                                        "Frozen HostZERO", "Frozen glycerol HostZERO",
+                                        "Frozen MolYsis", "Frozen Glycerol MolYsis",
+                                        "Frozen QIAamp", "Frozen Glycerol QIAamp")
+                            )
+        ) %>%
+  mutate(
+    cfu_per_ml = ifelse(grepl("glycerol", treatment2), cfu_per_ml*(225/135), cfu_per_ml), # glycerol stock had 135 uL liquid culture + 90 uL 50% glycerol
+    cfu_per_ml1 = ifelse(grepl("glycerol", treatment2), cfu_per_ml1*(225/135), cfu_per_ml1),
+    cfu_per_ml2 = ifelse(grepl("glycerol", treatment2), cfu_per_ml2*(225/135), cfu_per_ml2),
+    cfu_per_ml_forlog = cfu_per_ml + 1,
+    cfu_per_ml_log10 = log10(cfu_per_ml_forlog)
+  ) %>%
+  mutate(species2 = case_when(
+    species %in% c("Stenotrophomonas maltophila", "Stenotrophomonas maltophilia") ~ "Stenotrophomonas maltophila",
+    species %in% c("TSB", "TSB broth") ~ "Tryptic Soy Broth",
+    species %in% c("Achromobacter sp") ~ "Achromobacter spp",
+    TRUE ~ species)
+    ) %>%
+  mutate(species2 = factor(species2,
+                           ordered = TRUE, 
+                           levels = c("Tryptic Soy Broth", "Staphylococcus aureus", "Pseudomonas aeruginosa", 
+                                      "Achromobacter spp", "Escherichia coli", "Klebsiella pneumoniae", "Stenotrophomonas maltophila"))) %>%
+  filter(!is.na(cfu_per_ml))
+
+## checks
+hdv_all %>% filter(is.na(treatment2)) %>% select(expt_id, species, cfb_strain, treatment, treatment2)
+hdv_all %>% pull(treatment2) %>% table(useNA = "always")
+hdv_all %>% pull(species2) %>% table(useNA = "always")
+#write_csv(hdv_all, "Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion/DAT_20240909_PSL_hdv_all.csv")
+
+
+ggdotplot(hdv_all %>% filter(species2 == "Staphylococcus aureus"), x = "treatment2", y = "cfu_per_ml_forlog",
+          color = "treatment2",
+          binwidth = 0.12,
+          x.text.angle = 90,
+          xlab ="", ylab = "CFU/mL",
+          add = "mean_ci",
+          palette = c("#a50f15", "#a50f15", "#ef3b2c", "#fb6a4a", "#fc9272", "#fee0d2", "#006d2c", "#238b45", "#41ab5d", "#a1d99b", "#4292c6", "#2171b5", "#6baed6", "#c6dbef")
+    ) %>%
+  ggpar(ylim = c(1, 10000000000), yscale = "log10", format.scale = TRUE) %>%
+  facet(., facet.by = "species2") +
+  rremove("legend")
+#ggsave("/Users/pl47/Desktop/IMG_20240913_PSL_HDV_treatment_saureus_dotplot.tiff", width = 13, height = 8)
+
+# ggboxplot(hdv_all %>% filter(species2 == "Staphylococcus aureus"), x = "treatment2", y = "cfu_per_ml_forlog",
+#           color = "treatment2",
+#           x.text.angle = 90,
+#           xlab ="", ylab = "CFU/mL",
+#           notch = TRUE,
+#           add = "dotplot",
+#           palette = c("#a50f15", "#a50f15", "#ef3b2c", "#fb6a4a", "#fc9272", "#fee0d2", "#006d2c", "#238b45", "#41ab5d", "#a1d99b", "#4292c6", "#2171b5", "#6baed6", "#c6dbef")
+# ) %>%
+#   facet(., facet.by = "species2") +
+#   yscale("log10", .format = TRUE) +
+#   rremove("legend")
+# ggsave("/Users/pl47/Desktop/IMG_20240913_PSL_HDV_treatment_saureus.tiff", width = 13, height = 8)
+
+
+ggdotplot(hdv_all %>% filter(species2 %in% c("Staphylococcus aureus", "Pseudomonas aeruginosa", "Achromobacter spp") & !(treatment2 %in% c("Frozen MolYsis", "Frozen Glycerol MolYsis"))), 
+          x = "treatment2", y = "cfu_per_ml_forlog",
+          color = "treatment2",
+          binwidth = 0.12,
+          x.text.angle = 90,
+          xlab ="", ylab = "CFU/mL",
+          add = "mean_ci",
+          palette = c("#a50f15", "#a50f15", "#ef3b2c", "#fb6a4a", "#fc9272", "#fee0d2", "#006d2c", "#238b45", "#41ab5d", "#a1d99b", "#6baed6", "#c6dbef")
+    ) %>%
+  ggpar(ylim = c(1, 10000000000), yscale = "log10", format.scale = TRUE) %>%
+  # ggpar(yscale = "log10", ylim = c(0, 10000000000)) %>%
+  facet(., facet.by = "species2") +
+  rremove("legend") 
+#ggsave("/Users/pl47/Desktop/IMG_20240913_PSL_HDV_treatment_saureus_psa_achromobacter_dotplot.tiff", width = 13, height = 8)
+
+# ggboxplot(hdv_all %>% filter(species2 %in% c("Staphylococcus aureus", "Pseudomonas aeruginosa", "Achromobacter spp") & !(treatment2 %in% c("Frozen MolYsis", "Frozen Glycerol MolYsis"))), 
+#           x = "treatment2", y = "cfu_per_ml_forlog", 
+#           color = "treatment2", 
+#           x.text.angle = 90,
+#           xlab ="", ylab = "CFU/mL",
+#           notch = TRUE,
+#           add = "dotplot",
+#           binwidth = 0.12,
+#           palette = c("#a50f15", "#a50f15", "#ef3b2c", "#fb6a4a", "#fc9272", "#fee0d2", "#006d2c", "#238b45", "#41ab5d", "#a1d99b", "#6baed6", "#c6dbef")
+#   ) %>%
+#   facet(., facet.by = "species2", ncol = 3) + 
+#   yscale("log10", .format = TRUE) +
+#   rremove("legend")
+# ggsave("/Users/pl47/Desktop/IMG_20240913_PSL_HDV_treatment.tiff", width = 13, height = 8)
+
+
+# Checked to here #
+ggboxplot(hdv_all %>% filter(species == "Staphylococcus aureus"), x = "treatment2", y = "cfu_per_ml", 
+          color = "treatment2", 
+          x.text.angle = 90,
+          notch = TRUE,
+          add = "dotplot",
+          palette = get_palette("npg", 10)
+) +
+  yscale("log10", .format = TRUE)
+
+
+ggbarplot(hdv_all, x = "species2", y = "cfu_per_ml", 
+          fill = "treatment2", color = "treatment2", 
+          add = "mean_se",
+          position = position_dodge(.8),
+          x.text.angle = 90
+) 
+# yscale("log10", .format = TRUE)
+#ggsave("/Users/pl47/Desktop/IMG_20240905_PSL_HDV_treatment_20240909.tiff")
+ggbarplot(hdv_all %>% filter(species2 == "Staphylococcus aureus"), x = "inoculation_date_time", y = "cfu_per_ml", 
+          add = "mean_se",
+          position = position_dodge(.8),
+          x.text.angle = 90
+        ) %>%
+  facet(., facet.by = "treatment2")
+
+hdv_all %>% 
+  filter(species2 == "Staphylococcus aureus") %>% 
+  filter(treatment %in% c("fresh", "frozen", "QIAamp")) %>%
+  select(expt_id, species2, cfb_strain, treatment2, inoculation_date_time, cfu_per_ml, dilution_factor1, num_colonies1, cfu_per_ml1, dilution_factor2, num_colonies2, cfu_per_ml2) %>%
+  arrange(desc(cfu_per_ml)) %>%
+  data.frame()
+
 
 ```
 

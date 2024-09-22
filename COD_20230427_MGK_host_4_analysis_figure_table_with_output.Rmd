@@ -750,12 +750,12 @@ save_kable(table1_mock_and_neg, file = "Project_SICAS2_microbiome/7_Manuscripts/
 
 figS2_raw_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
         ggplot(aes(x = reorder(baylor_other_id, -Raw_reads),
-                               y = Raw_reads/100000000,
+                               y = Raw_reads/1000000,
                                col = sample_type)) +
                 geom_point() +
                 theme_classic(base_family = "sans") +
                 theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
-                ylab("Raw reads X 10<sup>8</sup>") +
+                ylab("Raw reads X 10<sup>6</sup>") +
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
@@ -778,12 +778,12 @@ figS2_raw_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phylos
 
 figS2_final_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
         ggplot(aes(x = reorder(baylor_other_id, -Final_reads),
-                               y = Final_reads/100000000,
+                               y = Final_reads/1000000,
                                col = sample_type)) +
                 geom_point() +
                 theme_classic(base_family = "sans") +
                 theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
-                ylab("Final reads X 10<sup>8</sup>") +
+                ylab("Final reads X 10<sup>6</sup>") +
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
@@ -807,12 +807,12 @@ figS2_final_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phyl
 
 figS2_total_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
         ggplot(aes(x = reorder(baylor_other_id, -total_read),
-                               y = total_read/100000000,
+                               y = total_read/1000000,
                                col = sample_type)) +
                 geom_point() +
                 theme_classic(base_family = "sans") +
                 theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
-                ylab("Sum of MetaPhlan mapped reads X 10<sup>8</sup>") +
+                ylab("Sum of MetaPhlan mapped reads X 10<sup>6</sup>") +
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
@@ -833,13 +833,13 @@ figS2_total_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phyl
         labs(tag = "F") 
 
 
-figS2 <- ggarrange(figS2_raw_reads, figS2_raw_reads_log, figS2_final_reads, figS2_final_reads_log, ncol = 2, nrow = 3, common.legend = T)
+figS2 <- ggarrange(figS2_raw_reads, figS2_raw_reads_log, figS2_final_reads, figS2_final_reads_log, ncol = 2, nrow = 2, common.legend = T)
 
 figS2
 
 png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2_revised.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
-    height = 270, # The height of the plot in inches
+    height = 180, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue

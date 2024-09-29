@@ -746,6 +746,9 @@ save_kable(table1_mock_and_neg, file = "Project_SICAS2_microbiome/7_Manuscripts/
 **Fig. S2.** (A) final reads after removing low quality reads and host-mapped reads and (B) sum of MetaPhlAn mapped reads by sample type.        
 
 ```{r warning=F, QC1.5.0}
+
+sample_data %>% data.frame %>% subset(., .$sample_type == "Neg.")
+
 #how were the samples failed in library prep?
 
 figS2_raw_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
@@ -773,7 +776,7 @@ figS2_raw_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phylos
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
-        labs(tag = "B") #+
+        labs(tag = "A") #+
         #ylim(c(0, 8.5))
 
 figS2_final_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
@@ -787,7 +790,7 @@ figS2_final_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
-        labs(tag = "C") #+
+        labs(tag = "B") #+
         #ylim(c(0, 8.5))
 
 
@@ -802,7 +805,7 @@ figS2_final_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phyl
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
-        labs(tag = "D")
+        labs(tag = "B")
 
 
 figS2_total_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
@@ -812,11 +815,11 @@ figS2_total_reads <- sample_data %>% data.frame %>% mutate(total_read = phyloseq
                 geom_point() +
                 theme_classic(base_family = "sans") +
                 theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
-                ylab("Sum of MetaPhlan mapped reads X 10<sup>6</sup>") +
+                ylab("MetaPhlAn mapped reads X 10<sup>6</sup>") +
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
-        labs(tag = "E")
+        labs(tag = "C")
 
 
 figS2_total_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phyloseq_unfiltered$phyloseq_count %>% otu_table %>% colSums()) %>%
@@ -826,25 +829,45 @@ figS2_total_reads_log <- sample_data %>% data.frame %>% mutate(total_read = phyl
                 geom_point() +
                 theme_classic(base_family = "sans") +
                 theme(axis.title.y = element_markdown(), axis.text.x = element_blank()) +
-                ylab("log<sub>10</sub>(Sum of MetaPhlan mapped reads)") +
+                ylab("log<sub>10</sub>(MetaPhlAn mapped reads)") +
                 xlab("Samples") +
         guides(col=guide_legend(title="Sample type")) +
         scale_color_brewer(type = "qual", palette = 6) +
-        labs(tag = "F") 
+        labs(tag = "C") 
 
 
-figS2 <- ggarrange(figS2_raw_reads, figS2_raw_reads_log, figS2_final_reads, figS2_final_reads_log, ncol = 2, nrow = 2, common.legend = T)
+figS2 <- ggarrange(figS2_raw_reads, figS2_final_reads, figS2_total_reads, ncol = 1, nrow = 3, common.legend = T)
+
+
+figS2_log <- ggarrange(figS2_raw_reads_log, figS2_final_reads_log, figS2_total_reads_log, ncol = 1, nrow = 3, common.legend = T)
 
 figS2
 
+figS2_log
+
 png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2_revised.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
-    height = 180, # The height of the plot in inches
+    height = 210, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
 
 figS2
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS2_revised_log.png",   # The directory you want to save the file in
+    width = 180, # The width of the plot in inches
+    height = 210, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+figS2_log
 # alpha diversity plots
 #ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
 #          ncol = 1) # alpha diversity plots

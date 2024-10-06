@@ -239,11 +239,11 @@ list of samples
 Due to limited number of swab samples, there was no identical nasal-swab samples that had croprotectant & no-cryoprotectant in different aliquot at the same time.
 
 ```{r}
-sample_result %>% subset(.,.$sample_type == "nasal_swab") %>% 
-        group_by(original_sample, cryo_preserve) %>%
-        summarise(n = n(),
-                  sequenced = ifelse(original_sample %in% (phyloseq_unfiltered$phyloseq_count %>% sample_data %>% .$original_sample), 1, 0)) %>%
-        reactable::reactable(sortable = T)
+# sample_result %>% subset(.,.$sample_type == "nasal_swab") %>% 
+#         group_by(original_sample, cryo_preserve) %>%
+#         summarise(n = n(),
+#                   sequenced = ifelse(original_sample %in% (phyloseq_unfiltered$phyloseq_count %>% sample_data %>% .$original_sample), 1, 0)) %>%
+#         reactable::reactable(sortable = T)
 
 
 ```
@@ -940,8 +940,7 @@ LMER : --> removed DNA RNA shield from the model.
 
 multi_model_sa <- hdv_all %>% 
                 filter(
-                species2 %in% c("Staphylococcus aureus") &
-                        !(treatment2 %in% c("Frozen MolYsis", "Frozen Glycerol MolYsis")),
+                species2 %in% c("Staphylococcus aureus"),
                 `DNA/RNA shield` == 0
                 ) %>%
         lmerTest::lmer(data = .,
@@ -950,8 +949,7 @@ multi_model_sa <- hdv_all %>%
 
 multi_model_pa <- hdv_all %>% 
                 filter(
-                species2 %in% c("Pseudomonas aeruginosa") &
-                        !(treatment2 %in% c("Frozen MolYsis", "Frozen Glycerol MolYsis")),
+                species2 %in% c("Pseudomonas aeruginosa"),
                 `DNA/RNA shield` == 0
                 ) %>%
         lmerTest::lmer(data = .,
@@ -960,8 +958,7 @@ multi_model_pa <- hdv_all %>%
 
 multi_model_a <- hdv_all %>% 
                 filter(
-                species2 %in% c("Achromobacter spp") &
-                        !(treatment2 %in% c("Frozen MolYsis", "Frozen Glycerol MolYsis")),
+                species2 %in% c("Achromobacter spp"),
                 `DNA/RNA shield` == 0
                 ) %>%
         lmerTest::lmer(data = .,
@@ -1010,7 +1007,7 @@ multi_sa <- multi_model_sa %>%
             "lyPMA",
             "Benzonase",
             "HostZERO",
-            #"MolYsis",
+            "MolYsis",
             "QIAamp"),]
 
 
@@ -1056,7 +1053,7 @@ multi_pa <- multi_model_pa %>%
             "lyPMA",
             "Benzonase",
             "HostZERO",
-            #"MolYsis",
+            "MolYsis",
             "QIAamp"),]
 
 
@@ -1102,7 +1099,7 @@ multi_a <- multi_model_a %>%
             "lyPMA",
             "Benzonase",
             "HostZERO",
-            #"MolYsis",
+            "MolYsis",
             "QIAamp"),]
 
 
@@ -1119,6 +1116,395 @@ save_kable(lmer_viability_result, file = "Project_SICAS2_microbiome/7_Manuscript
 lmer_viability_result
 
 ```
+
+
+
+### (Without glycerol) stratified by species (log scale)
+
+LMER : --> removed DNA RNA shield from the model.
+
+```{r}
+hdv_all %>% 
+        group_by(species, `DNA/RNA shield`, treatment2) %>%
+        summarise (n = n())
+
+# Analysis with glyceorl + unfrozen
+
+multi_model_sa_glycerol <- hdv_all %>% 
+                filter(
+                species2 %in% c("Staphylococcus aureus"),
+                `DNA/RNA shield` == 0,
+                treatment2 %in% c("Unfrozen", "Frozen Glycerol", "Frozen Glycerol QIAamp", "Frozen Glycerol Benzonase",
+                                  "Frozen glycerol HostZERO", "Frozen Glycerol lyPMA")
+                ) %>%
+        lmerTest::lmer(data = .,
+                       cfu_per_ml_log10 ~ Frozen + treatment + (1|cfb_strain)) 
+        
+
+multi_model_pa_glycerol <- hdv_all %>% 
+                filter(
+                species2 %in% c("Pseudomonas aeruginosa"),
+                `DNA/RNA shield` == 0,
+                treatment2 %in% c("Unfrozen", "Frozen Glycerol", "Frozen Glycerol QIAamp", "Frozen Glycerol Benzonase",
+                                  "Frozen glycerol HostZERO", "Frozen Glycerol lyPMA")
+                
+                ) %>%
+        lmerTest::lmer(data = .,
+                       cfu_per_ml_log10 ~  Frozen + treatment + (1|cfb_strain)) 
+        
+
+multi_model_a_glycerol <- hdv_all %>% 
+                filter(
+                species2 %in% c("Achromobacter spp"),
+                `DNA/RNA shield` == 0,
+                treatment2 %in% c("Unfrozen", "Frozen Glycerol", "Frozen Glycerol QIAamp", "Frozen Glycerol Benzonase",
+                                  "Frozen glycerol HostZERO", "Frozen Glycerol lyPMA")
+                
+                ) %>%
+        lmerTest::lmer(data = .,
+                       cfu_per_ml_log10 ~  Frozen + treatment + (1|cfb_strain)) 
+        
+
+# Without glycerol
+
+multi_model_sa_nogly <- hdv_all %>% 
+                filter(
+                species2 %in% c("Staphylococcus aureus"),
+                `DNA/RNA shield` == 0,
+                treatment2 %in% c("Unfrozen", "Frozen", "Frozen QIAamp", "Frozen Benzonase",
+                                  "Frozen HostZERO", "Frozen lyPMA")
+                ) %>%
+        lmerTest::lmer(data = .,
+                       cfu_per_ml_log10 ~ Frozen + treatment + (1|cfb_strain)) 
+        
+
+multi_model_pa_nogly <- hdv_all %>% 
+                filter(
+                species2 %in% c("Pseudomonas aeruginosa"),
+                `DNA/RNA shield` == 0,
+                treatment2 %in% c("Unfrozen", "Frozen", "Frozen QIAamp", "Frozen Benzonase",
+                                  "Frozen HostZERO", "Frozen lyPMA")
+                ) %>%
+        lmerTest::lmer(data = .,
+                       cfu_per_ml_log10 ~ Frozen + treatment + (1|cfb_strain)) 
+        
+
+multi_model_a_nogly <- hdv_all %>% 
+                filter(
+                species2 %in% c("Achromobacter spp"),
+                `DNA/RNA shield` == 0,
+                treatment2 %in% c("Unfrozen", "Frozen", "Frozen QIAamp", "Frozen Benzonase",
+                                  "Frozen HostZERO", "Frozen lyPMA")
+                ) %>%
+        lmerTest::lmer(data = .,
+                       cfu_per_ml_log10 ~ Frozen + treatment + (1|cfb_strain)) 
+        
+
+
+multi_sa_gly <- multi_model_sa_glycerol %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              multi_model_sa_glycerol %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+            "Frozen",
+            #"Glycerol",
+            #"`DNA/RNA shield`",
+            "lyPMA",
+            "Benzonase",
+            "HostZERO",
+            #"MolYsis",
+            "QIAamp"),]
+
+
+multi_pa_glycerol <- multi_model_pa_glycerol %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              multi_model_pa_glycerol %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+            "Frozen",
+            #"Glycerol",
+            #"`DNA/RNA shield`",
+            "lyPMA",
+            "Benzonase",
+            "HostZERO",
+            #"MolYsis",
+            "QIAamp"),]
+
+
+multi_a_glycerol <- multi_model_a_glycerol %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              multi_model_a_glycerol %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+            "Frozen",
+            #"Glycerol",
+            #"`DNA/RNA shield`",
+            "lyPMA",
+            "Benzonase",
+            "HostZERO",
+            #"MolYsis",
+            "QIAamp"),]
+
+
+
+
+multi_sa_nogly <- multi_model_sa_nogly %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              multi_model_sa_nogly %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+            "Frozen",
+            #"Glycerol",
+            #"`DNA/RNA shield`",
+            "lyPMA",
+            "Benzonase",
+            "HostZERO",
+            #"MolYsis",
+            "QIAamp"),]
+
+
+multi_pa_nogly <- multi_model_pa_nogly %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              multi_model_pa_nogly %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+            "Frozen",
+            #"Glycerol",
+            #"`DNA/RNA shield`",
+            "lyPMA",
+            "Benzonase",
+            "HostZERO",
+            #"MolYsis",
+            "QIAamp"),]
+
+
+multi_a_nogly <- multi_model_a_nogly %>% 
+        summary() %>%
+        .$coefficients %>%
+        data.frame(check.names = F) %>% 
+        mutate(` ` = case_when(abs(`Pr(>|t|)`) < 0.001 ~ "***",
+                               abs(`Pr(>|t|)`) < 0.01 ~ "**",
+                               abs(`Pr(>|t|)`) < 0.05 ~ "*",
+                               .default = " ")) %>% 
+        rename("<i>p</i>-value" = "Pr(>|t|)",
+               t_value = "t value") %>%
+        merge(., 
+              multi_model_a_nogly %>% confint() %>%
+                        round(digits = 1) %>% 
+                        format(nsmall = 1) %>%
+                        as.data.frame() %>%
+                        mutate(conf = paste("(",
+                                            gsub(" ","", .[,1]),
+                                            ", ",
+                                            gsub(" ","", .[,2]),
+                                            ")",
+                                            sep = "")),
+              by = 0
+              ) %>%
+        column_to_rownames("Row.names") %>%
+        rownames_to_column(var = "x") %>% mutate(x = gsub("treatment|sample_type", "", x)) %>% mutate(x = gsub(":", " * ", x)) %>%
+        
+        mutate(x = gsub("bal_log_centered_final_reads", "log<sub>10</sub>(Final reads)", x)) %>%
+        column_to_rownames(var = "x") %>% 
+        mutate("Effect size (95% CI)" = 
+                       paste(round(Estimate, digits = 1) %>%
+                                     format(nsmall = 1),
+                             conf, 
+                             sep = " "),
+               "<i>p</i>-value" = round(`<i>p</i>-value`, 3)) %>%
+        dplyr::select(c("Effect size (95% CI)", "<i>p</i>-value", " ")) %>%
+        .[c("(Intercept)",
+            "Frozen",
+            #"Glycerol",
+            #"`DNA/RNA shield`",
+            "lyPMA",
+            "Benzonase",
+            "HostZERO",
+            #"MolYsis",
+            "QIAamp"),]
+
+
+
+cbind(multi_sa_gly, multi_pa_glycerol, multi_a_glycerol) 
+
+cbind(multi_sa_nogly, multi_pa_nogly, multi_a_nogly) 
+
+
+data <- cbind(multi_sa_gly, multi_pa_glycerol, multi_a_glycerol,multi_sa_nogly, multi_pa_nogly, multi_a_nogly) 
+#rownames(data) <- c("(Intercept)","Frozen", "lyPMA", "Benzonase","HostZERO","MolYsis","QIAamp" )
+
+lmer_viability_result <- data %>%
+    kbl(format = "html", escape = 0) %>%
+        add_header_above(c(" " = 1, "<i>Staphylococcus aureus</i>" = 3, "<i>Pseudomonas aeruginosa</i>" = 3,"<i>Achromobacter</i> spp."= 3,
+                           "<i>Staphylococcus aureus</i>" = 3, "<i>Pseudomonas aeruginosa</i>" = 3,"<i>Achromobacter</i> spp."= 3),
+                         escape = F) %>%
+        add_header_above(c(" " = 1, "Cryoprotected"= 9,"Not cryoprotected"= 9),escape = F) %>%
+        kable_styling(full_width = 0, html_font = "sans")
+
+lmer_viability_result
+
+
+save_kable(lmer_viability_result, file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableS12-v3.html", self_contained = T)
+
+lmer_viability_result
+
+```
+
 
 
 ### Molysis on Staphylococcus
@@ -1434,8 +1820,8 @@ annotate_figure(ggarrange(rare_figure_microbe +
 
 
 png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS17.png",   # The directory you want to save the file in
-    width = 180, # The width of the plot in inches
-    height = 160, # The height of the plot in inches
+    width = 190, # The width of the plot in inches
+    height = 180, # The height of the plot in inches
     units = "mm",
     res = 600
 ) #fixing multiple page issue
@@ -1460,72 +1846,379 @@ dev.off()
 
 
 
-```
-
-rare_microbe$rare_virus_1000
-
-```{r}
-plot_rarefaction_curves <- function(otu_table, metadata, group_vars, step = 1, summarize = FALSE) {
-  # Create grouping variable
-  metadata$Group <- interaction(metadata[, group_vars], drop = TRUE)
-  
-  # Run rarecurve
-  rare <- rarecurve(otu_table, step = step, sample = NULL, label = FALSE)
-  
-  # Extract data
-  rare_df <- rarecurve_to_df(rare)
-  
-  # Merge with metadata
-  rare_df <- left_join(rare_df, metadata, by = "SampleID")
-  
-  if (summarize) {
-    # Summarize data
-    summary_df <- rare_df %>%
-      group_by(Group, Sequences) %>%
-      summarize(
-        MeanSpecies = mean(Species),
-        SDSpecies = sd(Species),
-        .groups = 'drop'
-      )
-    
-    # Plot summarized data
-    p <- ggplot(summary_df, aes(x = Sequences, y = MeanSpecies, color = Group)) +
-      geom_line(size = 1) +
-      geom_ribbon(aes(ymin = MeanSpecies - SDSpecies, ymax = MeanSpecies + SDSpecies, fill = Group), alpha = 0.2) +
-      labs(
-        x = "Number of Sequences",
-        y = "Mean Species Richness",
-        title = "Mean Rarefaction Curves with Standard Deviation"
-      ) +
-      theme_minimal() +
-      theme(legend.title = element_blank())
-  } else {
-    # Plot individual curves
-    p <- ggplot(rare_df, aes(x = Sequences, y = Species, color = Group, group = SampleID)) +
-      geom_line(alpha = 0.7) +
-      labs(
-        x = "Number of Sequences",
-        y = "Species Richness",
-        title = "Rarefaction Curves Stratified by Group"
-      ) +
-      theme_minimal() +
-      theme(legend.title = element_blank())
-  }
-  
-  return(p)
-}
-
-# Usage
-p <- plot_rarefaction_curves(
-  otu_table = otu_table,
-  metadata = metadata,
-  group_vars = c("SampleType", "Treatment"),
-  step = 10,
-  summarize = TRUE
-)
-print(p)
 
 ```
+# Thi's qPCR result
+
+```{R}
+
+read_excel("Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion/SOP_20240924_TAT_HDV_DNA_extraction.xlsx")
+qPCR1 <- read_excel("Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion/SOP_20240927_TAT_HDV_16S_qPCR.xlsx", sheet = 1)
+qPCR2 <- read_excel("Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion/SOP_20240927_TAT_HDV_16S_qPCR.xlsx", sheet = 10, skip= 24)
+qPCR1
+
+qPCR$sample_type
+qPCR <- merge(
+        qPCR1,
+        qPCR2 %>%
+        group_by(Sample) %>%
+        summarise(cq_mean = mean(as.numeric(Cq)),
+                  sd_mean = sd(as.numeric(Cq))) %>%
+                rename(expt_id = Sample), 
+        by = "expt_id",
+        all = T)
+
+
+standard <- subset(qPCR, grepl("STD", qPCR$expt_id)) %>%
+         subset(., !grepl("STD8", .$expt_id))
+        
+standard$dna_ng_well <- c(20,2, 0.2, 0.02, 0.002, 0.0002, 0.00002)
+
+standard$dna_ng_ul_temp <- c(10,1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
+        
+model <- lm(log2(standard$dna_ng_ul_temp) ~ standard$cq_mean) %>% summary
+
+
+
+
+standard$dna_ng_ul_tem_log_dil <- (model$coefficients[1] + standard$cq_mean * (model$coefficients[2]))
+standard$dna_ng_ul_tem_dil <- 2^(standard$dna_ng_ul_tem_log)
+standard$dna_ng_ul_tem_nondil <- standard$dna_ng_ul_tem_dil *10
+
+
+
+
+qPCR$dna_ng_ul_tem_log_dil <- (model$coefficients[1] + qPCR$cq_mean * (model$coefficients[2]))
+qPCR$dna_ng_ul_tem_dil <- 2^(qPCR$dna_ng_ul_tem_log)
+qPCR$dna_ng_ul_tem_nondil <- qPCR$dna_ng_ul_tem_dil *10
+
+standard  %>%
+        subset(., grepl("STD", .$expt_id)) %>%
+         subset(., !grepl("STD8", .$expt_id)) %>%
+        ggplot(., aes(x = log10(dna_ng_well), y = log10(dna_ng_ul_tem_dil * 2))) +
+        geom_point() +
+        theme_classic() +
+        xlab("Defined concentration, per well (ng/μL)") +
+        ylab("Concentration from linear mdoel, per well (ng/μL)")
+
+
+
+qPCR  %>%
+        ggplot(., aes(x = sample_type, y = dna_ng_ul_tem_nondil)) +
+        geom_jitter(aes(col = sample_type, x = sample_type),
+                    lwd = 0.2, alpha = 0.3, stroke = 0) +
+        stat_summary(aes(color = sample_type, x = sample_type),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        theme_classic() +
+        scale_color_manual(values = c("#e31a1c", "#1f78b4", "#33a02c", "#b2df8a")) +
+        facet_wrap(~species, scales = "free_y", ncol = 4) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        #scale_x_discrete(name ="Treatment")+
+        guides(fill = guide_legend(nrow = 1),
+               color = guide_legend(nrow = 1)) +
+        theme(legend.position = "top",
+              axis.title.y = element_markdown(),
+              axis.text.x = element_markdown(angle = 45, vjust = 1, hjust = 1),
+                strip.text = element_markdown()
+                ) +
+        #plot.tag = element_text(size = 15)) +
+              #axis.text.x = element_blank()) +
+        ylab("qPCR bacterial DNA (ng/μL)") +
+        xlab("Sample type")
+
+#All = all the culture --> DNA extraction
+#Frozen --> Frozen pellet - is it decreasing? 
+
+#Pellet --> raw pellet
+
+#supernatnat  --> filtered sup and DNA extracted. --> extracellular DNA
+#Pellet --> intracellular DNA
+
+
+
+qPCR_wide <- qPCR %>%
+        group_by(cfb_strain, sample_type) %>%
+        summarise(species = species,
+                  dna_ng_ul_tem_nondil = dna_ng_ul_tem_nondil) %>% 
+        filter(!is.na(cfb_strain)) %>% 
+        spread(., sample_type, dna_ng_ul_tem_nondil)
+        
+
+#From zymo... (https://zymoresearch.eu/products/femto-bacterial-dna-quantification-kit?srsltid=AfmBOoo_qYIhDhpNHjgEgsTLMIxZ4Bg_9mMibbVWJgdqNU6RZZqCEIM5)
+
+#  E. coli strain JM109 is a derivative of strain K12 and is also called K12 JM109. The genome size of the original genome of H12 is 4.64 Mb (ref). Ref: https://www.ncbi.nlm.nih.gov/pubmed/9278503
+
+
+
+#The standards included in the Femto Bacterial DNA Quantification kit are serial dilutions of E. coli genomic DNA. Each E. coli genome has about 7 copies of 16S rRNA gene. One can back calculate from the amount of genomic DNA to determine genomic copies, and then multiply by a factor of 7 to determine total copies of the 16S rRNA gene.
+
+#Genome copy number = (Amount of DNA (g)) / (g to bp constant * Genome size (bp))
+#Genome copy # = DNA (g) / (g_to_bp const. x genome size) With DNA (g) = 20 ng g to bp const = 1.096 x 10^-21 ng genome size = 4.6 x 10^6 bp 20 x 10^-9 g / (1.096 x 10^-21 g/bp x 4.6 x 10^6 bp) = 4.0 x 10^6 copies
+
+genome_size_bp_ecoli <- 4.6e6  # Genome size in base pairs (bp)
+genome_size_bp_sa <- 2839469  # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4654806/
+genome_size_bp_pa <- c(6.264, 6.538, 6.588, 6.602, 6.492, 6.905, 6.222, 6.667) * 1000000 #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3139241/#:~:text=The%20Pseudomonas%20aeruginosa%20genome%20(G,a%20variable%20number%20of%20plasmids.
+genome_size_bp_a <- 5876039 #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4543513/
+
+ng_to_bp_constant <- 1.096e-21  # g/bp constant
+
+# Number of 16S rRNA gene copies per each species
+copies_per_genome <- data.frame(speices = c("Staphylococcus aureus",
+                                           "Pseudomonas aeruginosa",
+                                           "Achromobacter sp"),
+                               genome_16S_copies = c(5.7, 4, 3.5)) %>%
+        column_to_rownames("speices")
+
+
+# Number of 16S rRNA gene copies per each species
+genome_size <- data.frame(speices = c("Staphylococcus aureus",
+                                           "Pseudomonas aeruginosa",
+                                           "Achromobacter sp"),
+                               genome_size = c(genome_size_bp_sa, mean(genome_size_bp_pa), genome_size_bp_a)) %>%
+        column_to_rownames("speices")
+
+
+
+qPCR_wide$copies_per_genome <- copies_per_genome[qPCR_wide$species,]
+
+qPCR_wide$genome_size <- genome_size[qPCR_wide$species,]
+
+qPCR_wide
+
+
+# this is g / uL
+qPCR_wide_dna_amount_g <- qPCR_wide %>%
+        mutate(ALL = ALL * 1e-9,
+               FROZEN = FROZEN * 1e-9,
+               PELLET = PELLET * 1e-9,
+               SUPERNATANT = SUPERNATANT * 1e-9)
+
+# this is 16S copy per / uL
+qPCR_wide_copies <- qPCR_wide_dna_amount_g %>%
+        mutate(ALL = ALL / (g_to_bp_constant * genome_size),
+               FROZEN = FROZEN / (g_to_bp_constant * genome_size),
+               PELLET = PELLET / (g_to_bp_constant * genome_size),
+               SUPERNATANT = SUPERNATANT / (g_to_bp_constant * genome_size))
+
+# this is genome copy per / uL
+qPCR_cells <- qPCR_wide_copies %>%
+        mutate(ALL = ALL / copies_per_genome,
+               FROZEN = FROZEN / copies_per_genome,
+               PELLET = PELLET / copies_per_genome,
+               SUPERNATANT = SUPERNATANT / copies_per_genome)
+
+
+qPCR_cells_figure <- qPCR_cells %>% 
+        gather(., sample_type, cells, ALL:SUPERNATANT) %>%
+        filter(sample_type %in% c("PELLET", "SUPERNATANT")) %>%
+        mutate(sample_type = case_when(sample_type == "PELLET" ~ "Pellet",
+                                       sample_type == "SUPERNATANT" ~ "Supernatant"),
+               species = factor(species, levels = c("Staphylococcus aureus",
+                                                    "Pseudomonas aeruginosa",
+                                                    "Achromobacter sp"
+                                                    ))) %>%
+        ggplot(., aes(x = sample_type, y = cells)) +
+        geom_jitter(aes(col = sample_type, x = sample_type),
+                    lwd = 0.2, alpha = 0.3, stroke = 0) +
+        stat_summary(aes(color = sample_type, x = sample_type),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        theme_classic() +
+        scale_color_manual(values = c("#e31a1c", "#1f78b4")) +
+        facet_wrap(~species, scales = "free_y", ncol = 4,
+                   labeller = as_labeller(c(
+                        "Staphylococcus aureus" = "*Staphylococcus aureus*",
+                        "Pseudomonas aeruginosa" = "*Pseudomonas aeruginosa*",
+                        "Achromobacter sp" = "*Achromobacter* spp."))) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        #scale_x_discrete(name ="Treatment")+
+        guides(fill = guide_legend(nrow = 1),
+               color = guide_legend(nrow = 1, title = "Smaple type")) +
+        theme(legend.position = "top",
+              axis.title.y = element_markdown(),
+              axis.text.x = element_markdown(#angle = 45, 
+                                             #vjust = 1, hjust = 1
+                                             ),
+                strip.text = element_markdown()
+                ) +
+        labs(tag = "A") +
+        #plot.tag = element_text(size = 15)) +
+              #axis.text.x = element_blank()) +
+        ylab("Genome copies by qPCR (copies/μL)") +
+        xlab("Sample type") 
+
+
+qPCR_cells_figure
+
+
+#Calculate percentage of extrazcellular DNA 
+qPCR_prop_figure <- qPCR %>%
+        group_by(cfb_strain, sample_type) %>%
+        summarise(species = species,
+                  dna_ng_ul_tem_nondil = dna_ng_ul_tem_nondil) %>% 
+        filter(!is.na(cfb_strain)) %>% 
+        spread(., sample_type, dna_ng_ul_tem_nondil) %>%
+        mutate(eDNA_prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100) %>%
+        mutate(species = factor(species, levels = c("Staphylococcus aureus",
+                                                    "Pseudomonas aeruginosa",
+                                                    "Achromobacter sp"
+                                                    ),
+                                labels = c("*Staphylococcus aureus*",
+                                                    "*Pseudomonas aeruginosa*",
+                                                    "*Achromobacter* spp."
+                                                    ))) %>%
+        ggplot(., aes(x = species, y = eDNA_prop)) +
+        geom_jitter(aes(col = species, x = species),
+                    lwd = 0.2, alpha = 0.3, stroke = 0) +
+        stat_summary(aes(color = species, x = species),
+                             fun.data="mean_sdl",  fun.args = list(mult=1), 
+                             geom = "pointrange",  size = 0.4) +
+        theme_classic() +
+        guides(fill = guide_legend(nrow = 1),
+               color = guide_legend(nrow = 1, title = "Species", position = "top")) +
+        theme(axis.text.x = element_markdown(), legend.text = element_markdown(),
+              legned.position = "top") +
+        ylab("Proportion of extracellular DNA (%)") +
+        xlab("Species") +
+        scale_color_manual(values = c("#1b9e77", "#d95f02", "#7570b3")) +
+        labs(tag = "B") 
+        
+qPCR_cells_figure
+
+qPCR_prop_figure
+
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS18.png",   # The directory you want to save the file in
+    width = 190, # The width of the plot in inches
+    height = 220, # The height of the plot in inches
+    units = "mm",
+    res = 600
+) #fixing multiple page issue
+
+ggarrange(qPCR_cells_figure, qPCR_prop_figure, ncol = 1)
+                
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+
+
+qPCR_cells_table <- qPCR_cells %>% 
+        mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100,
+                species = factor(species, levels = c("Staphylococcus aureus",
+                                                    "Pseudomonas aeruginosa",
+                                                    "Achromobacter sp"
+                                                    ),
+                                labels = c("<i>Staphylococcus aureus</i>",
+                                                    "<i>Pseudomonas aeruginosa</i>",
+                                                    "<i>Achromobacter</i> spp."
+                                                    ))) %>%
+        group_by(species) %>%
+        summarise(`Genome in pellet (copies / µL)` = 
+                          paste0(
+                                  mean(PELLET) %>% round(1) %>% format(., nsmall = 1, 
+                                                                       big.mark=",", 
+                                                                       scientific=F),
+                                  " ± ",
+                                  sd(PELLET) %>% round(1)) %>% format(., nsmall = 1, 
+                                                                       big.mark=",", 
+                                                                       scientific=F),
+                  `Genome in supernatant (copies / µL)` = 
+                          paste0(
+                                  mean(SUPERNATANT) %>% round(1) %>% format(., nsmall = 1, 
+                                                                       big.mark=",", 
+                                                                       scientific=F),
+                                  " ± ",
+                                  sd(SUPERNATANT) %>% round(1)) %>% format(., nsmall = 1, 
+                                                                       big.mark=",", 
+                                                                       scientific=F),
+                  `Proportion of extracellular DNA (%)` = 
+                          paste0(
+                                  mean(prop) %>% round(1) %>% format(., nsmall = 1, 
+                                                                       big.mark=",", 
+                                                                       scientific=F),
+                                  " ± ",
+                                  sd(prop) %>% round(1) %>% format(., nsmall = 1, 
+                                                                       big.mark=",", 
+                                                                       scientific=F))) %>%
+        kbl(format = "html", escape = 0) %>%
+        #add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
+        kable_styling(full_width = 0, html_font = "sans")
+
+        
+qPCR_cells_table %>%
+        save_kable(., 
+                   file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableC21.html", self_contained = T)
+
+
+```
+
+
+<!-- rare_microbe$rare_virus_1000 -->
+
+<!-- ```{r} -->
+<!-- plot_rarefaction_curves <- function(otu_table, metadata, group_vars, step = 1, summarize = FALSE) { -->
+<!--   # Create grouping variable -->
+<!--   metadata$Group <- interaction(metadata[, group_vars], drop = TRUE) -->
+
+<!--   # Run rarecurve -->
+<!--   rare <- rarecurve(otu_table, step = step, sample = NULL, label = FALSE) -->
+
+<!--   # Extract data -->
+<!--   rare_df <- rarecurve_to_df(rare) -->
+
+<!--   # Merge with metadata -->
+<!--   rare_df <- left_join(rare_df, metadata, by = "SampleID") -->
+
+<!--   if (summarize) { -->
+<!--     # Summarize data -->
+<!--     summary_df <- rare_df %>% -->
+<!--       group_by(Group, Sequences) %>% -->
+<!--       summarize( -->
+<!--         MeanSpecies = mean(Species), -->
+<!--         SDSpecies = sd(Species), -->
+<!--         .groups = 'drop' -->
+<!--       ) -->
+
+<!--     # Plot summarized data -->
+<!--     p <- ggplot(summary_df, aes(x = Sequences, y = MeanSpecies, color = Group)) + -->
+<!--       geom_line(size = 1) + -->
+<!--       geom_ribbon(aes(ymin = MeanSpecies - SDSpecies, ymax = MeanSpecies + SDSpecies, fill = Group), alpha = 0.2) + -->
+<!--       labs( -->
+<!--         x = "Number of Sequences", -->
+<!--         y = "Mean Species Richness", -->
+<!--         title = "Mean Rarefaction Curves with Standard Deviation" -->
+<!--       ) + -->
+<!--       theme_minimal() + -->
+<!--       theme(legend.title = element_blank()) -->
+<!--   } else { -->
+<!--     # Plot individual curves -->
+<!--     p <- ggplot(rare_df, aes(x = Sequences, y = Species, color = Group, group = SampleID)) + -->
+<!--       geom_line(alpha = 0.7) + -->
+<!--       labs( -->
+<!--         x = "Number of Sequences", -->
+<!--         y = "Species Richness", -->
+<!--         title = "Rarefaction Curves Stratified by Group" -->
+<!--       ) + -->
+<!--       theme_minimal() + -->
+<!--       theme(legend.title = element_blank()) -->
+<!--   } -->
+
+<!--   return(p) -->
+<!-- } -->
+
+<!-- # Usage -->
+<!-- p <- plot_rarefaction_curves( -->
+<!--   otu_table = otu_table, -->
+<!--   metadata = metadata, -->
+<!--   group_vars = c("SampleType", "Treatment"), -->
+<!--   step = 10, -->
+<!--   summarize = TRUE -->
+<!-- ) -->
+<!-- print(p) -->
+
+<!-- ``` -->
 
 
 

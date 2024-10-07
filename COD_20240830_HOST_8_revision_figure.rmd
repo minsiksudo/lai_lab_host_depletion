@@ -1857,7 +1857,15 @@ qPCR1 <- read_excel("Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion/
 qPCR2 <- read_excel("Summer_Student_Projects/People/@thi/SOP/TAT_Host_Depletion/SOP_20240927_TAT_HDV_16S_qPCR.xlsx", sheet = 10, skip= 24)
 qPCR1
 
-qPCR$sample_type
+qPCR2 %>%
+        group_by(Sample) %>%
+        summarise(mean = mean(as.numeric(Cq), na.rm = T),
+                  sd = sd(Cq),
+                  max = max(Cq),
+                  median = median(Cq),
+                  min = min(Cq))
+
+#qPCR$sample_type
 qPCR <- merge(
         qPCR1,
         qPCR2 %>%
@@ -1960,7 +1968,11 @@ genome_size_bp_sa <- 2839469  # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC465
 genome_size_bp_pa <- c(6.264, 6.538, 6.588, 6.602, 6.492, 6.905, 6.222, 6.667) * 1000000 #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3139241/#:~:text=The%20Pseudomonas%20aeruginosa%20genome%20(G,a%20variable%20number%20of%20plasmids.
 genome_size_bp_a <- 5876039 #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4543513/
 
-ng_to_bp_constant <- 1.096e-21  # g/bp constant
+bp_to_g_constant <- 1.096e-21  # g/bp constant
+
+g_to_bp_constant <- 9.26e20
+
+e_coli_16S_copies <- 7 
 
 # Number of 16S rRNA gene copies per each species
 copies_per_genome <- data.frame(speices = c("Staphylococcus aureus",
@@ -1983,32 +1995,47 @@ qPCR_wide$copies_per_genome <- copies_per_genome[qPCR_wide$species,]
 
 qPCR_wide$genome_size <- genome_size[qPCR_wide$species,]
 
-qPCR_wide
+qPCR_wide %>% 
+        mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET)*100) %>%
+        view
+
 
 
 # this is g / uL
+
+# this is 16S copy per / uL
 qPCR_wide_dna_amount_g <- qPCR_wide %>%
         mutate(ALL = ALL * 1e-9,
                FROZEN = FROZEN * 1e-9,
                PELLET = PELLET * 1e-9,
                SUPERNATANT = SUPERNATANT * 1e-9)
 
-# this is 16S copy per / uL
-qPCR_wide_copies <- qPCR_wide_dna_amount_g %>%
-        mutate(ALL = ALL / (g_to_bp_constant * genome_size),
-               FROZEN = FROZEN / (g_to_bp_constant * genome_size),
-               PELLET = PELLET / (g_to_bp_constant * genome_size),
-               SUPERNATANT = SUPERNATANT / (g_to_bp_constant * genome_size))
+qPCR_wide_basepairs <- qPCR_wide_dna_amount_g %>%
+        mutate(ALL = ALL * g_to_bp_constant,
+               FROZEN = FROZEN * g_to_bp_constant,
+               PELLET = PELLET * g_to_bp_constant,
+               SUPERNATANT = SUPERNATANT * g_to_bp_constant)
 
-# this is genome copy per / uL
-qPCR_cells <- qPCR_wide_copies %>%
-        mutate(ALL = ALL / copies_per_genome,
-               FROZEN = FROZEN / copies_per_genome,
-               PELLET = PELLET / copies_per_genome,
-               SUPERNATANT = SUPERNATANT / copies_per_genome)
+qPCR_wide_ecoli_genome <- qPCR_wide_basepairs %>%
+        mutate(ALL = (ALL)/genome_size_bp_ecoli,
+               FROZEN = (FROZEN)/genome_size_bp_ecoli,
+               PELLET = (PELLET)/genome_size_bp_ecoli,
+               SUPERNATANT = (SUPERNATANT)/genome_size_bp_ecoli)
 
 
-qPCR_cells_figure <- qPCR_cells %>% 
+qPCR_wide_16S_copies <- qPCR_wide_ecoli_genome %>%
+        mutate(ALL = (7 * ALL),
+               FROZEN = (7 * FROZEN),
+               PELLET = (7 * PELLET),
+               SUPERNATANT = (7 * SUPERNATANT))
+
+qPCR_wide_genome_copies <- qPCR_wide_16S_copies %>%
+        mutate(ALL = ALL/copies_per_genome,
+               FROZEN = FROZEN/copies_per_genome,
+               PELLET = PELLET/copies_per_genome,
+               SUPERNATANT = SUPERNATANT/copies_per_genome)
+
+qPCR_cells_figure <- qPCR_wide_genome_copies %>% 
         gather(., sample_type, cells, ALL:SUPERNATANT) %>%
         filter(sample_type %in% c("PELLET", "SUPERNATANT")) %>%
         mutate(sample_type = case_when(sample_type == "PELLET" ~ "Pellet",
@@ -2023,7 +2050,7 @@ qPCR_cells_figure <- qPCR_cells %>%
         stat_summary(aes(color = sample_type, x = sample_type),
                              fun.data="mean_sdl",  fun.args = list(mult=1), 
                              geom = "pointrange",  size = 0.4) +
-        theme_classic() +
+        theme_classic (base_size = 12, base_family = "sans")+ 
         scale_color_manual(values = c("#e31a1c", "#1f78b4")) +
         facet_wrap(~species, scales = "free_y", ncol = 4,
                    labeller = as_labeller(c(
@@ -2051,12 +2078,7 @@ qPCR_cells_figure
 
 
 #Calculate percentage of extrazcellular DNA 
-qPCR_prop_figure <- qPCR %>%
-        group_by(cfb_strain, sample_type) %>%
-        summarise(species = species,
-                  dna_ng_ul_tem_nondil = dna_ng_ul_tem_nondil) %>% 
-        filter(!is.na(cfb_strain)) %>% 
-        spread(., sample_type, dna_ng_ul_tem_nondil) %>%
+qPCR_prop_figure <- qPCR_wide_genome_copies %>%
         mutate(eDNA_prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100) %>%
         mutate(species = factor(species, levels = c("Staphylococcus aureus",
                                                     "Pseudomonas aeruginosa",
@@ -2072,7 +2094,7 @@ qPCR_prop_figure <- qPCR %>%
         stat_summary(aes(color = species, x = species),
                              fun.data="mean_sdl",  fun.args = list(mult=1), 
                              geom = "pointrange",  size = 0.4) +
-        theme_classic() +
+        theme_classic (base_size = 12, base_family = "sans")+ 
         guides(fill = guide_legend(nrow = 1),
                color = guide_legend(nrow = 1, title = "Species", position = "top")) +
         theme(axis.text.x = element_markdown(), legend.text = element_markdown(),
@@ -2104,7 +2126,7 @@ dev.off()
 
 
 
-qPCR_cells_table <- qPCR_cells %>% 
+qPCR_cells_table <- qPCR_wide_genome_copies %>% 
         mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100,
                 species = factor(species, levels = c("Staphylococcus aureus",
                                                     "Pseudomonas aeruginosa",
@@ -2152,6 +2174,20 @@ qPCR_cells_table %>%
                    file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableC21.html", self_contained = T)
 
 
+
+ qPCR_wide_genome_copies %>% 
+        mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100) %>%
+         data.frame() %>%
+         lmer(prop ~ species + (1|species), data = .) %>%
+         summary
+
+ qPCR_wide_genome_copies %>% 
+        mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100) %>%
+         data.frame() %>%
+         lm(prop ~ species, data = .) %>%
+         summary
+
+ 
 ```
 
 

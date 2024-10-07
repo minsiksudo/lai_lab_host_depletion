@@ -751,6 +751,7 @@ sample_data %>% data.frame %>% subset(., .$sample_type == "Neg.")
 
 #how were the samples failed in library prep?
 sample_data %>%
+        data.frame() %>%
         mutate(sample_type = factor(.$sample_type, 
                                     labels = c("Negative control", "Mock", "BAL", "Nasal", "Sputum")))
         

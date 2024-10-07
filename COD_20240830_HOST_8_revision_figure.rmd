@@ -2168,25 +2168,57 @@ qPCR_cells_table <- qPCR_wide_genome_copies %>%
         #add_header_above(c(" " = 1, "BAL" = 3, "Nasal swab" = 3,"Sputum"= 3)) %>% 
         kable_styling(full_width = 0, html_font = "sans")
 
-        
+qPCR_cells_table
 qPCR_cells_table %>%
         save_kable(., 
                    file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/tableC21.html", self_contained = T)
 
 
 
- qPCR_wide_genome_copies %>% 
-        mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100) %>%
-         data.frame() %>%
-         lmer(prop ~ species + (1|species), data = .) %>%
-         summary
-
- qPCR_wide_genome_copies %>% 
-        mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100) %>%
+qPCR_wide_genome_copies %>% 
+        mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100,
+               species = factor(species, 
+                                 levels = c("Staphylococcus aureus",
+                                            "Pseudomonas aeruginosa",
+                                            "Achromobacter sp"))) %>%
+         mutate(gram_negative = case_when(species == "Staphylococcus aureus" ~ 0,
+                                          .default = 1) ) %>%
          data.frame() %>%
          lm(prop ~ species, data = .) %>%
          summary
 
+
+
+qPCR_wide_genome_copies %>% 
+        mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100,
+               species = factor(species, 
+                                 levels = c("Staphylococcus aureus",
+                                            "Pseudomonas aeruginosa",
+                                            "Achromobacter sp"))) %>%
+         mutate(gram_negative = case_when(species == "Staphylococcus aureus" ~ 0,
+                                          .default = 1) ) %>%
+         data.frame() %>%
+         lm(prop ~ species, data = .) %>%
+         
+        confint()
+        
+
+
+#  
+# qPCR_wide_genome_copies %>% 
+#         mutate(prop = SUPERNATANT/(SUPERNATANT+PELLET) * 100,
+#                species = factor(species, 
+#                                  levels = c("Staphylococcus aureus",
+#                                             "Pseudomonas aeruginosa",
+#                                             "Achromobacter sp"))) %>%
+#          mutate(gram_negative = case_when(species == "Staphylococcus aureus" ~ 0,
+#                                           .default = 1) ) %>%
+#          data.frame() %>%
+#          lm(prop ~ gram_negative, data = .) %>%
+#          summary
+
+
+ 
  
 ```
 

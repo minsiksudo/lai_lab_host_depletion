@@ -37,7 +37,7 @@ path_working <-
                "/home/bagel/minsik/",
                ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
                       "/Volumes/macdrive/Dropbox/", 
-                      "/Dropbox (Personal)"))
+                      "/Users/minsikkim/Dropbox (Personal)"))
 
 path_library <- 
         ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
@@ -333,6 +333,7 @@ Aim 4. Does host depletion increase the risk of contamination?
 ```{r warning=F, message=FALSE, "Data loading"}
 # Loading files -----------------------------------------------------------
 #loading tidy phyloseq object
+
 phyloseq_unfiltered <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 v_phyloseq <- read_rds("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20240212_MGK_host_marker_magu_Jessica.rds")

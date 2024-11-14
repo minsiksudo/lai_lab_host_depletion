@@ -7,6 +7,9 @@ This repository contains all the codes written to wrangle, process, test, and vi
 
 **Host DNA depletion on frozen human respiratory samples enables successful metagenomic sequencing for microbiome studies**
 
+Relavant publication (preprint) can be found at https://pmc.ncbi.nlm.nih.gov/articles/PMC10854296/
+
+
 Descriptions of each code were listed as follows:
 
 1. Data wrangling
@@ -49,6 +52,8 @@ COD_20240509_HOST_7_ATS024_figure.Rmd
 
 9. During the peer review, additional figures and tables were generated with extra viability testing results.
 
-COD_20230830_HOST_8_revision.Rmd
+COD_20230830_HOST_8_revision_figure.Rmd
+
+10. During the peer review, additional figures and tables were generated with extra viability testing results.
 
 ‌

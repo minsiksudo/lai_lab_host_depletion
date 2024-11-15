@@ -2767,17 +2767,24 @@ dev.off()
 
 ```
 
+Peggy's comment on 20241114: 
+
+With relative abundance there is no way to tell the microbial load to see if it is cross-well contamination or swapping of wells. The relative abundance for lyPMA_neg_3 and lyPMA_pos_5 could both pass for the mock community.
+ 
+If you can export metaphlan-mapped reads, 16S qPCR counts, and human qPCR counts for all pos and neg controls we can discuss further on Monday. If you have time to regenerate a similar figure like the below
+
+
 ```{r}
 phyloseq$phyloseq_count %>%
-    subset_samples(baylor_other_id %in% c("lyPMA_neg_3", "lyPMA_pos_5")) %>%
+    subset_samples(baylor_other_id %in% c("lyPMA_neg_3", "molysis_pos_5")) %>%
     {
         data <- .
         taxa_to_keep <- taxa_sums(data) != 0  # Logical vector of taxa to keep
         prune_taxa(taxa_to_keep, data)        # Pass logical vector and phyloseq object
     } %>%
         otu_table %>%
-        data.frame() %>%
-        write.csv(., "Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/DAT_20241115_MGK_host_lyPMA_neg_3_and_lyPMA_pos_5.csv")
+        data.frame() %>% 
+        write.csv(., "Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/DAT_20241115_MGK_host_lyPMA_neg_3_and_molysis_pos_5.csv")
 
 
 
@@ -2814,12 +2821,35 @@ phyloseq$phyloseq_count %>%
 
 
 
-
 phyloseq$phyloseq_count %>%
-    subset_samples(sample_type %in% c("Neg.", "Mock")) %>%
-    sample_data %>%
-        data.frame(check.names = F) %>%
-        select(sample_type, Raw_reads, Metaphlan_mapped, DNA_host_nondil, DNA_bac_nondil, host_proportion) 
+        subset_samples(extraction_date == "20230119") %>% {
+                temp_phyloseq <- .
+                sample_data(temp_phyloseq)$sample_type <- ifelse(sample_data(temp_phyloseq)$baylor_other_id == "lyPMA_neg_3", 
+                                                        "Contaminated Neg.",
+                                                        as.character(sample_data(temp_phyloseq)$sample_type))
+                temp_phyloseq
+        } %>% {
+                temp_phyloseq <- .
+        plot <- ordinate(temp_phyloseq, method = "PCoA", distance = "horn") %>%
+        plot_ordination(temp_phyloseq, ., col = "sample_type") +
+        #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
+        scale_color_manual(values = c("#a8ddb5", "#43a2ca", "#a50f15", "#fc9272", "#fee0d2"),
+                           name = "Sample type",
+                           breaks = c("Neg.","Mock", "Contaminated Neg."),
+                           labels = c("Neg.","Mock", "Contaminated Neg.")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
+        geom_point(size = 3) +
+        theme_classic (base_size = 12, base_family = "sans") +
+        ggrepel::geom_text_repel(aes(label = baylor_other_id), max.overlaps = 30) #+
+        #facet_wrap(~sample_type, scales = "free") +
+        #labs(tag = "A") +
+        #ggtitle("PCoA plot, M-H dissimilarity, extracted on 20240119") +
+        theme(plot.tag = element_text(size = 15), legend.position = "top") #+
+        #stat_ellipse(type = "norm", linetype = 2, linewidth = 0.1) +
+        #stat_ellipse(type = "t", linewidth = 0.1)
+        plot
+        }        
+
         
 ```
 

@@ -3854,6 +3854,33 @@ annotate_figure(fig2_updated,
 dev.off()
 
 
+
+pdf(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_updated.pdf",   # The directory you want to save the file in
+    width = 183 / 25.4, # Convert width from mm to inches (180 mm)
+    height = 220 / 25.4, # Convert height from mm to inches (160 mm)
+    paper = "special",   # Prevents default paper size settings
+    onefile = FALSE      # Ensures a single page per PDF file
+)
+
+
+annotate_figure(fig2_updated,
+                left = text_grob("Relative abundance",
+                                 rot = 90,
+                                 family = "sans", 
+                                 size = 11),
+                bottom = text_grob("Subject",
+                                 rot = 0,
+                                 family = "sans", 
+                                 size = 11)
+)
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+
 ```
 
 
@@ -4363,6 +4390,35 @@ fig2_updated <- ggarrange(c, ggarrange(ggplot() + theme_void(), c %>% lemon::g_l
                   widths = c(3, 1), heights = c(2, 2.72, 2, 2.72, 2, 2.72),
                   legend = "none",
                   align = "hv")
+
+
+annotate_figure(fig2_updated,
+                left = text_grob("Relative abundance",
+                                 rot = 90,
+                                 family = "sans", 
+                                 size = 11),
+                bottom = text_grob("Treatment",
+                                 rot = 0,
+                                 family = "sans", 
+                                 size = 11)
+)
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
+
+
+
+
+pdf(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure2_updated_v2.pdf",   # The directory you want to save the file in
+    width = 183 / 25.4, # Convert width from mm to inches (180 mm)
+    height = 225 / 25.4, # Convert height from mm to inches (160 mm)
+    paper = "special",   # Prevents default paper size settings
+    onefile = FALSE      # Ensures a single page per PDF file
+)
+
 
 
 annotate_figure(fig2_updated,
@@ -5157,6 +5213,25 @@ ggarrange(figS7, figS7_host,
 #          ncol = 1) # alpha diversity plots
 
 dev.off()
+
+
+pdf(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure4_updated.pdf",   # The directory you want to save the file in
+    width = 183 / 25.4, # Convert width from mm to inches (180 mm)
+    height = 220 / 25.4, # Convert height from mm to inches (160 mm)
+    paper = "special",   # Prevents default paper size settings
+    onefile = FALSE      # Ensures a single page per PDF file
+)
+
+
+
+ggarrange(figS7, figS7_host,
+          common.legend = T, ncol = 1,align = "hv")
+
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+
+dev.off()
 ```
 
 
@@ -5454,6 +5529,25 @@ annotate_figure(fig4,
 dev.off()
 
 
+
+pdf(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure5_updated.pdf",   # The directory you want to save the file in
+    width = 183 / 25.4, # Convert width from mm to inches (180 mm)
+    height = 220 / 25.4, # Convert height from mm to inches (160 mm)
+    paper = "special",   # Prevents default paper size settings
+    onefile = FALSE      # Ensures a single page per PDF file
+)
+
+
+
+annotate_figure(fig4,
+                bottom = text_grob("Treatment method",
+                                 rot = 0,
+                                 family = "sans", 
+                                 size = 11, hjust = -0.2))
+# alpha diversity plots
+#ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
+#          ncol = 1) # alpha diversity plots
+dev.off()
 
 
 ```

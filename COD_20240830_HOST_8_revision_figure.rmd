@@ -739,7 +739,7 @@ figure_S16 <- hdv_all %>%
 figure_S16
 
 
-png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/FigureS16.png",   # The directory you want to save the file in
+png(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure6.png",   # The directory you want to save the file in
     width = 180, # The width of the plot in inches
     height = 210, # The height of the plot in inches
     units = "mm",
@@ -752,6 +752,30 @@ figure_S16
 #          ncol = 1) # alpha diversity plots
 
 dev.off()
+
+
+
+
+pdf(file = "Project_SICAS2_microbiome/7_Manuscripts/2022_MGK_Host_Depletion/Figures/Figure6.pdf",   # The directory you want to save the file in
+    width = 183 / 25.4, # Convert width from mm to inches (180 mm)
+    height = 210 / 25.4, # Convert height from mm to inches (160 mm)
+    paper = "special",   # Prevents default paper size settings
+    onefile = FALSE      # Ensures a single page per PDF file
+)
+
+
+figure_S16
+
+dev.off()
+
+hdv_all %>%
+     filter(
+         species2 %in% c("Staphylococcus aureus", "Pseudomonas aeruginosa", "Achromobacter spp") &
+             !(treatment2 %in% c("Frozen MolYsis", "Frozen Glycerol MolYsis"))
+     ) %>%
+        #reactable::reactable(groupBy = c("species","treatment", "cfb_strain"))
+ group_by(species, treatment) %>%
+     summarise(n = n()) 
 
 
 ```

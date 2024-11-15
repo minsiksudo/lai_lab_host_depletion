@@ -8,10 +8,25 @@ library(lme4)
 
 
 
+# Directory settings ------------------------------------------------------
+
+
+path_working <- 
+        ifelse(sessionInfo()[1]$R.version$platform == "x86_64-pc-linux-gnu",
+               "/home/bagel/minsik/",
+               ifelse(sessionInfo()[1]$R.version$platform == "aarch64-apple-darwin20",
+                      "/Volumes/macdrive/Dropbox/", 
+                      "/Dropbox (Personal)"))
+
+setwd(path_working)
+
 # Loading data ------------------------------------------------------------
 
 
-phyloseq <- readRDS("/Users/minsikkim/Dropbox/Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
+# Loading data ------------------------------------------------------------
+
+
+phyloseq <- readRDS("Project_SICAS2_microbiome/4_Data/2_Tidy/Phyloseq/PHY_20230521_MGK_host_tidy.rds")
 
 # Adding alpha diversity indices ------------------------------------------
 

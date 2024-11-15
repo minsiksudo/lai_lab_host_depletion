@@ -532,7 +532,10 @@ sample_data(phyloseq_unfiltered$phyloseq_count) <- sample_data(alpha_diversity(p
 sample_data(phyloseq_unfiltered$phyloseq_path_rpk) <- sample_data(alpha_diversity(phyloseq_unfiltered$phyloseq_path_rpk))  
 
 
-
+sample_data(phyloseq_unfiltered$phyloseq_rel) %>% 
+        data.frame %>% 
+        select(Raw_reads, Final_reads, DNA_host_ng_uL, DNA_bac_16S_copies_uL, gram_neg_prop, S.obs) %>%
+        reactable::reactable(searchable = T)
         
 
 ```
@@ -2762,6 +2765,62 @@ annotate_figure(barplot_neg_microbe,
 
 dev.off()
 
+```
+
+```{r}
+phyloseq$phyloseq_count %>%
+    subset_samples(baylor_other_id %in% c("lyPMA_neg_3", "lyPMA_pos_5")) %>%
+    {
+        data <- .
+        taxa_to_keep <- taxa_sums(data) != 0  # Logical vector of taxa to keep
+        prune_taxa(taxa_to_keep, data)        # Pass logical vector and phyloseq object
+    } %>%
+        otu_table %>%
+        data.frame() %>%
+        write.csv(., "Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/DAT_20241115_MGK_host_lyPMA_neg_3_and_lyPMA_pos_5.csv")
+
+
+
+phyloseq$phyloseq_count %>%
+    subset_samples(sample_type %in% c("Mock")) %>%
+    {
+        data <- .
+        taxa_to_keep <- taxa_sums(data) != 0  # Logical vector of taxa to keep
+        prune_taxa(taxa_to_keep, data)        # Pass logical vector and phyloseq object
+    } %>%
+        otu_table %>%
+        data.frame(check.names = F) %>%
+        write.csv(., "Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/DAT_20241115_MGK_host_otu_mock.csv")
+
+
+phyloseq$phyloseq_count %>%
+    subset_samples(sample_type %in% c("Neg.")) %>%
+    {
+        data <- .
+        taxa_to_keep <- taxa_sums(data) != 0  # Logical vector of taxa to keep
+        prune_taxa(taxa_to_keep, data)        # Pass logical vector and phyloseq object
+    } %>%
+        otu_table %>%
+        data.frame(check.names = F) %>%
+        write.csv(., "Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/DAT_20241115_MGK_host_otu_negative_controls.csv")
+
+
+phyloseq$phyloseq_count %>%
+    subset_samples(sample_type %in% c("Neg.", "Mock")) %>%
+    sample_data %>%
+        data.frame(check.names = F) %>%
+        select(sample_type, Raw_reads, Metaphlan_mapped, DNA_host_nondil, DNA_bac_nondil, host_proportion) %>% 
+        write.csv(., "Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/DAT_20241115_MGK_host_neg_pos_sampledata.csv")
+
+
+
+
+phyloseq$phyloseq_count %>%
+    subset_samples(sample_type %in% c("Neg.", "Mock")) %>%
+    sample_data %>%
+        data.frame(check.names = F) %>%
+        select(sample_type, Raw_reads, Metaphlan_mapped, DNA_host_nondil, DNA_bac_nondil, host_proportion) 
+        
 ```
 
 ### Predicted function barplot

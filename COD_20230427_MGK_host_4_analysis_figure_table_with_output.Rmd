@@ -2774,6 +2774,9 @@ With relative abundance there is no way to tell the microbial load to see if it 
 If you can export metaphlan-mapped reads, 16S qPCR counts, and human qPCR counts for all pos and neg controls we can discuss further on Monday. If you have time to regenerate a similar figure like the below
 
 
+##### Storing data that Peggy requested
+
+
 ```{r}
 phyloseq$phyloseq_count %>%
     subset_samples(baylor_other_id %in% c("lyPMA_neg_3", "molysis_pos_5")) %>%
@@ -2819,28 +2822,225 @@ phyloseq$phyloseq_count %>%
         select(sample_type, Raw_reads, Metaphlan_mapped, DNA_host_nondil, DNA_bac_nondil, host_proportion) %>% 
         write.csv(., "Project_SICAS2_microbiome/5_Scripts/MGK/Host_depletion_git/data/DAT_20241115_MGK_host_neg_pos_sampledata.csv")
 
+```
 
+#### Creating plots 
+
+
+##### Raw reads of negative controls
+
+
+```{r}
+phyloseq$phyloseq_count %>%
+        subset_samples(sample_type %in% c("Neg.")) %>%
+        sample_data %>%
+        data.frame(check.names = F) %>%
+        mutate(sample_type2 = case_when(baylor_other_id == "lyPMA_neg_3"  ~ "Ambiguous Neg.",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "Ambiguous Mock",
+                                       .default = sample_type)) %>%
+        ggplot(., aes(x = baylor_other_id, y = Raw_reads, label = baylor_other_id)) +
+        geom_point() +
+        ggrepel::geom_text_repel(max.overlaps = 15,show.legend  = F) +
+        ylab("Raw reads") +
+        scale_y_log10() +
+        theme_classic() +
+        theme(axis.text.x = element_blank())
+
+```
+
+
+##### Bacterial qPCR of negative controls
+
+```{r}
+
+phyloseq$phyloseq_count %>%
+        subset_samples(sample_type %in% c("Neg.")) %>%
+        sample_data %>%
+        data.frame(check.names = F) %>%
+        mutate(sample_type2 = case_when(baylor_other_id == "lyPMA_neg_3"  ~ "Ambiguous Neg.",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "Ambiguous Mock",
+                                       .default = sample_type)) %>%
+        ggplot(., aes(x = baylor_other_id, y = DNA_bac_16S_copies_uL, label = baylor_other_id)) +
+        geom_point() +
+        scale_y_log10() +
+        ggrepel::geom_text_repel(max.overlaps = 15,show.legend  = F) +
+        ylab("Bacterial DNA measured by qPCR (copies/µL)") +
+        theme_classic() +
+        theme(axis.text.x = element_blank())
+```
+
+##### Raw reads of positive and negative controls
+
+
+```{r}
+phyloseq$phyloseq_count %>%
+        subset_samples(sample_type %in% c("Neg.", "Mock")) %>%
+        sample_data %>%
+        data.frame(check.names = F) %>%
+        ggplot(., aes(x = baylor_other_id, y = Raw_reads, label = baylor_other_id, col = sample_type)) +
+        geom_point() +
+        scale_color_manual(values = MetBrewer::met.brewer("Austria", 4)[3:4],
+                           name = "Sample type",
+                           breaks = c("Neg.","Mock"),
+                           labels = c("Neg.","Mock")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
+        ggrepel::geom_text_repel(max.overlaps = 10,show.legend  = F) +
+        theme_classic() +
+        scale_y_log10() +
+        ylab("Raw reads") +
+        theme(axis.text.x = element_blank()) +
+        facet_wrap(~sample_type, scales = "free_x")
+```
+`lyPMA_neg_3` will be noted as `ambiguous negative control`
+
+`lyPMA_pos_1`, `lyPMA_pos_3`, `lyPMA_pos_5 ` will be noted as `ambiguous negative control
+
+##### Bacterial qPCR of positive and negative controls
+
+```{r}
+
+phyloseq$phyloseq_count %>%
+        subset_samples(sample_type %in% c("Neg.", "Mock")) %>%
+        sample_data %>%
+        data.frame(check.names = F) %>%
+        mutate(sample_type2 = case_when(baylor_other_id == "lyPMA_neg_3"  ~ "Ambiguous Neg.",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "Ambiguous Mock",
+                                       .default = sample_type),
+               sample_label = case_when(baylor_other_id == "lyPMA_neg_3"  ~ "lyPMA_neg_3",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "lyPMA_pos_1",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "lyPMA_pos_3",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "lyPMA_pos_5",
+                                       .default = NA)) %>%
+        ggplot(., aes(x = baylor_other_id, y = DNA_bac_16S_copies_uL, label = baylor_other_id, col = sample_type2)) +
+        geom_point() +
+        scale_color_manual(values = MetBrewer::met.brewer("Austria", 4),
+                           name = "Sample type",
+                           breaks = c("Neg.","Mock", "Ambiguous Neg.", "Ambiguous Mock"))+
+        labs(col="Sample type") +
+        ggrepel::geom_text_repel(max.overlaps = 10,show.legend  = F) +
+        ylab("Bacterial DNA measured by qPCR (copies/µL)") +
+        scale_y_log10 () +
+        theme_classic() +
+        theme(axis.text.x = element_blank()) +
+        facet_wrap(~sample_type, scale = "free_x")
+```
+# Is low bacterial DNA in lyPMA group is due to the treatment? 
+
+Facetting by treatment type
+
+
+```{r}
+
+phyloseq$phyloseq_count %>%
+        subset_samples(sample_type %in% c("Neg.", "Mock")) %>%
+        sample_data %>%
+        data.frame(check.names = F) %>%
+        mutate(sample_type = case_when(baylor_other_id == "lyPMA_neg_3"  ~ "Ambiguous Neg.",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "Ambiguous Mock",
+                                       .default = sample_type),
+               sample_label = case_when(baylor_other_id == "lyPMA_neg_3"  ~ "lyPMA_neg_3",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "lyPMA_pos_1",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "lyPMA_pos_3",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "lyPMA_pos_3",
+                                       .default = NA)) %>%
+        ggplot(., aes(x = baylor_other_id, y = DNA_bac_16S_copies_uL, label = sample_label, col = sample_type)) +
+        geom_point() +
+        scale_color_manual(values = MetBrewer::met.brewer("Austria", 4),
+                           name = "Sample type",
+                           breaks = c("Neg.","Mock", "Ambiguous Neg.", "Ambiguous Mock"))+
+        ggrepel::geom_text_repel(max.overlaps = 30, show.legend  = F, nudge_y = 5000000) + 
+        theme_classic() +
+        theme(axis.text.x = element_blank()) +
+        facet_wrap(~treatment, scale = "free_x")
+```
+
+
+#### Beta diversity plot (Morishita-Horn)
+
+```{r}
 
 phyloseq$phyloseq_count %>%
         subset_samples(extraction_date == "20230119") %>% {
                 temp_phyloseq <- .
-                sample_data(temp_phyloseq)$sample_type <- ifelse(sample_data(temp_phyloseq)$baylor_other_id == "lyPMA_neg_3", 
-                                                        "Contaminated Neg.",
-                                                        as.character(sample_data(temp_phyloseq)$sample_type))
-                temp_phyloseq
+                sample_data_temp <- sample_data(temp_phyloseq) %>%
+                        data.frame(check.names = F)
+                sample_data_temp <- sample_data_temp %>%
+                        mutate(sample_type = case_when(baylor_other_id == "lyPMA_neg_3"  ~ "Ambiguous Neg.",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "Ambiguous Mock",
+                                       .default = sample_type),
+                               sample_label = case_when(
+                                       baylor_other_id == "lyPMA_neg_3"  ~ "lyPMA_neg_3",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "lyPMA_pos_1",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "lyPMA_pos_3",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "lyPMA_pos_5",
+                                       baylor_other_id == "molysis_pos_5"  ~ "molysis_pos_5",
+                                       .default = NA),
+                               sample_label2 = case_when(
+                                       treatment == "lyPMA"  ~ baylor_other_id,
+                                       treatment == "MolYsis"  ~ baylor_other_id,
+                                       .default = NA))
+                temp_phyloseq <- merge_phyloseq(sample_data(sample_data_temp), otu_table(temp_phyloseq))
         } %>% {
                 temp_phyloseq <- .
         plot <- ordinate(temp_phyloseq, method = "PCoA", distance = "horn") %>%
         plot_ordination(temp_phyloseq, ., col = "sample_type") +
-        #scale_color_viridis(discrete = 6, name = "Treatment", labels = c("Mock theoretical", "Control","lyPMA", "Benzonase", "HostZERO", "MolYsis", "QIAamp")) +
-        scale_color_manual(values = c("#a8ddb5", "#43a2ca", "#a50f15", "#fc9272", "#fee0d2"),
+        scale_color_manual(values = MetBrewer::met.brewer("Austria", 4),
                            name = "Sample type",
-                           breaks = c("Neg.","Mock", "Contaminated Neg."),
-                           labels = c("Neg.","Mock", "Contaminated Neg.")) + #color using https://colorbrewer2.org/#type=qualitative&scheme=Set1&n=6
-        #scale_shape(name = "Sample type", labels = c("Mock theoretical", "Mock")) +
+                           breaks = c("Neg.","Mock", "Ambiguous Neg.", "Ambiguous Mock"))+
         geom_point(size = 3) +
         theme_classic (base_size = 12, base_family = "sans") +
-        ggrepel::geom_text_repel(aes(label = baylor_other_id), max.overlaps = 30) #+
+        ggrepel::geom_text_repel(aes(label = sample_label2), max.overlaps = 30, show.legend = F, nudge_x = -0.3) #+
+        #facet_wrap(~sample_type, scales = "free") +
+        #labs(tag = "A") +
+        #ggtitle("PCoA plot, M-H dissimilarity, extracted on 20240119") +
+        theme(plot.tag = element_text(size = 15), legend.position = "top") #+
+        #stat_ellipse(type = "norm", linetype = 2, linewidth = 0.1) +
+        #stat_ellipse(type = "t", linewidth = 0.1)
+        plot
+        }        
+
+phyloseq$phyloseq_count %>%
+        subset_samples(extraction_date == "20230119") %>% {
+                temp_phyloseq <- .
+                sample_data_temp <- sample_data(temp_phyloseq) %>%
+                        data.frame(check.names = F)
+                sample_data_temp <- sample_data_temp %>%
+                        mutate(sample_type = case_when(baylor_other_id == "lyPMA_neg_3"  ~ "Ambiguous Neg.",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "Ambiguous Mock",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "Ambiguous Mock",
+                                       .default = sample_type),
+                               sample_label = case_when(
+                                       baylor_other_id == "lyPMA_neg_3"  ~ "lyPMA_neg_3",
+                                       baylor_other_id == "lyPMA_pos_1"  ~ "lyPMA_pos_1",
+                                       baylor_other_id == "lyPMA_pos_3"  ~ "lyPMA_pos_3",
+                                       baylor_other_id == "lyPMA_pos_5"  ~ "lyPMA_pos_5",
+                                       baylor_other_id == "molysis_pos_5"  ~ "molysis_pos_5",
+                                       .default = NA),
+                               sample_label2 = case_when(
+                                       treatment == "lyPMA"  ~ baylor_other_id,
+                                       treatment == "MolYsis"  ~ baylor_other_id,
+                                       .default = NA))
+                temp_phyloseq <- merge_phyloseq(sample_data(sample_data_temp), otu_table(temp_phyloseq))
+        } %>% {
+                temp_phyloseq <- .
+        plot <- ordinate(temp_phyloseq, method = "PCoA", distance = "jaccard") %>%
+        plot_ordination(temp_phyloseq, ., col = "sample_type") +
+        scale_color_manual(values = MetBrewer::met.brewer("Austria", 4),
+                           name = "Sample type",
+                           breaks = c("Neg.","Mock", "Ambiguous Neg.", "Ambiguous Mock"))+
+        geom_point(size = 3) +
+        theme_classic (base_size = 12, base_family = "sans") +
+        ggrepel::geom_text_repel(aes(label = sample_label2), max.overlaps = 30, show.legend = F, nudge_x = -0.2) #+
         #facet_wrap(~sample_type, scales = "free") +
         #labs(tag = "A") +
         #ggtitle("PCoA plot, M-H dissimilarity, extracted on 20240119") +
@@ -2852,6 +3052,71 @@ phyloseq$phyloseq_count %>%
 
         
 ```
+#### Barplot of lyPMA controls and molysis_pos_5 (adjacent to lyPMA_neg_3)
+
+```{r}
+
+tax_table(subset_samples(phyloseq$phyloseq_rel,
+                         sample_type == "Neg." | sample_type == "Mock") %>%
+                  subset_samples(.,
+                                 (sample_type == "Mock" & treatment == "Untreated") | treatment == "lyPMA" | treatment == "MolYsis")) %>%
+        cbind(species20 = "[Other]") %>%
+        {top20species <- head(
+                taxa_sums(
+                        subset_samples(
+                                phyloseq$phyloseq_rel,
+                                sample_type == "Neg." | sample_type == "Mock") %>%
+                                subset_samples(.,
+                                               (sample_type == "Mock" & treatment == "Untreated") | treatment == "lyPMA" | treatment == "MolYsis") %>% 
+           subset_samples(., S.obs != 0)) %>%
+                                data.frame %>%
+                                arrange(-.) %>%
+                                row.names(), 20)
+   .[top20species, "species20"] <- as.character(.[top20species, "Species"])
+   .[, 9] <- gsub("s__", " ", .[, 9])
+   .[, 9] <- gsub("_", " ", .[, 9])
+   .[, 9] <- gsub("[]]|[[]", "",  .[, 9])
+   .[, 9] <- gsub(" sp", " sp.",  .[, 9])
+   .[, 9] <- gsub(" sp.", "</i> sp.",  .[, 9])
+   .[, 9] <- gsub(" group", "</i> group.",  .[, 9])
+   .[, 9] <- ifelse(grepl("Other",.[, 9]),
+                    "Other",
+                    ifelse(grepl("</i>",  .[, 9]),
+                           paste("<i>",  .[, 9], sep = ""),
+                           paste("<i>",  .[, 9], "</i>", sep = "")) %>%
+                            gsub("s__", "", .) %>%
+                            gsub("_", " ", .)
+   )
+   phyloseq_temp <- subset_samples(phyloseq$phyloseq_rel,
+                                   sample_type == "Neg." | sample_type == "Mock") %>%
+                  subset_samples(.,
+                              (sample_type == "Mock" & treatment == "Untreated") | treatment == "lyPMA" | treatment == "MolYsis") %>% 
+           subset_samples(., S.obs != 0)
+   tax_table(phyloseq_temp) <- tax_table(.) 
+   phyloseq_temp
+  } %>%
+        my_plot_bar(., fill="species20") + 
+        xlab("Subject") +
+        ylab("") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        theme(legend.text = element_markdown(size = 6),
+              legend.key.size = unit(3, "mm"),
+              legend.title = element_text(size = 6),
+              axis.text.x = element_text(angle = 90, )) +
+        guides(fill=guide_legend(title="Top 20 species")) +
+        scale_fill_manual(values = c(RColorBrewer::brewer.pal(n = 9, name = "Set3"),
+                                     RColorBrewer::brewer.pal(n = 12, name = "Paired")
+                                     )) +
+        facet_wrap(sample_type~treatment, scales = "free_x", ncol = 3)
+        #ggtitle("D    Mock")
+        #facet_wrap (~ factor(sample_type, levels = c("Mock", "BAL", "Nasal", "Sputum")),
+        #            scales= "free_x", nrow=2) +
+        
+
+
+
+```
+
 
 ### Predicted function barplot
 

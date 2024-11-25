@@ -2880,7 +2880,7 @@ f5d_host <- merge(filt_fit_data_spt$rel %>%
         #ggtitle("F  Sputum (viral host)") +
         theme(panel.grid.major = element_line(colour = "grey"),
               legend.position = "top",
-              plot.title = element_text(hjust = -4),
+              plot.title = element_text(hjust = 1),
               plot.tag.position = c(0.05, 0.95),
               axis.text.x = element_text(angle = 45, hjust=1, color = c("#e31a1c", "#fb9a99", "#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")),
               #Element markdown for taxa name italicizing
@@ -2915,6 +2915,7 @@ fig4 <- ggarrange(f5c_host %>% lemon::g_legend() %>% as_ggplot,
                   align = "v")
 
 fig4
+
 
 ```
 
@@ -5548,6 +5549,8 @@ annotate_figure(fig4,
 #ggarrange(f4ad, ggarrange(f4e, f4f, ncol = 2),
 #          ncol = 1) # alpha diversity plots
 dev.off()
+
+
 
 
 ```
